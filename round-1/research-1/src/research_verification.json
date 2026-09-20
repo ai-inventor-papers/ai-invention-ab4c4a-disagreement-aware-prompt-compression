@@ -1,0 +1,262 @@
+{
+  "valid": true,
+  "file_errors": [],
+  "schema_errors": [],
+  "content_warnings": [],
+  "files_found": {
+    "research_out.json": {
+      "exists": true,
+      "path": "/home/adrian/projects/ai-inventor-wt-integ/aii_data/users/admin/runs/run_Ymcqd66mFtJZ/3_invention_loop/iter_1/gen_art/gen_art_research_1/research_out.json",
+      "source_count": 25,
+      "size": 43323
+    }
+  },
+  "source_count": 25,
+  "checked_at": "2026-09-20T06:13:58.943328+00:00",
+  "passage_check_scope": "Case/whitespace-normalized text occurrence at the source URL (or archive fallback). Not claim entailment, locator verification, or author/year verification. status=error means unverified, not a misquotation.",
+  "passages": [
+    {
+      "source_index": 1,
+      "source_url": "https://arxiv.org/html/2403.12968",
+      "quote": "We approach prompt compression as a token classification task (i.e., preserve or discard), and take the predicted probability of each token being labeled as preserve as the compression metric.",
+      "locator": "Section 1, contributions",
+      "status": "valid",
+      "context": "...m meetingbank (hu et al., 2023) and their compressed versions. we publicly release the dataset. * • we approach prompt compression as a token classification task (i.e., preserve or discard), and take the predicted probability of each token being labeled as preserve as the compression metric. the benefits are three folds: (1) it can capture all essential information needed for prompt compre...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 1,
+      "source_url": "https://arxiv.org/html/2403.12968",
+      "quote": "represent the probability of a word by averaging over the predicted probabilities of all subword tokens",
+      "locator": "Section 4.2, footnote",
+      "status": "valid",
+      "context": "...lying our approach across various llms and slms, we preserve the integrity of multi-token words and represent the probability of a word by averaging over the predicted probabilities of all subword tokens.. finally, we retain the top n~\\tilde{n} words in the original prompt 𝒙\\bm{x} with the highest pip_...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 1,
+      "source_url": "https://arxiv.org/html/2403.12968",
+      "quote": "LLMLingua-2 is designed for question-agnostic compression",
+      "locator": "Appendix K",
+      "status": "valid",
+      "context": "...roves the key information preservation by utilizing the information provided in the question. while llmlingua-2 is designed for question-agnostic compression, it can also be integrated with longllmlingua to preserve more key information relevant to the ques...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 2,
+      "source_url": "https://raw.githubusercontent.com/microsoft/LLMLingua/main/llmlingua/prompt_compressor.py",
+      "quote": "We can get the answer to this question in the given documents.",
+      "locator": "get_rank_results / get_distance_longllmlingua",
+      "status": "valid",
+      "context": "...ef get_distance_longllmlingua(corpus, query): context_ppl = [ self.get_condition_ppl( d, query \\+ \" we can get the answer to this question in the given documents.\", condition_in_question, ) \\- dl * 2 / 250 * 0 for d, dl in zip(corpus, context_tokens_length) ] so...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 2,
+      "source_url": "https://raw.githubusercontent.com/microsoft/LLMLingua/main/llmlingua/prompt_compressor.py",
+      "quote": "self.max_seq_len = 512",
+      "locator": "init_llmlingua2",
+      "status": "valid",
+      "context": "...: int = 50, max_force_token: int = 100, ): seed_everything(42) self.max_batch_size = max_batch_size self.max_seq_len = 512 self.max_force_token = max_force_token self.special_tokens = set( [ v for k, v in self.tokenizer.sp...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 2,
+      "source_url": "https://raw.githubusercontent.com/microsoft/LLMLingua/main/llmlingua/prompt_compressor.py",
+      "quote": "sort_direct = -1 if condition_in_question",
+      "locator": "get_distance_longllmlingua",
+      "status": "valid",
+      "context": "...sentence_number: for dem_idx in range(len(sentences)): keep_sentence(dem_idx, keep_sentence_number) sort_direct = -1 if condition_in_question == \"none\" else 1 sent_sort = sorted( enumerate(sentence_ppl), key=lambda x: sort_direct * x[1] ) el...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 3,
+      "source_url": "https://raw.githubusercontent.com/microsoft/LLMLingua/main/README.md",
+      "quote": "model_name=\"microsoft/llmlingua-2-xlm-roberta-large-meetingbank\"",
+      "locator": "Quick Start, LLMLingua-2 snippet",
+      "status": "valid",
+      "context": "...narios, you can use ```python from llmlingua import promptcompressor llm_lingua = promptcompressor( model_name=\"microsoft/llmlingua-2-xlm-roberta-large-meetingbank\", use_llmlingua2=true, # whether to use llmlingua-2 ) compressed_prompt = llm_lingua.compress_prompt...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 5,
+      "source_url": "https://raw.githubusercontent.com/microsoft/LLMLingua/main/DOCUMENT.md",
+      "quote": "also highly sensitive to compression",
+      "locator": "Parameters",
+      "status": "valid",
+      "context": "...playing high sensitivity to compression. \\- **question** (str): general question within the prompt, also highly sensitive to compression. \\- **ratio** (float, optional): the target compression ratio, where larger values result in fewer ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 6,
+      "source_url": "https://arxiv.org/html/2310.06839v2",
+      "quote": "we only used reordering in the NaturalQuestions Multi-document QA",
+      "locator": "Appendix B.2",
+      "status": "valid",
+      "context": "...o 200200. the δ​τ\\delta\\tau used in dynamic compression ratio is set to 0.3. for a fair comparison, we only used reordering in the naturalquestions multi-document qa and noted this in table 1. we use “we can get the answer to this question in the given documents.\" ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 6,
+      "source_url": "https://arxiv.org/html/2310.06839v2",
+      "quote": "granular control coefficient",
+      "locator": "Appendix B.2",
+      "status": "valid",
+      "context": "...e original prompt is first compressed to kk times the constraint at a coarse level, where kk is the granular control coefficient; token-level is then performed to reach the overall constraint. our method follows the same coarse-...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 6,
+      "source_url": "https://arxiv.org/html/2310.06839v2",
+      "quote": "we propose contrastive perplexity, i.e., the distribution shift caused by the condition of the question",
+      "locator": "Section 4.1, fine-grained compression",
+      "status": "valid",
+      "context": "...ue\\mathbf{x}^{\\text{que}}, further reducing their differentiation from other tokens. in this paper, we propose contrastive perplexity, i.e., the distribution shift caused by the condition of the question, to represent the association between the token and the question. the contrastive perplexity based ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 7,
+      "source_url": "https://raw.githubusercontent.com/microsoft/LLMLingua/main/experiments/llmlingua2/evaluation/metrics.py",
+      "quote": "Lower text and remove punctuation, articles and extra whitespace.",
+      "locator": "normalize_answer docstring",
+      "status": "valid",
+      "context": "...aluate import jieba from fuzzywuzzy import fuzz from rouge import rouge def normalize_answer(s): \"\"\"lower text and remove punctuation, articles and extra whitespace.\"\"\" def remove_articles(text): return re.sub(r\"\\b(a|an|the)\\b\", \" \", text) def white_space_fix(text)...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 8,
+      "source_url": "https://proceedings.neurips.cc/paper_files/paper/2025/file/e356ed5f27885c79c7cb597bb1107c94-Paper-Conference.pdf",
+      "quote": "heads with the highest scores as evaluator heads",
+      "locator": "Section 4, Generalizability",
+      "status": "valid",
+      "context": "...ce on diverse downstream tasks. the results over two models are presented in table 2. we selected 8 heads with the highest scores as evaluator heads from the layer with the highest cumulative score. we also randomly selected 8 heads and 50% heads 6...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 8,
+      "source_url": "https://proceedings.neurips.cc/paper_files/paper/2025/file/e356ed5f27885c79c7cb597bb1107c94-Paper-Conference.pdf",
+      "quote": "we used the average pooling operation",
+      "locator": "Appendix D",
+      "status": "valid",
+      "context": "...f the observed windows, the pooling operation, and the kernel size for pooling. in all experiments, we used the average pooling operation, as the difference between average pooling and maximum pooling was experimentally negligible. for l...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 8,
+      "source_url": "https://proceedings.neurips.cc/paper_files/paper/2025/file/e356ed5f27885c79c7cb597bb1107c94-Paper-Conference.pdf",
+      "quote": "the code is provided in the supplementary material",
+      "locator": "NeurIPS Paper Checklist, item 5",
+      "status": "valid",
+      "context": "...main experimental results, as described in supplemental material? answer: [yes] justification: yes, the code is provided in the supplementary material with instructions to reproduce the experiments. guidelines: • the answer na means that paper does n...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 13,
+      "source_url": "https://arxiv.org/pdf/2308.14508",
+      "quote": "built from three Wikipedia-based",
+      "locator": "Section 3, Multi-Doc QA",
+      "status": "valid",
+      "context": "...tain the answer, which is usually more challenging than single-doc qa. the english test samples are built from three wikipedia-based multi-hop qa datasets: hotpotqa (yang et al., 2018), 2wikimultihopqa (ho et al., 2020), and musique...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 14,
+      "source_url": "https://raw.githubusercontent.com/THUDM/LongBench/main/LongBench/metrics.py",
+      "quote": "Lower text and remove punctuation, articles and extra whitespace.",
+      "locator": "normalize_answer docstring",
+      "status": "valid",
+      "context": "...ing import list from collections import counter from rouge import rouge def normalize_answer(s): \"\"\"lower text and remove punctuation, articles and extra whitespace.\"\"\" def remove_articles(text): return re.sub(r\"\\b(a|an|the)\\b\", \" \", text) def white_space_fix(text)...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 15,
+      "source_url": "https://raw.githubusercontent.com/THUDM/LongBench/main/LongBench/eval.py",
+      "quote": "score = max(score, dataset2metric[dataset](prediction, ground_truth, all_classes=all_classes))",
+      "locator": "scorer",
+      "status": "valid",
+      "context": "...m\", \"lsht\"]: prediction = prediction.lstrip('\\n').split('\\n')[0] for ground_truth in ground_truths: score = max(score, dataset2metric[dataset](prediction, ground_truth, all_classes=all_classes)) if length < 4000: scores[\"0-4k\"].append(score) elif length < 8000: scores[\"4-8k\"].append(score) els...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 16,
+      "source_url": "https://raw.githubusercontent.com/THUDM/LongBench/main/LongBench/config/dataset2prompt.json",
+      "quote": "Answer the question based on the given passages. Only give me the answer and do not output any other words.",
+      "locator": "hotpotqa / 2wikimqa / musique entries",
+      "status": "valid",
+      "context": "...下文字并用中文简短回答：\\n\\n{context}\\n\\n现在请基于上面的文章回答下面的问题，只告诉我答案，不要输出任何其他字词。\\n\\n问题：{input}\\n回答：\", \"hotpotqa\": \"answer the question based on the given passages. only give me the answer and do not output any other words.\\n\\nthe following are given passages.\\n{context}\\n\\nanswer the question based on the given passages....",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 17,
+      "source_url": "https://raw.githubusercontent.com/THUDM/LongBench/main/LongBench/config/dataset2maxlen.json",
+      "quote": "\"hotpotqa\": 32",
+      "locator": "json entry",
+      "status": "valid",
+      "context": "{ \"narrativeqa\": 128, \"qasper\": 128, \"multifieldqa_en\": 64, \"multifieldqa_zh\": 64, \"hotpotqa\": 32, \"2wikimqa\": 32, \"musique\": 32, \"dureader\": 128, \"gov_report\": 512, \"qmsum\": 512, \"multi_news\": 512...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 18,
+      "source_url": "https://arxiv.org/abs/2510.16439",
+      "quote": "rank them to retain the top-k% tokens, and obtain a sparse frugalized prompt",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...bution methods, globenc and decompx, we assign salience scores to every token in an input sequence, rank them to retain the top-k% tokens, and obtain a sparse frugalized prompt. we establish the theoretical stability of our approach and provide strong empirical results across...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 19,
+      "source_url": "https://arxiv.org/pdf/2510.16439",
+      "quote": "a 20% prompt reduction preserves",
+      "locator": "Section 1, contributions",
+      "status": "valid",
+      "context": "...ed with empirical results showing strong reten- tion–performance trade-offs. across four nlp tasks, a 20% prompt reduction preserves performance for most models with negligible parameter overhead. • we reveal behavioral insights int...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 20,
+      "source_url": "https://arxiv.org/abs/2608.31066",
+      "quote": "the drop in answer likelihood when a token's internal contribution is removed",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...el cot compression), which defines token importance along two complementary axes: \\emph{necessity}, the drop in answer likelihood when a token's internal contribution is removed, and \\emph{sufficiency}, the gain in answer likelihood when that contribution alone is provided. co...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 21,
+      "source_url": "https://arxiv.org/pdf/2608.31066",
+      "quote": "reasoning chains with Qwen2.5-1.5B-Instruct",
+      "locator": "Figure 2 caption",
+      "status": "valid",
+      "context": "...igure 2: empirical characterization of dual-axis model-internal token saliency. results on 100 math reasoning chains with qwen2.5-1.5b-instruct. (a) top-necessity retention consistently outperforms posi- tional and random baselines across budg...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 22,
+      "source_url": "https://arxiv.org/abs/2608.04569",
+      "quote": "independent selection can split dependent evidence pairs, retaining one member while deleting the other",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...ining the highest-scoring units under a budget. we identify a structural failure in this procedure: independent selection can split dependent evidence pairs, retaining one member while deleting the other. when retained text contains an answer but deleted text defines the entity needed to interpret it, ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 23,
+      "source_url": "https://arxiv.org/pdf/2608.04569",
+      "quote": "six hard compressors that assign",
+      "locator": "Section 4.2",
+      "status": "valid",
+      "context": "...pared with 73 for complete pairs. 4.2 comparison across six scoring signals the comparison includes six hard compressors that assign importance using different signals: embedding similarity with beaver (hu et al. 2026), syntactic pa...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 24,
+      "source_url": "https://raw.githubusercontent.com/microsoft/LLMLingua/main/experiments/llmlingua2/evaluation/eval_longbench.py",
+      "quote": "\"hotpotqa\": qa_f1_score",
+      "locator": "dataset2metric",
+      "status": "valid",
+      "context": "...f1_score, \"qasper\": qa_f1_score, \"multifieldqa_en\": qa_f1_score, \"multifieldqa_zh\": qa_f1_zh_score, \"hotpotqa\": qa_f1_score, \"2wikimqa\": qa_f1_score, \"musique\": qa_f1_score, \"dureader\": rouge_zh_score, \"gov_report\": rouge_s...",
+      "match_type": "exact"
+    }
+  ]
+}
