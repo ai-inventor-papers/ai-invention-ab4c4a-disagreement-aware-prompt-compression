@@ -1,0 +1,374 @@
+URL: https://arxiv.org/pdf/1809.01448
+Type: PDF
+Length: 10542 chars
+
+--- Content ---
+
+arXiv:1809.01448v1  [cs.CL]  5 Sep 2018
+Appendix - Recommended Statistical Signiﬁcance Tests for
+NLP Tasks
+Rotem Dror
+Roi Reichart
+Faculty of Industrial Engineering and Management, Technion, IIT
+{rtmdrr@campus|roiri}.technion.ac.il
+This document is an annex to the paper "The Hitchhiker’s Guide to Testing Statistical Signiﬁcance
+in Natural Language Processing".Rotem Dror, Gili Baumer, Segev Shlomov and Roi Reichart (ACL
+2018). Please cite:
+@inproceedings{dror2018hitchhiker,
+title={The Hitchhiker’s Guide to Testing Statistical Signiﬁcance in Natural Language Processing},
+author={Dror, Rotem and Baumer, Gili and Shlomov, Segev and Reichart, Roi},
+booktitle={Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (Volume
+1: Long Papers)},
+volume={1},
+pages={1383–1392},
+year={2018}
+}
+Abstract
+Statistical signiﬁcance testing plays an important role when drawing conclusions from
+experimental results in NLP papers. Particularly, it is a valuable tool when one would like to
+establish the superiority of one algorithm over another. This appendix complements the guide
+for testing statistical signiﬁcance in NLP presented in [5] by proposing valid statistical tests
+for the common tasks and evaluation measures in the ﬁeld.
+Statistical Signiﬁcance Test Table
+For each evaluation measure, the following table presents valid statistical tests1 and explana-
+tions about the assumptions made when using each test. Our recommendations are based on
+the considerations discussed in [5]. We will be happy to get feedback about their validity in
+case the reader does not found our considerations to hold.
+Notice that for each measure we present both parametric and non-parametric tests that
+can be used under certain assumptions. The parametric tests discussed here assume that the
+data is normally distributed. This assumption is likely to hold when using evaluation measures
+that calculate an average of counts of correct classiﬁcations. When the normality assumption
+that accompanies these tests holds in practice, they have higher statistical power than their
+non-parametric counterparts proposed in the table, hence it is recommended to use them.
+Otherwise, one should use non-parametric tests that do not make any such assumptions (we
+marked cases where it is unlikely to assume normality by — in the parametric test column).
+For example, in the case of precision, recall and F-score, [14] described why the t-test can
+only be used for the recall metric but not for the precision and F-score measures. For other
+evaluation measures, one can test if the data is normally distributed by applying statistical
+tests that check for normality (see [5] for more details).
+In this table, we only mention a
+parametric test when we consider it likely to assume normality.
+Additionally, when comparing the performance of two algorithms that are applied on the
+same dataset, one should use the paired version of the statistical signiﬁcance test (such as the
+matched-pair t-test). An implementation of the paired versions of all statistical tests presented
+here as well as of other tests can be found at https://github.com/rtmdrr/testSignificanceNLP.
+1A statistical test is called valid if it guarantees that the probability of making type one error is bounded by a
+pre-deﬁned constant. See [5] for a detailed explanation.
+1
+
+Evaluation
+Measure
+Description
+Parametric
+Test
+Non-
+Parametric
+Test
+Exemplary
+Task
+Assump-
+tions/
+Comments
+Contingency
+table/
+confusion
+matrix
+2 × 2 table2 which
+presents the outcomes of
+an algorithm on a
+sample of n data points:
+# tp
+# fp
+# fn
+# tn
+—
+McNemar’s
+test
+Binary
+sentiment
+classiﬁcation
+tp (true
+positive), fp
+(false positive),
+fn (false
+negative), tn
+(true negative)
+Exact match
+Percentage of
+predictions that match
+any one of the ground
+truth answers exactly
+t-test
+bootstrap/
+permutation
+Question
+answering
+1, 2
+Accuracy
+Proportion of true
+results (both true
+positives and true
+negatives) among the
+total number of cases
+examined3
+t-test
+bootstrap/
+permutation
+Sequence
+labeling
+1, 2
+Recall
+true positive
+true positive+false negative
+4
+t-test
+bootstrap/
+permutation
+Phrase-based
+(constituent)
+parsing
+1, 2, 6
+Precision
+true positive
+true positive+false positive
+5
+—
+bootstrap/
+permutation
+Phrase-based
+(constituent)
+parsing
+2, 6
+F score
+Fβ = (1 + β2) ·
+precision·recall
+(β2·precision)+recall
+—
+bootstrap/
+permutation
+Semantic
+parsing
+2, 6
+Perplexity
+Measurement of how
+well a probability
+distribution or
+probability model
+predicts a sample6
+—
+Wilcoxon
+signed-rank
+test
+Language
+modeling
+5
+Spearman
+correlation
+Measure of rank
+correlation between the
+ranking produced by
+two algorithms 7
+Z-test
+bootstrap/
+permutation
+Word
+similarity
+2, 3
+Pearson
+correlation
+Measure of the linear
+correlation between the
+results of two
+algorithms8
+Z-test
+bootstrap/
+permutation
+Word
+similarity
+2, 3
+UAS
+(sentence-
+level)
+Unlabeled attachment
+score [7]
+t-test
+bootstrap/
+permutation
+Dependency
+parsing
+1, 2, 4
+LAS
+(sentence-
+level)
+Labeled attachment
+score [7]
+t-test
+bootstrap/
+permutation
+Dependency
+parsing
+1, 2, 4
+ROUGE
+[9]
+—
+bootstrap/
+permutation
+Summariza-
+tion
+2
+BLEU
+[11]
+—
+bootstrap/
+permutation
+Machine
+translation
+2
+METEOR
+[2]
+—
+bootstrap/
+permutation
+Machine
+translation
+2
+PINC
+[3]
+—
+bootstrap/
+permutation
+Paraphrasing
+2
+2https://en.wikipedia.org/wiki/Confusion_matrix
+3https://en.wikipedia.org/wiki/Accuracy_and_precision
+4https://en.wikipedia.org/wiki/Precision_and_recall
+5https://en.wikipedia.org/wiki/Precision_and_recall
+6https://en.wikipedia.org/wiki/Perplexity
+7https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient
+8https://en.wikipedia.org/wiki/Pearson_correlation_coefficient
+2
+
+CIDEr
+[12]
+—
+bootstrap/
+permutation
+Image
+description
+generation
+2
+MUC, B3,
+CEAFe,
+BLANC
+[13, 1, 10, 8]
+—
+bootstrap/
+permutation
+Coreference
+resolution
+2, 7
+Krippendorf’s
+alpha,
+Cohen’s
+kappa
+Statistical measures of
+agreement [6, 4]
+—
+bootstrap/
+permutation
+Annotation
+reliability
+2
+MRR
+Mean reciprocal rank,
+used for algorithms that
+produce a list of
+possible responses to a
+sample of queries,
+ordered by probability
+of correctness9
+—
+bootstrap/
+permutation
+Question
+answering,
+information
+retrieval
+2
+Assumptions and Comments
+1. t-test: assuming that an average count of correct classiﬁcations is normally distributed.
+2. Bootstrap: assuming the dataset is representative of the whole population. I.e., the data
+sample should be big enough to cover many use-cases and represent the domain in a
+satisfactory manner.
+3. Fisher transformation: F(r) = 1
+2 ln 1+r
+1−r .
+• For Spearman:
+q
+n−3
+1.06 F(r) approximately follows a standard normal distribution.
+• For Pearson: the Fisher transformation approximately follows a normal distribution
+with a mean of F(ρ) and a standard deviation of
+1
+√n−3, where n is the sample size.
+One can use this to apply z-test to test for signiﬁcance.
+4. UAS and LAS are actually accuracy measures.
+5. Wilcoxon signed-rank test: since the number of possible predictions (vocabulary words)
+a language model may make can be very large, the non-sampling non-parametric tests
+are preferable.
+6. See [14] for explanations.
+7. All measures used for evaluating coreference resolution are functions of precision and
+recall. Since parametric tests are not suitable in the case of precision, these tests are also
+not valid for these measures.
+References
+[1] Amit Bagga and Breck Baldwin. Algorithms for scoring coreference chains. In The ﬁrst
+international conference on language resources and evaluation workshop on linguistics
+coreference, volume 1, pages 563–566. Granada, 1998.
+[2] Satanjeev Banerjee and Alon Lavie. Meteor: An automatic metric for mt evaluation with
+improved correlation with human judgments. In Proceedings of the ACL workshop on in-
+trinsic and extrinsic evaluation measures for machine translation and/or summarization,
+pages 65–72, 2005.
+[3] David L Chen and William B Dolan. Collecting highly parallel data for paraphrase eval-
+uation. In Proceedings of the 49th Annual Meeting of the Association for Computational
+Linguistics: Human Language Technologies-Volume 1, pages 190–200. Association for
+Computational Linguistics, 2011.
+[4] Jacob Cohen. A coeﬃcient of agreement for nominal scales. Educational and psychological
+measurement, 20(1):37–46, 1960.
+9https://en.wikipedia.org/wiki/Mean_reciprocal_rank
+3
+
+[5] Rotem Dror, Gili Baumer, Segev Shlomov, and Roi Reichart.
+The hitchhiker’s guide
+to testing statistical signiﬁcance in natural language processing. In Proceedings of the
+56th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long
+Papers), volume 1, pages 1383–1392, 2018.
+[6] Klaus Krippendorﬀ. Computing krippendorﬀ’s alpha-reliability. 2011.
+[7] Sandra Kübler, Ryan McDonald, and Joakim Nivre.
+Dependency parsing.
+Synthesis
+Lectures on Human Language Technologies, 1(1):1–127, 2009.
+[8] Heeyoung Lee, Marta Recasens, Angel Chang, Mihai Surdeanu, and Dan Jurafsky. Joint
+entity and event coreference resolution across documents. In Proceedings of the 2012 Joint
+Conference on Empirical Methods in Natural Language Processing and Computational
+Natural Language Learning, pages 489–500. Association for Computational Linguistics,
+2012.
+[9] Chin-Yew Lin. Rouge: A package for automatic evaluation of summaries. Text Summa-
+rization Branches Out, 2004.
+[10] Xiaoqiang Luo. On coreference resolution performance metrics. In Proceedings of the
+conference on human language technology and empirical methods in natural language pro-
+cessing, pages 25–32. Association for Computational Linguistics, 2005.
+[11] Kishore Papineni, Salim Roukos, Todd Ward, and Wei-Jing Zhu. Bleu: a method for
+automatic evaluation of machine translation. In Proceedings of the 40th annual meeting on
+association for computational linguistics, pages 311–318. Association for Computational
+Linguistics, 2002.
+[12] Ramakrishna Vedantam, C Lawrence Zitnick, and Devi Parikh. Cider: Consensus-based
+image description evaluation. In Proceedings of the IEEE conference on computer vision
+and pattern recognition, pages 4566–4575, 2015.
+[13] Marc Vilain, John Burger, John Aberdeen, Dennis Connolly, and Lynette Hirschman.
+A model-theoretic coreference scoring scheme. In Proceedings of the 6th conference on
+Message understanding, pages 45–52. Association for Computational Linguistics, 1995.
+[14] Alexander Yeh. More accurate tests for the statistical signiﬁcance of result diﬀerences. In
+Proceedings of the 18th conference on Computational linguistics-Volume 2, pages 947–953.
+Association for Computational Linguistics, 2000.
+4
+

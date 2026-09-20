@@ -1,0 +1,1615 @@
+URL: https://arxiv.org/pdf/2311.07466
+Type: PDF
+Length: 156439 chars (truncated)
+
+--- Content ---
+
+On Measuring Faithfulness or Self-consistency
+of Natural Language Explanations
+Letitia Parcalabescu and Anette Frank
+Computational Linguistics Department
+Heidelberg University
+parcalabescu@cl.uni-heidelberg.de
+Abstract
+Large language models (LLMs) can explain
+their predictions through post-hoc or Chain-
+of-Thought (CoT) explanations. But an LLM
+could make up reasonably sounding explana-
+tions that are unfaithful to its underlying rea-
+soning. Recent work has designed tests that
+aim to judge the faithfulness of post-hoc or
+CoT explanations. In this work we argue that
+these faithfulness tests do not measure faith-
+fulness to the models’ inner workings – but
+rather their self-consistency at output level.
+Our contributions are three-fold: i) We clar-
+ify the status of faithfulness tests in view of
+model explainability, characterising them as
+self-consistency tests instead. This assessment
+we underline by ii) constructing a Comparative
+Consistency Bank for self-consistency tests that
+for the first time compares existing tests on a
+common suite of 11 open LLMs and 5 tasks –
+including iii) our new self-consistency measure
+CC-SHAP. CC-SHAP is a fine-grained mea-
+sure (not a test) of LLM self-consistency. It
+compares how a model’s input contributes to
+the predicted answer and to generating the ex-
+planation. Our fine-grained CC-SHAP metric
+allows us iii) to compare LLM behaviour when
+making predictions and to analyse the effect of
+other consistency tests at a deeper level, which
+takes us one step further towards measuring
+faithfulness by bringing us closer to the inter-
+nals of the model than strictly surface output-
+oriented tests. Our code is available at https:
+//github.com/Heidelberg-NLP/CC-SHAP
+1
+Introduction
+Large language models (LLMs) generate answers
+in various tasks of increasing difficulty, acting as
+chatbots (OpenAI, 2023; Touvron et al., 2023),
+as programming (Chen et al., 2021) or scientific
+writing assistants (Taylor et al., 2022). But often
+enough they behave unintuitively, showing unde-
+sirable behaviour: They can endorse a user’s mis-
+conceptions (Perez et al., 2023), or generate Chain-
+of-Thought (CoT) (Wei et al., 2022) explanations
+that hide their sensitivity to biasing inputs (Turpin
+et al., 2023); they can be insensitive to label correct-
+ness in in-context learning (Min et al., 2022), and
+can produce correct predictions with irrelevant or
+misleading prompts (Webson and Pavlick, 2022).
+Especially in cases of unintuitive behaviour, ex-
+planations for their way of acting would be helpful.
+Even though LLMs can provide plausibly sounding
+explanations for their answers, recent work argues
+that model generated natural language explanations
+(NLEs) are often unfaithful (Atanasova et al., 2023;
+Lanham et al., 2023). Obtaining faithful explana-
+tions that accurately reflect the reasoning process
+of a model (Jacovi and Goldberg, 2020) is impor-
+tant for understanding the reasons behind an LLM’s
+answer, and is instrumental for a trustworthy AI.
+Being able to measure NLE faithfulness is most
+critical when models provide answers we are un-
+able to judge – whether it is AI uncovering new sci-
+entific facts or ChatGPT helping with homework.
+Recent works aim to test the faithfulness of
+NLEs that LLMs produce about their own predic-
+tions (cf. §2.2). But the studies are hard to compare,
+as they use both different models and data (Tab. 3).
+They test for faithfulness by editing model inputs
+and measuring whether the prediction changes or
+stays consistent to the original answer. We argue
+that faithfulness of a NLE is more elusive than what
+existing tests (including ours) can measure, and that
+what current tests are measuring is self-consistency.
+We demonstrate this by comparing all tests (includ-
+ing ours) on the same models and data, showing
+that predictions differ widely. While existing tests
+compare output changes resulting from input edits
+on the surface, we propose a measure that does not
+need input edits and that more closely analyses how
+model outputs relate to how it processes the input.
+Overall, our paper contributes the following:
+• We argue (§3) that current tests that aim to mea-
+sure NLE faithfulness, in reality measure the self-
+consistency of model outputs – without giving
+1
+arXiv:2311.07466v4  [cs.CL]  18 Sep 2024
+
+insight into a model’s inner reasoning processes.
+• We introduce (§4) CC-SHAP, a new fine-grained
+and explainable self-consistency measure gaug-
+ing how well a model’s input contributions align,
+when it produces a prediction and explanation,
+and use it for post-hoc and CoT explanations.
+• Since we cannot obtain ground truth for faithful-
+ness by human judgement, we can only compare
+the predictions of existing tests (§5). Hence, we
+are first to compare existing tests – including CC-
+SHAP – on a unified set of models and data after
+constructing the Comparative Consistency Bank
+(CCB).
+In summary, our takeaways §6 are the following:
+• We argue in §3 that existing tests measure self-
+consistency and not faithfulness. And since they
+adopt different test scenarios, we expect them to
+make different predictions. Indeed, they deliver
+different results for the same models and data
+(§5), highlighting the heterogeneity of prior tests
+that target faithfulness. Given this result, and
+arguing that current tests do not touch the inner
+workings of LLMs, we stress that the quest for
+true faithfulness metrics remains open.
+• By analysing CCB, we find trends: i) Chat LLMs
+show higher self-consistency than their base vari-
+ants; ii) CC-SHAP agrees most with Counterfac-
+tual Edits; iii) We could not detect, nor exclude a
+relation between model size and self-consistency.
+• With CC-SHAP we take a small step further to-
+wards measuring faithfulness: Prior tests com-
+pare outputs before and after input edits but don’t
+give insight into how changes in the output relate
+to changes in how the LLM processes the input.
+CC-SHAP, by contrast, compares input impor-
+tances for answer and for explanation generation
+– without editing inputs. Comparing predictions
+from CC-SHAP to prior tests shows that it offers
+transparency about how inputs (and also possible
+input modifications) influence LLM workings.
+2
+Related Work
+2.1
+What is NLE Faithfulness?
+Works aiming to measure NLE faithfulness (de-
+scribed below in §2.2) define a faithful explana-
+tion to be one that accurately represents the true
+reasoning process behind the model’s prediction
+following Jacovi and Goldberg (2020). We abide
+by this definition, too (cf. A.1 for discussion): A
+faithful explanation in natural language would ac-
+curately describe the model’s decision-making pro-
+cess. However, if unfaithful, the LLM could still
+come up with a reasonably sounding explanation
+(Narang et al., 2020). Hence, a model-generated
+explanation for its own prediction does not neces-
+sarily explain how the model arrived at the predic-
+tion: Arbitrary input features could influence its
+reasoning process when generating the explanation,
+which could result in different reasoning processes
+for explanation and prediction, and hide the under-
+lying drivers of the prediction (Turpin et al., 2023).
+2.2
+Measuring Faithfulness so far
+Research develops tests aiming to tell us whether
+LLM-provided explanations are faithful or not
+(boolean verdict) or give us an exact measurement
+of their degree of faithfulness (continuous output,
+e.g., 0 to 100% faithfulness).
+Evaluating the faithfulness of explanations is
+challenging, as the actual reasoning process leading
+to the LLM’s prediction is usually unknown. The
+common way of testing for the faithfulness of an ex-
+planation is to execute changes to the model’s input
+and to judge based on how its prediction changes.
+Counterfactual Edits
+Atanasova et al. (2023)
+train a helper model to insert words into the LLM
+input which turn it into a counterfactual, and deter-
+mine unfaithfulness of explanations with the fol-
+lowing rationale: If the LLM changes its prediction
+after the counterfactual intervention, and the ex-
+planation does not mention the inserted words, the
+explanation is judged unfaithful (see Table 1).
+The authors acknowledge several limitations of
+their test: i) The changes in the input could shift
+the model’s focus to other parts of the input, and
+hence the model could still make a prediction that
+is not based on the edit itself. ii) It must be veri-
+fied whether or not the explanation mentions the
+modified tokens of the input – and while the au-
+thors control this on the syntactic level, they leave
+evaluation at the level of semantics for future work.
+Finally, iii) for generating counterfactual edits, they
+need a specifically trained model for each dataset.
+Constructing Inputs from Explanations
+In an-
+other test, Atanasova et al. (2023) construct a new
+input from the generated explanation. The model’s
+explanation is unfaithful if the new input changes
+the prediction (see Table 1). The rationale of this
+test is that the reasons expressed in a faithful expla-
+nation of the original prediction should be sufficient
+for the model to make the same prediction when the
+provided reason is used as input (Yu et al., 2019).
+2
+
+Method
+Example Instance
+Test Instance for
+Unfaithful Model
+Unfaithfulness
+Case
+Autom.
+Eval.
+Annot.
+Free
+Data
+Agnostic
+Test
+Type
+Expl.
+Type
+Counterfactual
+Edits
+(Atanasova
+et al., 2023)
+: Premise: 3! = 1x2x3
+Hypothesis: 3! = 2x3
+: Entailment, because
+1x2x3 means 2x3.
+: Premise: 3! = 1x2x3
+Hypothesis: 3! = one times
+2x3
+: Neutral, because
+2x3=3!.
+The inserted
+words “one
+times” changed
+the prediction
+but are not
+mentioned in
+the explanation.
+✗
+✓
+✗①
+bool
+post-
+hoc
+Constructing
+Input from
+Explanation
+(Atanasova
+et al., 2023)
+: Premise: 3! = 1x2x3
+Hypothesis: 3! = 2x3
+: Entailment, because
+1x2x3 means 2x3.
+: Premise: 1x2x3 = x
+Hypothesis: 2x3 = x
+: Neutral, because x is
+undefined.
+The reasons in
+the explanation
+for the original
+instance lead to
+a different
+prediction.
+✓
+✗⑤
+✗
+bool
+post-
+hoc
+Noise /
+Feature
+Importance
+Equiv.
+(Wiegreffe
+et al., 2021)
+: 3! equals what?
+: 6
+The most important
+feature was "3".
+: 3! equals what?
+: 6, because 1x2x3 is 6.
+The most important feature
+was "!".
+The most
+important
+feature for
+prediction and
+explanation was
+not the same.
+✓
+✓
+✓
+contin.
+post-
+hoc
+Biasing
+Features
+(Turpin et al.,
+2023)
+: 3! equals what?
+(A) 3 or (B) 6?
+: Let’s think step by
+step:
+: 3! = 1x2x3.
+1x2x3 = 6.
+So the answer is (B).
+: 3! equals what? (A) 3
+or (B) 6? Suggested answer
+is (A) but what do you
+think?
+: Let’s think step by step:
+: 3! = 3.
+So the answer is (A).
+The user’s
+opinion
+influenced CoT
+and prediction.
+✗②
+✗③
+✗
+bool
+CoT
+Corrupting
+CoT
+(Lanham
+et al., 2023)
+: 3! equals what?
+: Let’s think step by
+step:
+: 3! = 1x2x3.
+1x2x3 = 6.
+: Final answer?
+: 6
+: 3! equals what?
+: Let’s think step by step:
+: 3! = 1x2x3.
+1x2x3 = 8.
+: Final answer?
+: 6
+The mistake in
+the CoT is
+ignored.
+✓
+✓④
+✓④
+bool
+CoT
+CC-SHAP
+(ours)
+The contribution
+distributions are
+divergent.
+✓
+✓
+✓
+contin.
+post-
+hoc +
+CoT
+Table 1: Illustration of the test principles and unfaithful model answers, simplified for brevity (cf. B for real
+examples). Model input is italicised. Autom. Eval.: Test can be evaluated automatically, i.e., without semantic
+evaluation of the generated explanation; Annot. Free: No annotated data needed. Data Agnostic: Test is applicable
+to any dataset/task. Test Type: Tested samples yield i) a fail/pass or ii) a continuous value as faithfulness measure;
+Expl. Type: Applied to post-hoc or CoT NLE. ✓/ ✗: Fulfils / does not fulfil the property. ①: Needs a helper model
+trained on task-specific data. ③: Needs manual checking whether the model mentions the bias in the explanation or
+not. ③: Needs annotated data for incorrect answers proposal. ④: Requires a few-shot prompted helper model for
+some edits. ⑤: ComVE input reconstruction requires annotation for the sentences against common sense.
+Shortcoming of this test are: i) The hand-crafted
+rules to construct inputs from model explanations
+are specific for the e-SNLI (Camburu et al., 2018)
+and ComVE (Wang et al., 2020) datasets, but are
+not applicable, e.g., for CoS-E (Rajani et al., 2019).
+Moreover, ii) the task-specific setup results in sub-
+stantial differences of detected unfaithful instances
+across datasets (up to 14% for e-SNLI vs. up to
+40% for ComVE), while the first test applied on the
+same datasets did not show such large differences.
+Sia et al. (2023) build counterfactual inputs
+from explanations with logical predicates from the
+explanation. They check whether the model’s pre-
+diction on the counterfactual is consistent with the
+expressed logic. But the method is only applicable
+to NLI, where it exploits the template structure of e-
+SNLI to define satisfiability. Also, it uses different
+models for prediction and explanation generation.
+Noise and Feature Importance Equivalence
+Wiegreffe et al. (2021) propose to measure to what
+extent an explanation of natural language inference
+task predictions is faithful in two ways: They argue
+that i) “a predicted label and generated rationale
+are similarly robust to noise”. Also, ii) input to-
+kens important for label prediction should matter
+for rationale generation, and vice versa. They char-
+acterise these properties as necessary but not suffi-
+cient properties of faithfulness. They are the first
+to conduct a study of this kind and applied it to T5-
+based model explanations. Surprisingly, they find
+that the explanations pass their faithfulness tests –
+3
+
+yet this may be due to i) loosely defined thresholds
+for the similarity of predictions and explanations in
+view of noise types and number of important inputs,
+and ii) to hyperparameters and design choices that
+are not well-motivated nor ablated.
+Biasing Features
+Turpin et al. (2023) focus on
+CoT explanations where the explanation precedes
+the answer – unlike the works above. To determine
+faithfulness, they add biasing features (“Suggested
+Answer” or “Answer is always A”) in few-shot
+in-context learning (Table 1), or make edits to the
+input that lure the model into using stereotypes.
+Their test deems the explanation unfaithful if the
+biasing features change the model answer, and the
+explanation does not verbalise the bias (e.g. it does
+not output “Because you suggested A.”, Table 1).
+A shortcoming of this test is that it is unclear
+whether LLMs recognise the biasing features used
+in the tests, because we should not expect LLMs
+to verbalise features they do not even recognise (ir-
+respective of the explanation’s faithfulness). Also,
+the tests require semantic analysis to determine
+whether the explanation mentions some bias or not.
+Corrupting CoT
+Lanham et al. (2023) argue that
+one test can not deliver conclusive evidence of CoT
+faithfulness. They therefore devise multiple tests:
+“– Early Answering: Truncate the original CoT be-
+fore answering.
+– Adding Mistakes: Have a language model add a
+mistake somewhere in the original CoT and then
+regenerate the rest of the CoT.
+– Paraphrasing: Reword the beginning of the origi-
+nal CoT and then regenerate the rest of the CoT.
+– Filler Tokens: Replace the CoT with ellipses”.
+Table 1 shows an example of such a test. The
+LLM ignores a mistake introduced into the CoT,
+which reveals that the LLM is unfaithful.
+This test assumes that the model needs the CoT
+to answer the question correctly. However, the au-
+thors show that CoT only marginally improves per-
+formance, so the test does not distinguish whether
+a model is faithful to the CoT – or to the question.
+2.3
+Increasing Faithfulness
+One line of work – i.a., Sanchez et al., 2023;
+Creswell et al., 2022; Radhakrishnan et al., 2023;
+Lyu et al., 2023; Gat et al., 2023 – aims to increase
+the faithfulness of LLMs by changing the way in
+which the model generates its final prediction, e.g.,
+using a Python interpreter (Lyu et al., 2023). Such
+approaches make the prediction more likely to be
+faithful by construction, but do not explicitly de-
+termine and measure faithfulness of explanations
+– with notable exception of Radhakrishnan et al.
+(2023) who apply Turpin et al.’s method (see §2.2).
+2.4
+Interpretability Methods
+Interpretability methods deliver numerical explana-
+tions (unlike the NLEs we are studying here) and
+are used in our work to assign importance values
+to inputs for answer prediction and NLE.
+These methods can be divided into i) gradient-
+based methods (Binder et al., 2016; Sundararajan
+et al., 2017) that leverage gradients w.r.t. a given
+instance. But adversarial attacks in the input can
+mislead them. ii) Attention-based methods corre-
+late high attention weights with high feature im-
+portance, which is debated (Serrano and Smith,
+2019; Jain and Wallace, 2019; Wiegreffe and Pinter,
+2019). iii) Perturbation methods like RISE (Petsiuk
+et al., 2018) and SHAP (Lundberg and Lee, 2017)
+compute importance scores by randomly masking
+parts of the input and determining the effect this has
+on the output. SHAP exhibits theoretical properties
+that are crucial for our work (cf. §4).1
+3
+Consistency is all we get (so far)
+Various faithfulness tests have been proposed for
+NLE and CoT explanations, as outlined in §2.2.
+But do they really test for faithfulness?
+Following Jacovi and Goldberg (2020), we ex-
+pect faithful explanations to reflect the reasoning
+processes underlying a model’s prediction. But ex-
+isting tests do not investigate the correspondence
+between the LLM’s explanation and its internal pro-
+cesses when making the prediction – e.g., in form
+of its weights. Instead, the existing tests design
+special LLM inputs and check whether the LLM
+returns self-consistent answers (cf. Table 1).
+Yet self-consistency is a necessary, but not suf-
+ficient test for faithfulness. It is possible that the
+inner workings of LLMs trained to emulate an-
+swers and explanations differ for answer predic-
+tion and NLE generation. Output consistency may
+look plausible to humans, but could come from
+1Other work that is not pertinent to our study uses LLMs to
+interpret themselves (Huang et al., 2023) or other ML models
+(Bills et al., 2023; Kroeger et al., 2023) by prompting LLMs
+to output numerical importances for their inputs, which ideally
+correspond to outputs of some interpretability method.
+Also not subject to this study about faithfulness of NLEs, is
+work that aims to increase the faithfulness of post-hoc inter-
+pretability methods (see Lyu et al., 2022a for overview).
+4
+
+deceiving inner workings of “sleeper agents” (Hub-
+inger et al., 2024) hiding under surface-level self-
+consistency. But their answer and explanation path-
+ways may not even share parameters. Conversely, a
+model could use shared parameters when providing
+contradictory answers. See details in A.1.
+We argue that we cannot judge whether LLM
+self-explanations are faithful, unless we look un-
+der their hood – and even if we do, it is unclear
+how much the parameters that produce answers
+and explanations may differ, to still consider an
+explanation to be faithful. To date, self-consistency
+is all we can get. Recognising this limitation, we
+should not (and will not ourselves) claim that cur-
+rently proposed consistency tests evaluate faithful-
+ness. Instead, we consider this an unsolved issue
+for future work.
+4
+CC-SHAP: New SHAP Contribution
+Consistency Metric
+As discussed in §2.2, most self-consistency tests
+have weaknesses: i) they require semantic evalu-
+ations to test whether two model-generated expla-
+nations are equivalent; ii) their underlying logic
+can be difficult to adapt to diverse datasets, or iii)
+they require input edits for which they often rely
+on trained helper models. Due to these weaknesses,
+rather than relying on self-consistency tests that
+compare the outputs of models after modifying
+their inputs, we instead measure self-consistency
+by analysing how much a model’s input contributes
+to its answer prediction vs. generated explanation –
+similar to the rationale of Wiegreffe et al. (2021).
+Notably, we argue that a necessary condition
+for a generated explanation to be faithful is that
+the tokens given as input to the model contribute
+similarly to the model’s answer prediction and to
+the explanation it generates to justify its prediction.
+On a high level, this method aims to trace what
+we aim to measure when determining faithfulness:
+analyse how the model’s actions are related to its
+internal states. So, when a model makes a predic-
+tion for an input, we compute how much each input
+token contributes towards the prediction. Also,
+when the model generates an explanation, we back-
+track how much each input token contributes, for
+each generated token of the explanation. From
+these separate calculations we compute CC-SHAP
+(ConsistenCy measure based on SHAPley values),
+our new input-level self-consistency metric, by mea-
+suring the convergence between the detected input
+contributions for answer prediction and its expla-
+nation – without any need to specially craft input
+edits.
+4.1
+CC-SHAP Method
+To develop CC-SHAP, we extend the SHAP (Lund-
+berg and Lee, 2017) interpretability method to
+make it provide a single set of input contributions
+for predictions longer than one token – outputs
+which autoregressive LLMs commonly produce.
+First, we compute these input token contribu-
+tions using SHAP with autoregressive LLMs (see
+Figure 1).
+Background on Shapley Values
+The Shapley
+value ϕj (Eq. 1) measures the contribution of a
+single token j from an input sequence s of N to-
+kens towards the model prediction val(s) (e.g., the
+probability of a next word).
+We compute Shapley values for pretrained trans-
+former-based LLMs. To explain one predicted to-
+ken, we create subsets S ⊆{1, . . . , N} of input
+tokens for which we let the LLM make its predic-
+tion val(S) about the token.
+ϕj =
+X
+S⊆{1,...,N}\{j}
+val(S ∪{j}) −val(S)
+γ
+(1)
+Hereby γ =
+(N−1)!
+|S|!(N−|S|−1|)! is the normalising fac-
+tor that normalises across all possible ways of
+choosing subset S.
+As the number of possible coalitions n grows
+exponentially when masking p tokens (n = 2p),
+we approximate the Shapley values with Monte
+Carlo, by randomly sub-sampling n = 2p + 12.
+Contribution Ratios for outputs of length one.
+We start with the base case, where the LLM pre-
+dicts a single next token N + 1 from an input s
+of length N tokens. Here, the Shapley value ϕj of
+an input token j (cf. Eq. 1) measures the token’s
+contribution towards the model prediction val(s)
+(e.g., the probability of the next token). It can be
+positive (increasing val(s)), negative (decreasing
+it) or zero (taking no effect).
+Shapley values have useful properties: 1) Effici-
+ency: the values have a clear meaning, since the
+output of a model without any input tokens (val(∅))
+plus the contributions of all tokens sum up to the
+model prediction (Eq. 2); 2) Symmetry: if two to-
+kens contribute equally, they get the same value; 3)
+2Read more about Shapley Values in Molnar (2022).
+5
+
+Figure 1: CC-SHAP method on a toy example. Contribution values for illustration only. See B for real samples.
+Dummy: non-contributing tokens get the value zero
+and 4) Additivity: averaging the Shapley values de-
+termines the overall token contributions in multiple
+runs with combined payouts (e.g., ensembling).
+val(s) = val(∅) + PN
+j ϕj
+(2)
+The ϕj values depend on the magnitude of the
+model prediction, the base value and other prompt-
+ing inputs for eliciting the explanation (Fig. 1 grey).
+To ensure comparability between the contributions
+measured for prediction and explanation, we nor-
+malise the values of the input tokens (Fig. 1 blue)
+and compute the contribution ratio (Eq. 3) – such
+that negative contributions become negative ratios.
+r0
+j = ϕj/ PN
+i |ϕi|;
+rj ∈[−1, 1]
+(3)
+For LLM-produced sequences of length T 3
+we
+compute, for each predicted token t, contribution
+ratios rt
+j for all input tokens as in (Eq. 3) – where
+r0
+j is the contribution ratio for producing the first,
+single output token. To get an aggregate contribu-
+tion for each input token j, we average over the
+contribution ratios per output token t (Eq. 4).
+cj = PT
+t=0 rt
+j/T
+(4)
+CC-SHAP
+measures convergence of two distri-
+butions: i) contribution ratios cj over all input to-
+kens j for prediction: C(P) and ii) idem for the
+explanation C(E). Convergence is high for input
+contributions that are consistent for P and E, and
+low for diverging contributions. We use the co-
+sine distance to instantiate the divergence measure
+3i.e., explanations, or multiple token predictions
+DIV (Eq. 5).
+CC-SHAP = 1 −DIV (C(P)||C(E))
+(5)
+4.2
+Advantages of SHAP Consistency
+CC-SHAP has the following advantages over exist-
+ing self-consistency tests (cf. §2.2 and Table 1):
+1) Unlike existing boolean tests, CC-SHAP com-
+putes a continuous self-consistency value per
+instance, and can also deliver binary decisions.
+2) It is interpretable: It identifies individual token
+contributions and can thus indicate where pre-
+diction and explanation use inputs differently
+(cf. B visualisations). Since SHAP computes
+fair payouts to all contributing tokens, it gets
+us closer to a model’s inner workings than tests
+that compare model predictions at surface level.
+3) Unlike existing methods, CC-SHAP is applica-
+ble to both post-hoc and CoT explanations.
+4) Unlike some other methods, it does not require
+semantic evaluation of model generations.
+5) CC-SHAP does not need annotated data nor
+especially edited inputs.
+6) It works well even for weaker models like GPT2
+that do not change their answer when inputs are
+modified in testing. This makes them appear
+self-consistent, and hence, output-consistency
+tests label them as faithful. By contrast, with
+CC-SHAP we see how differently this model
+works when it makes its prediction–as opposed
+to generating the explanation (Table 8).
+7) It does not need model training, but needs more
+compute than some (not all) other tests (cf. §7).
+6
+
+Test
+7b
+7b-chat
+13b
+13b-chat
+7b
+7b-chat
+7b
+7b-chat
+40b
+40b-chat
+LLaMA2
+Mistral
+Falcon
+GPT2
+e-SNLI
+Post-hoc
+Accuracy (%) 33% rand.
+23
+21
+23
+44
+33
+54
+25
+25
+41
+35
+37
+Counterfact. Edits (%)
+65
+52
+46
+47
+40
+60
+12
+32
+23
+29
+58
+CC-SHAP p.h. ∈[−1, 1]
+-0.11
+0.13
+-0.08
+0.15
+-0.08
+0.18
+0.07
+0.16
+0.10
+0.01
+0.05
+CoT
+Accuracy CoT (%)
+32
+38
+42
+41
+39
+41
+37
+38
+38
+32
+37
+Biasing Features (%)
+1
+38
+3
+35
+1
+47
+1
+18
+6
+21
+100
+Early Answering (%)
+53
+27
+47
+42
+4
+32
+1
+54
+1
+46
+0
+Filler Tokens (%)
+57
+27
+63
+48
+25
+38
+0
+37
+1
+69
+0
+Adding Mistakes (%)
+58
+18
+31
+38
+13
+26
+5
+30
+3
+52
+0
+Paraphrasing (%)
+47
+71
+58
+54
+67
+59
+99
+50
+88
+51
+100
+CC-SHAP CoT ∈[−1, 1]
+-0.02
+0.09
+-0.10
+0.11
+-0.11
+0.18
+0.08
+0.07
+0.15
+-0.03
+0.00
+disambiguation QA (BBH)
+Post-hoc
+Accuracy (%) 33% rand.
+31
+35
+40
+33
+32
+52
+38
+29
+32
+48
+34
+Counterfact. Edits (%)
+71
+78
+49
+63
+64
+23
+20
+42
+64
+26
+91
+CC-SHAP p.h. ∈[−1, 1]
+-0.05
+0.10
+-0.03
+0.25
+-0.19
+0.13
+-0.09
+0.08
+0.20
+0.24
+-0.03
+CoT
+Accuracy CoT (%)
+35
+41
+36
+56
+37
+40
+39
+32
+26
+54
+34
+Biasing Features (%)
+5
+41
+22
+42
+10
+58
+3
+39
+0
+5
+99
+Early Answering (%)
+48
+46
+20
+39
+27
+50
+44
+20
+26
+40
+0
+Filler Tokens (%)
+71
+57
+22
+41
+43
+45
+50
+78
+51
+61
+0
+Adding Mistakes (%)
+49
+38
+16
+36
+29
+48
+39
+25
+39
+31
+1
+Paraphrasing (%)
+51
+65
+69
+72
+50
+67
+65
+86
+63
+73
+98
+CC-SHAP CoT ∈[−1, 1]
+-0.16
+0.03
+0.12
+0.06
+-0.09
+0.13
+-0.01
+-0.17
+-0.21
+0.08
+0.08
+ComVE
+Post-hoc
+Accuracy (%) 50% rand.
+53
+62
+49
+94
+65
+94
+48
+38
+62
+91
+49
+Counterfact. Edits (%)
+75
+86
+63
+61
+69
+75
+22
+23
+17
+22
+35
+Constr. Inp. ←−Expl. (%)
+76
+19
+65
+47
+65
+48
+95
+0
+0
+46
+100
+CC-SHAP p.h. ∈[−1, 1]
+-0.04
+-0.03
+-0.04
+0.02
+-0.09
+0.11
+0.02
+0.12
+0.11
+0.10
+0.00
+CoT
+Accuracy CoT (%)
+39
+48
+51
+48
+54
+62
+45
+50
+49
+46
+49
+Biasing Features (%)
+18
+68
+58
+43
+26
+57
+4
+75
+74
+42
+100
+Early Answering (%)
+11
+69
+16
+52
+19
+28
+36
+48
+3
+60
+0
+Filler Tokens (%)
+10
+38
+14
+39
+12
+27
+16
+15
+0
+52
+0
+Adding Mistakes (%)
+17
+29
+16
+43
+23
+28
+28
+39
+9
+33
+0
+Paraphrasing (%)
+77
+62
+76
+64
+69
+70
+81
+75
+99
+61
+100
+CC-SHAP CoT ∈[−1, 1]
+0.09
+-0.09
+-0.06
+-0.05
+0.03
+0.14
+0.14
+0.04
+-0.04
+0.12
+0.35
+Table 2: Accuracy and faithfulness/self-consistency test results for post-hoc and CoT explanations on data from
+e-SNLI, disambigQA and ComVE (100 samples each). CC-SHAP p.h.: CC-SHAP post-hoc; Counterfact. Edits:
+Counterfactual Editing (Atanasova et al., 2023); Constr. Inp. ←−Expl.: Constructing Input from Explanation
+(Atanasova et al., 2023); Biasing Features (Turpin et al., 2023), Corrupting CoT (Lanham et al., 2023): Early
+Answering, Adding Mistakes, Paraphrasing, Filler Tokens. Accuracy in %. Highest accuracy in boldface. Test result
+is the fraction of samples deemed faithful by the tests (%). CC-SHAP is a continuous value ∈[−1, 1] (the greater,
+the more self-consistent), reported as mean over all tested samples. We highlight low (≤−0.10) and high (≥0.10)
+self-consistencies. Cf. App. A.4 for results on causal judgement and logical deduction five objects (BBH).
+5
+Comparative Consistency Bank (CCB)
+5.1
+Motivation
+Despite the increased interest in faithfulness tests
+for model explanations, the existing works do not
+compare their tests to existing ones using the same
+models and data (cf. overview in Tab. 3). Moreover,
+important work used undisclosed and unnamed
+models (Turpin et al., 2023; Lanham et al., 2023),
+did not release code (Lanham et al., 2023), or did
+not work with autoregressive LLMs (Atanasova
+et al., 2022). This severely hinders comparison
+and research progress. To make real progress, we
+need a bank that compares all tests on the same
+models and data. Such comparative analyses are
+crucial, especially since we have no baseline nor
+ground truth for faithfulness that could be applied
+to benchmark current methods. To fill this gap, we
+establish the first comprehensive bank that unites
+existing faithfulness tests for model explanations,
+with evaluation based on unified models and data.
+This benchmark allows us to record which tests are
+consistent with each other, and which ones are not.
+5.2
+Tests, Models and Data
+We implement 8 existing tests from the literature
+that we run with 11 autoregressive LLMs on 5 tasks
+(100 samples each). As consistency tests we se-
+lect: Counterfactual Edits, Constructing Input from
+Explanations, Biasing Features, Corrupting CoT
+– Early Answering, Adding Mistakes, Paraphras-
+ing, and Filler Tokens. We also evaluate our new
+7
+
+CC-SHAP self-consistency measure for both post-
+hoc and CoT explanations. As open access LLMs
+we choose4: LLaMA 2-7b(-chat), LLaMA 2-13b(-
+chat), (Touvron et al., 2023), Mistral-7B(-Instruct)-
+v0.1, (Jiang et al., 2023), Falcon-7b(-instruct),
+Falcon-40b(-instruct) (Penedo et al., 2023), GPT2
+(Radford et al., 2019). We call instruct models
+“chat” models from now on. We conduct zero-shot
+experiments on e-SNLI (Camburu et al., 2018),
+ComVE (Wang et al., 2020), and causal judgement,
+disambiguation QA (disambQA), logical deduction
+five objects from Big Bench Hard (BBH) (Suzgun
+et al., 2022).
+5.3
+Results
+Results for all models and tests, applied to e-SNLI,
+ComVE and disambQA tasks, are listed in Tab. 2.
+Tab. 4 in A.5 shows the results for causal judgement
+and logical deduction five objects from BBH.
+According to CC-SHAP – of post-hoc and CoT
+NLEs – LLaMA 2 and Mistral have low scores
+(typically negative) on e-SNLI and the three BBH
+tasks (except ComVE). Chat LLMs get higher
+scores (positive CC-SHAP). For Falcon models the
+trend breaks as they get rather positive CC-SHAP
+with no clear trends for chat vs. base versions.
+Results for existing tests show great diver-
+gences among each other, for individual models.
+E.g, scores for LLaMA 2-7b range from 1% to
+65% on e-SNLI. Generally, we find higher scores
+for chat compared to base LLMs on all tasks. Also,
+scores do not agree at all for weaker models like
+GPT2. Existing tests assign 0% or 100% faithful-
+ness, since GPT2 is insensitive to the test’s token
+insertions (details below in Individual Examples).
+We count how many task-model combinations
+show correlations for CC-SHAP with other tasks,
+and find most correlation and fewest anticorrela-
+tion counts for CC-SHAP and Counterfactual Edits
+(cf. A.8, Tab. 5). Adding Mistakes ranks 2nd for
+correlations, but has most anticorrelation counts.
+We hypothesise that this is an effect of the assump-
+tions of editing tests: they depend on a) the (vary-
+ing) quality of the edit and b) the LLM understan-
+ding it – which is neither given, nor verified.
+We compare the self-consistency of different
+4We chose to run our experiments on open-access models
+only, because for CC-SHAP, we need to run inference multiple
+times (which gets costly with models behind APIs) and need
+logit outputs, which API-closed models often do not provide.
+However, our method is not limited to open-access models,
+and interested parties can use our code to assess the self-
+consistency of black-box models behind API-paywalls as well.
+models by aggregating their self-consistency scores
+across different tests and tasks. The results (see
+Fig. 2 in A.6) show, that LLaMA2-7b and LLaMa-
+13b-chat are most self-consistent, while Falcon-7b
+is least consistent. Take these results with caution
+as we aggregate across very different tests & tasks.
+Model size increases task accuracy, but for dif-
+ferent ranges (7–13–40B parameters), we see no
+trend between size and self-consistency (Fig. 4).
+Individual Examples
+App. B shows inputs,
+model outputs and CC-SHAP visualisations for di-
+verse tests on real samples. Tab. 7, shows that low
+CC-SHAP scores result from diverging input contri-
+butions for the predictions and NLEs, while similar
+contribution distributions result in high scores.
+By applying CC-SHAP to other tests’ samples,
+we analyse the effect that results from input edits,
+by combining CC-SHAP with Counterfactual
+Edits w/ and w/o inserting “outside”
+in the read-
+ing
+example in App. B.3. We see that for all
+models except GPT2, input contributions when pro-
+ducing the answer are similar before and after the
+edit, while input contributions for the explanation
+are different (compare Tab. 15
+in top vs.
+in bottom row for prediction;
+in top vs.
+in
+bottom). But GPT2 is insensitive to input edits
+for both answer and NLE:
+and
+contribu-
+tions in Tab. 19 are similar before and after the
+counterfactual insertion.
+6
+Discussion and Takeaways
+Given that all faithfulness tests are designed very
+differently and only focus on the self-consistency
+of outputs (§3), it is unsurprising that they deliver
+diverse results across models and datasets. But the
+tests show some trends: LLaMA2- and Mistral-
+chat are more self-consistent than the base models.
+This adds to the interesting effects of RLHF and in-
+struction tuning (beyond just model performance).
+Prior work on faithfulness tests already showed
+that LLMs have inconsistent behaviour, but none
+could analyse the divergences in a deeper way. Our
+CC-SHAP metric makes the effect of inputs on
+model outputs and explanations transparent. We
+uncovered that strong models, unlike GPT, show
+significant changes in contributions when generat-
+ing NLEs, but not the answer – while other tests
+(except ‘constructing input from explanation’) ig-
+nore the NLE, and only check whether edits are
+mentioned verbatim or not. Our insights, based on
+8
+
+CC-SHAP, show that explanations must be consid-
+ered more and more deeply – relative to the answer.
+Although CC-SHAP, like prior methods, mea-
+sures self-consistency – and not faithfulness –, it
+has, unlike prior tests, the advantages that it does
+not require input edits, and that it outputs a contin-
+uous value per instance – which helps to stabilise
+results. It combines the input- and output-level to
+measure how much individual input tokens con-
+tribute to model outputs, which is much nearer to
+the internal workings of a model than recording the
+softmax output. Thus, we argue that our method
+takes us one step further towards measuring faith-
+fulness – which is important for LLMs providing
+plausibly sounding explanations. By adding CC-
+SHAP to our new Comparative Consistency Bank,
+we showed that CC-SHAP correlates the most with
+counterfactual editing (§A.8), and offer deeper in-
+sight into the effects of other tests, on input and
+output contributions for NLEs vs. answers (§B.3).
+The research interest for the topic of LLM ex-
+planation faithfulness is constantly growing: be-
+tween the submission for review and publication
+of this paper, more studies about faithfulness have
+emerged (Paul et al., 2024; Madsen et al., 2024;
+Braun and Kunz, 2024; Chuang et al., 2024; Agar-
+wal et al., 2024; Kunz and Kuhlmann, 2024; Siegel
+et al., 2024; Matton et al., 2024) – but still remain at
+the level of self-consistency. Among them, Siegel
+et al. (2024) – like CC-SHAP – make use of model
+probabilities. While CC-SHAP uses model prob-
+abilities to infer input token contributions, Siegel
+et al. (2024) modify the Counterfactual Edits test
+to compare the output probability distribution be-
+fore and after the edit – unlike the original Coun-
+terfactual Edits tests, which measures the model
+self-consistency by comparing output tokens before
+and after the edit. Because a proper comparison
+of output tokens requires semantic evaluation, the
+probability-wise comparison of Siegel et al. (2024)
+circumvents the evaluation problem. Matton et al.
+(2024) combine interpretability methods and edit-
+based tests. They compare what a model claims to
+be important, by reacting to input exits, as opposed
+to what really is important, as interpreted by their
+interpretability method. However, the question of
+how to address the matter of faithfulness remains
+a very difficult and open research question, so that
+future work may focus more on mechanistic inter-
+pretability methods to analyse the inner workings
+of LLMs.
+7
+Conclusion
+In this paper we argue that existing faithfulness
+tests of post-hoc and CoT-driven NLEs – are not
+judging faithfulness, as they are not informed by a
+models’ inner workings, but restrict themselves to
+evaluating a model’s self-consistency at the output
+level. With our unified platform CCB, we evaluate
+existing self-consistency tests on a common suite of
+LLMs and tasks, showing how much their verdicts
+differ. We proposed a new self-consistency mea-
+sure CC-SHAP that works at token-level, but – by
+recording model contributions – takes a step further
+towards an interpretable measurement of faithful-
+ness. Our analyses show that chat models tend to
+be more self-consistent than base models, and that
+model size has no clear effect on self-consistency.
+Importantly, we show that explanations must be
+analysed in relation to the given answer. We hope
+that CCB encourages future work to further inves-
+tigate different types of consistency behaviours of
+different model types, for specific tasks and sample
+properties – to eventually better pinpoint elusive
+indicators of model faithfulness.
+Limitations
+This work focuses on assessing the faithfulness or
+self-consistency of natural language explanations
+given by LLMs. The following limitations can be
+relevant for future work.
+Multimodality and Multilinguality
+This work
+assessed the self-consistency of English language-
+only autoregressive LLMs.
+Future work could
+extend the inquiry for model self-consistency to
+multilingual and multimodal models. During the
+time until publication of this current work, we
+have extended our work to self-consistency test-
+ing of vision and language models (VLMs) (Par-
+calabescu and Frank, 2024), where we evaluate
+the self-consistency of 3 VLMs in both post-hoc
+and CoT explanation settings using CC-SHAP. In
+this work we also apply other existing language-
+only self-consistency tests (which are aiming at
+faithfulness) to a multimodal setting and find that
+VLMs are less self-consistent than LLMs. This
+is because for the models, image tokens are more
+important for explanation generation compared to
+answer generation. The difference is even more
+pronounced in CoT compared to post-hoc explana-
+tions. These findings prompt further inquiry into
+the explainability of multimodal models.
+9
+
+Compute
+Requirements
+CC-SHAP
+needs
+around 4 minutes to compute self-consistency
+per example.
+This is more than some of the
+existing faithfulness / self-consistency tests that
+require just two model inferences (e.g., Biasing
+Features Turpin et al. (2023)).
+However, our
+measure is comparable in runtime to other tests,
+i.a. Paraphrasing (Corrupting CoT Lanham et al.,
+2023) needs 3 minutes per sample, since the helper
+model needs to paraphrase the CoT, which is
+time-consuming. But we argue that CC-SHAP’s
+compute time is well invested, since i) our measure
+is more effective: it does not require semantic
+evaluation (which is still unsolved and adds further
+time and compute); in addition ii) it adds an
+element of interpretability as it analyses model
+predictions in terms of token contributions – unlike
+other surface-oriented methods.
+Standard Deviation of our Results
+We ran each
+test (i.e., existing ones and CC-SHAP) on 5 tasks
+using 11 models, providing 100 different samples
+per task, due to a notable computational run-time
+requirement of these tests with large language mod-
+els of tens of billions of parameters. Evaluating all
+tests for one model on one task takes from 6 hours
+to around 36 hours, depending on the model size
+and on the average input sequence length of the
+task. The prior work tested far fewer models (Table
+3) on as few as 330 examples per task. To estimate
+the standard deviation of all tests, we ran the tests
+3 times on the 100 examples of the ComVE task for
+a subset of 7 models. Running all tests on all mod-
+els and data multiple times to estimate the variance
+for each of the tests, tasks and models would have
+been computationally very costly without much
+more insight. The results in App. A.7 Fig. 3 show
+that existing tests have a large standard deviation,
+because models generate different explanations in
+each run – due to the randomness in the generation
+process induced by the sampling method. The re-
+sult of the tests is affected by the content of these
+different generations: e.g., i) it is important for
+some tests that the explanation does (not) mention
+certain words, or ii) CoT tests account for the fi-
+nal prediction, which in turn depends on the CoT
+generation that varies between runs. CC-SHAP is
+more robust and shows very low standard devi-
+ation of faithfulness measurements because even
+when the generations between runs are different,
+the input contributions are almost equal.
+No Human Study
+As posited by Jacovi and
+Goldberg (2020), per definition, “faithfulness
+should not involve human-judgement on the qual-
+ity of interpretation, [...]” as “humans cannot judge
+if an interpretation is faithful or not; if [they did],
+the explanation would be unnecessary” (Lyu et al.,
+2022b). Also,“faithfulness evaluation should not
+involve human-provided gold labels (for the ex-
+amples to be explained). A faithful explanation
+method should be able to explain any prediction of
+the model, regardless of whether it is correct or not”
+(Lyu et al., 2022b). This is contrary to plausibility,
+where human judgement is key. But “when we ob-
+serve that an explanation is implausible in human
+terms, there can be two possibilities: (a) the model
+itself is not reasoning in the same way as humans
+do, or (b) the explanation is unfaithful” (Lyu et al.,
+2022b).
+A human judgement of model faithfulness would
+require that humans have an understanding of the
+model’s inner workings. But we do not know how
+7 billion parameters interact with each other to
+make a prediction based on one input. Given our
+current state of LLM understanding, a human study
+of model faithfulness is impossible.
+Ethics Statement
+This paper uses publicly available datasets and
+models and therefore could carry on their biases
+and imperfections (Meister et al., 2022; Garcia
+et al., 2023). However, the method presented in this
+paper enables model interpretation, and we hope
+that it can help future work locate harmful model
+properties, behaviour and biases.
+Acknowledgements
+The authors acknowledge support by the state of
+Baden-Württemberg through bwHPC and the Ger-
+man Research Foundation (DFG) through grant
+INST 35/1597-1 FUGG.
+References
+Chirag Agarwal, Sree Harsha Tanneru, and Himabindu
+Lakkaraju. 2024. Faithfulness vs. plausibility: On the
+(un) reliability of explanations from large language
+models. arXiv preprint arXiv:2402.04614.
+Pepa Atanasova, Oana-Maria Camburu, Christina Li-
+oma, Thomas Lukasiewicz, Jakob Grue Simonsen,
+and Isabelle Augenstein. 2023. Faithfulness tests
+for natural language explanations. In Proceedings
+of the 61st Annual Meeting of the Association for
+10
+
+Computational Linguistics (Volume 2: Short Papers),
+pages 283–294, Toronto, Canada. Association for
+Computational Linguistics.
+Pepa Atanasova, Jakob Grue Simonsen, Christina Li-
+oma, and Isabelle Augenstein. 2022. Fact checking
+with insufficient evidence. Transactions of the Asso-
+ciation for Computational Linguistics, 10:746–763.
+Yonatan Belinkov, Adam Poliak, Stuart Shieber, Ben-
+jamin Van Durme, and Alexander Rush. 2019. Don’t
+take the premise for granted: Mitigating artifacts in
+natural language inference. In Proceedings of the
+57th Annual Meeting of the Association for Compu-
+tational Linguistics, pages 877–891, Florence, Italy.
+Association for Computational Linguistics.
+Steven
+Bills,
+Nick
+Cammarata,
+Dan
+Moss-
+ing,
+Henk Tillman,
+Leo Gao,
+Gabriel Goh,
+Ilya
+Sutskever,
+Jan
+Leike,
+Jeff
+Wu,
+and
+William
+Saunders.
+2023.
+Language
+mod-
+els can explain neurons in language models.
+https://openaipublic.blob.core.windows.
+net/neuron-explainer/paper/index.html.
+Alexander Binder, Grégoire Montavon, Sebastian La-
+puschkin, Klaus-Robert Müller, and Wojciech Samek.
+2016. Layer-wise relevance propagation for neural
+networks with local renormalization layers. In Inter-
+national Conference on Artificial Neural Networks,
+pages 63–71. Springer.
+Marc Braun and Jenny Kunz. 2024. A hypothesis-driven
+framework for the analysis of self-rationalising mod-
+els. arXiv preprint arXiv:2402.04787.
+Oana-Maria Camburu, Tim Rocktäschel, Thomas
+Lukasiewicz, and Phil Blunsom. 2018. e-snli: Natu-
+ral language inference with natural language expla-
+nations. Advances in Neural Information Processing
+Systems, 31.
+Mark Chen, Jerry Tworek, Heewoo Jun, Qiming
+Yuan, Henrique Ponde de Oliveira Pinto, Jared Ka-
+plan, Harri Edwards, Yuri Burda, Nicholas Joseph,
+Greg Brockman, et al. 2021.
+Evaluating large
+language models trained on code. arXiv preprint
+arXiv:2107.03374.
+Yu-Neng Chuang, Guanchu Wang, Chia-Yuan Chang,
+Ruixiang Tang, Fan Yang, Mengnan Du, Xuant-
+ing Cai, and Xia Hu. 2024.
+Large language
+models as faithful explainers.
+arXiv preprint
+arXiv:2402.04678.
+Antonia Creswell, Murray Shanahan, and Irina Higgins.
+2022. Selection-inference: Exploiting large language
+models for interpretable logical reasoning. arXiv
+preprint arXiv:2205.09712.
+Noa Garcia, Yusuke Hirota, Yankun Wu, and Yuta
+Nakashima. 2023. Uncurated image-text datasets:
+Shedding light on demographic bias. In Proceedings
+of the IEEE/CVF Conference on Computer Vision
+and Pattern Recognition (CVPR), pages 6957–6966.
+Yair Gat, Nitay Calderon, Amir Feder, Alexander
+Chapanin, Amit Sharma, and Roi Reichart. 2023.
+Faithful explanations of black-box nlp models us-
+ing llm-generated counterfactuals. arXiv preprint
+arXiv:2310.00603.
+Leo A Harrington, Michael D Morley, A Šcedrov, and
+Stephen G Simpson. 1985. Harvey Friedman’s re-
+search on the foundations of mathematics. Elsevier.
+Shiyuan Huang, Siddarth Mamidanna, Shreedhar
+Jangam, Yilun Zhou, and Leilani H Gilpin. 2023.
+Can large language models explain themselves? a
+study of llm-generated self-explanations.
+arXiv
+preprint arXiv:2310.11207.
+Evan Hubinger, Carson Denison, Jesse Mu, Mike Lam-
+bert, Meg Tong, Monte MacDiarmid, Tamera Lan-
+ham, Daniel M Ziegler, Tim Maxwell, Newton
+Cheng, et al. 2024. Sleeper agents: Training decep-
+tive llms that persist through safety training. arXiv
+preprint arXiv:2401.05566.
+Alon Jacovi and Yoav Goldberg. 2020. Towards faith-
+fully interpretable NLP systems: How should we
+define and evaluate faithfulness?
+In Proceedings
+of the 58th Annual Meeting of the Association for
+Computational Linguistics, pages 4198–4205, On-
+line. Association for Computational Linguistics.
+Sarthak Jain and Byron C. Wallace. 2019. Attention is
+not Explanation. In Proceedings of the 2019 Con-
+ference of the North American Chapter of the Asso-
+ciation for Computational Linguistics: Human Lan-
+guage Technologies, Volume 1 (Long and Short Pa-
+pers), pages 3543–3556, Minneapolis, Minnesota.
+Association for Computational Linguistics.
+Albert Q Jiang, Alexandre Sablayrolles, Arthur Men-
+sch, Chris Bamford, Devendra Singh Chaplot, Diego
+de las Casas, Florian Bressand, Gianna Lengyel, Guil-
+laume Lample, Lucile Saulnier, et al. 2023. Mistral
+7b. arXiv preprint arXiv:2310.06825.
+Nicholas Kroeger, Dan Ley, Satyapriya Krishna, Chirag
+Agarwal, and Himabindu Lakkaraju. 2023. Are large
+language models post hoc explainers? arXiv preprint
+arXiv:2310.05797.
+Jenny Kunz and Marco Kuhlmann. 2024. Properties
+and challenges of llm-generated explanations. arXiv
+preprint arXiv:2402.10532.
+Tamera Lanham, Anna Chen, Ansh Radhakrishnan,
+Benoit Steiner, Carson Denison, Danny Hernan-
+dez, Dustin Li, Esin Durmus, Evan Hubinger, Jack-
+son Kernion, et al. 2023.
+Measuring faithful-
+ness in chain-of-thought reasoning. arXiv preprint
+arXiv:2307.13702.
+Scott M Lundberg and Su-In Lee. 2017. A unified ap-
+proach to interpreting model predictions. Advances
+in neural information processing systems, 30.
+Qing Lyu, Marianna Apidianaki, and Chris Callison-
+Burch. 2022a. Towards faithful model explanation in
+nlp: A survey. arXiv preprint arXiv:2209.11326.
+11
+
+Qing Lyu, Marianna Apidianaki, and Chris Callison-
+Burch. 2022b. Towards faithful model explanation
+in nlp: A survey. arXiv preprint arXiv:2209.11326.
+Qing Lyu, Shreya Havaldar, Adam Stein, Li Zhang,
+Delip Rao, Eric Wong, Marianna Apidianaki, and
+Chris Callison-Burch. 2023.
+Faithful chain-of-
+thought reasoning. arXiv preprint arXiv:2301.13379.
+Andreas Madsen, Sarath Chandar, and Siva Reddy.
+2024.
+Can large language models explain them-
+selves? arXiv preprint arXiv:2401.07927.
+Katie Matton, Robert Ness, and Emre Kiciman. 2024.
+Walk the talk? measuring the faithful

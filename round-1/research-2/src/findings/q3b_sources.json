@@ -1,0 +1,128 @@
+[
+  {
+    "url": "https://arxiv.org/abs/2310.11207",
+    "title": "Can Large Language Models Explain Themselves? A Study of LLM-Generated Self-Explanations",
+    "summary": "Compares ChatGPT's self-generated feature-attribution explanations against occlusion and LIME saliency maps; self-explanations perform on par with faithfulness metrics but disagree substantially with the traditional methods.",
+    "authors": ["Shiyuan Huang", "Siddarth Mamidanna", "Shreedhar Jangam", "Yilun Zhou", "Leilani H. Gilpin"],
+    "year": 2023,
+    "supporting_passages": [
+      {
+        "quote": "we study different ways to elicit the self-explanations, evaluate their faithfulness on a set of evaluation metrics, and compare them to traditional explanation methods such as occlusion or LIME saliency maps. Through an extensive set of experiments, we find that ChatGPT's self-explanations perform on par with traditional ones, but are quite different from them according to various agreement metrics, meanwhile being much cheaper to produce",
+        "locator": "arxiv.org/pdf/2310.11207, abstract"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2401.07927",
+    "title": "Are self-explanations from Large Language Models faithful?",
+    "summary": "Introduces self-consistency checks to measure faithfulness of LLM self-explanations; finds faithfulness varies by explanation type and task, not just by model.",
+    "authors": ["Andreas Madsen", "Sarath Chandar", "Siva Reddy"],
+    "year": 2024,
+    "supporting_passages": [
+      {
+        "quote": "Figure 8: Faithfulness evaluation using self-consistency checks, evaluated using Llama2-70B. Results show that Llama2-70B is not affected by prompt variations, but the faithfulness for each explanation type is task-dependent.",
+        "locator": "arxiv.org/pdf/2401.07927, Figure 8 caption"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2311.07466",
+    "title": "On Measuring Faithfulness or Self-consistency of Natural Language Explanations",
+    "summary": "Introduces CC-SHAP, a fine-grained Shapley-value-based measure of self-consistency between a model's input contributions when producing a prediction versus when producing its explanation. NOTE: the ID given in the source task (2311.13725) is incorrect and resolves to an unrelated paper (Ali & Breazeal, 'Studying Artist Sentiments around AI-generated Artwork'); the correct ID, confirmed by page-1 title and content match, is 2311.07466 (Parcalabescu & Frank, ACL 2024).",
+    "authors": ["Letitia Parcalabescu", "Anette Frank"],
+    "year": 2024,
+    "supporting_passages": [
+      {
+        "quote": "constructing a Comparative Consistency Bank for self-consistency tests that for the first time compares existing tests on a common suite of 11 open LLMs and 5 tasks – including iii) our new self-consistency measure CC-SHAP. CC-SHAP is a fine-grained measure (not a test) of LLM self-consistency. It compares how a model's input contributes to the predicted answer and to generating the explanation.",
+        "locator": "arxiv.org/pdf/2311.07466, abstract"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2305.04388",
+    "title": "Language Models Don't Always Say What They Think: Unfaithful Explanations in Chain-of-Thought Prompting",
+    "summary": "Shows CoT explanations can be systematically unfaithful: biasing features (e.g. reordering answer options) shift model predictions by up to 36% without being mentioned in the explanation.",
+    "authors": ["Miles Turpin", "Julian Michael", "Ethan Perez", "Samuel R. Bowman"],
+    "year": 2023,
+    "supporting_passages": [
+      {
+        "quote": "Adding biasing features heavily influences model CoT predictions on BBH tasks, causing accuracy to drop as much as 36%, despite the biasing features never being referenced in the CoT explanations.",
+        "locator": "arxiv.org/pdf/2305.04388, Introduction, main findings"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2307.13702",
+    "title": "Measuring Faithfulness in Chain-of-Thought Reasoning",
+    "summary": "Tests several possible faithfulness failure modes of CoT (post-hoc reasoning, etc.); finds models vary greatly in how much they use/rely on CoT depending on the task.",
+    "authors": ["Tamera Lanham", "Anna Chen", "Ansh Radhakrishnan", "et al."],
+    "year": 2023,
+    "supporting_passages": [
+      {
+        "quote": "Post-hoc reasoning: The model's reasoning may be post-hoc, i.e., produced after a certain conclusion has already been guaranteed... We find great variation in how much LLMs use CoT on different tasks, not using CoT at all for some tasks while relying upon it heavily for other tasks.",
+        "locator": "arxiv.org/pdf/2307.13702, Section on faithfulness failures"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2505.05410",
+    "title": "Reasoning Models Don't Always Say What They Think",
+    "summary": "Measures how often reasoning-model CoT verbalizes hints actually used to change the answer; overall faithfulness scores are low (25% Claude 3.7 Sonnet, 39% DeepSeek R1).",
+    "authors": ["Yanda Chen", "Joe Benton", "Ansh Radhakrishnan", "et al.", "Ethan Perez"],
+    "year": 2025,
+    "supporting_passages": [
+      {
+        "quote": "CoTs of reasoning models often lack faithfulness and can conceal misalignment. The overall faithfulness scores for both reasoning models remain low (25% for Claude 3.7 Sonnet and 39% for DeepSeek R1) (Figure 1).",
+        "locator": "arxiv.org/pdf/2505.05410, results summary"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2410.13787",
+    "title": "Looking Inward: Language Models Can Learn About Themselves by Introspection",
+    "summary": "Shows a model trained on its own self-prediction data predicts its own behavior more accurately than a cross-trained model predicting it, evidence for (limited) introspection.",
+    "authors": ["Felix J Binder", "James Chua", "Tomek Korbak", "et al."],
+    "year": 2024,
+    "supporting_passages": [
+      {
+        "quote": "Llama 70B predicts its own behavior more accurately (48.5%) than GPT-4o (31.8%), despite GPT-4o's superior capabilities... GPT-4o predicts itself better (49.4%) than Llama 70B does (36.6%).",
+        "locator": "arxiv.org/pdf/2410.13787, Section 3.2.1"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2504.16574",
+    "title": "PIS: Linking Importance Sampling and Attention Mechanisms for Efficient Prompt Compression",
+    "summary": "Uses attention scores as importance-sampling weights for prompt compression, but notes relying solely on attention scores can remove important high-attention tokens, correcting with TF-IDF.",
+    "authors": ["Lizhe Chen", "Binjia Zhou", "Yuyao Ge", "Jiayi Chen", "Shiguang Ni"],
+    "year": 2025,
+    "supporting_passages": [
+      {
+        "quote": "relying solely on attention scores may lead to the removal of important tokens with high attention scores. To address this, we introduce TF-IDF scores as a corrective measure for attention scores of each token.",
+        "locator": "arxiv.org/pdf/2504.16574, methodology section"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2512.12411",
+    "title": "Detecting the Disturbance: A Nuanced View of Introspective Abilities in LLMs",
+    "summary": "Finds LLM introspection of injected concept perturbations is partial: near-chance on naive binary detection but well above chance (up to 88%/83%) on localization/strength-comparison tasks, confined to early layers.",
+    "authors": ["Ely Hahami", "Ishaan Sinha", "Lavik Jain", "Josh Kaplan", "Jon Hahami"],
+    "year": 2025,
+    "supporting_passages": [
+      {
+        "quote": "on tasks requiring differential sensitivity, we find robust evidence for partial introspection: models localize which of 10 sentences received an injection at up to 88% accuracy (vs. 10% chance) and discriminate relative injection strengths at 83% accuracy (vs. 50% chance). These capabilities are confined to early-layer injections and collapse to chance thereafter",
+        "locator": "arxiv.org/pdf/2512.12411, abstract"
+      }
+    ],
+    "verified": true
+  }
+]

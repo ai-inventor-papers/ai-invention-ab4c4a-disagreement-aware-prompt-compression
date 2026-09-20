@@ -1,0 +1,709 @@
+URL: https://arxiv.org/pdf/2005.00928
+Type: PDF
+Length: 27544 chars
+
+--- Content ---
+
+Quantifying Attention Flow in Transformers
+Samira Abnar
+ILLC, University of Amsterdam
+s.abnar@uva.nl
+Willem Zuidema
+ILLC, University of Amsterdam
+w.h.zuidema@uva.nl
+Abstract
+In the Transformer model, “self-attention”
+combines information from attended embed-
+dings into the representation of the focal em-
+bedding in the next layer. Thus, across lay-
+ers of the Transformer, information originating
+from different tokens gets increasingly mixed.
+This makes attention weights unreliable as ex-
+planations probes. In this paper, we consider
+the problem of quantifying this ﬂow of infor-
+mation through self-attention. We propose two
+methods for approximating the attention to in-
+put tokens given attention weights, attention
+rollout and attention ﬂow, as post hoc methods
+when we use attention weights as the relative
+relevance of the input tokens. We show that
+these methods give complementary views on
+the ﬂow of information, and compared to raw
+attention, both yield higher correlations with
+importance scores of input tokens obtained us-
+ing an ablation method and input gradients.
+1
+Introduction
+Attention (Bahdanau et al., 2015; Vaswani et al.,
+2017) has become the key building block of neu-
+ral sequence processing models, and visualizing
+attention weights is the easiest and most popular
+approach to interpret a model’s decisions and to
+gain insights about its internals (Vaswani et al.,
+2017; Xu et al., 2015; Wang et al., 2016; Lee et al.,
+2017; Dehghani et al., 2019; Rockt¨aschel et al.,
+2016; Chen and Ji, 2019; Coenen et al., 2019; Clark
+et al., 2019). Although it is wrong to equate atten-
+tion with explanation (Pruthi et al., 2019; Jain and
+Wallace, 2019), it can offer plausible and mean-
+ingful interpretations (Wiegreffe and Pinter, 2019;
+Vashishth et al., 2019; Vig, 2019). In this paper,
+we focus on problems arising when we move to the
+higher layers of a model, due to lack of token iden-
+tiﬁability of the embeddings in higher layers (Brun-
+ner et al., 2020).
+We propose two simple but effective methods to
+compute attention scores to input tokens (i.e., token
+attention) at each layer, by taking raw attentions
+(i.e., embedding attention) of that layer as well as
+those from the precedent layers. These methods
+are based on modelling the information ﬂow in the
+network with a DAG (Directed Acyclic Graph), in
+which the nodes are input tokens and hidden em-
+beddings, edges are the attentions from the nodes
+in each layer to those in the previous layer, and
+the weights of the edges are the attention weights.
+The ﬁrst method, attention rollout, assumes that
+the identities of input tokens are linearly combined
+through the layers based on the attention weights.
+To adjust attention weights, it rolls out the weights
+to capture the propagation of information from in-
+put tokens to intermediate hidden embeddings. The
+second method, attention ﬂow, considers the atten-
+tion graph as a ﬂow network. Using a maximum
+ﬂow algorithm, it computes maximum ﬂow values,
+from hidden embeddings (sources) to input tokens
+(sinks). In both methods, we take the residual con-
+nection in the network into account to better model
+the connections between input tokens and hidden
+embedding. We show that compared to raw atten-
+tion, the token attentions from attention rollout and
+attention ﬂow have higher correlations with the im-
+portance scores obtained from input gradients as
+well as blank-out, an input ablation based attribu-
+tion method. Furthermore, we visualize the token
+attention weights and demonstrate that they are bet-
+ter approximations of how input tokens contribute
+to a predicted output, compared to raw attention.
+It is noteworthy that the techniques we propose
+in this paper, are not toward making hidden embed-
+dings more identiﬁable, or providing better atten-
+tion weights for better performance, but a new set
+of attention weights that take token identity prob-
+lem into consideration and can serve as a better
+diagnostic tool for visualization and debugging.
+arXiv:2005.00928v2  [cs.LG]  31 May 2020
+
+(a) Embedding attentions
+(b) Attention rollout
+(c) Attention ﬂow
+Figure 1: Visualisation of attention weights.
+Figure 2: Raw Attention maps for the CLS token at
+different layers.
+2
+Setups and Problem Statement
+In our analysis, we focus on the verb number pre-
+diction task, i.e., predicting singularity or plurality
+of a verb of a sentence, when the input is the sen-
+tence up to the verb position. We use the subject-
+verb agreement dataset (Linzen et al., 2016). This
+task and dataset are convenient choices, as they of-
+fer a clear hypothesis about what part of the input
+is essential to get the right solution. For instance,
+given “the key to the cabinets” as the input, we
+know that attending to “key” helps the model pre-
+dict singular as output while attending to “cabinets”
+(an agreement attractor, with the opposite number)
+is unhelpful.
+We train a Transformer encoder, with GPT-
+2 Transformer blocks as described in (Radford
+et al., 2019; Wolf et al., 2019) (without masking).
+The model has 6 layers, and 8 heads, with hid-
+den/embedding size of 128. Similar to Bert (De-
+vlin et al., 2019) we add a CLS token and use
+its embedding in the ﬁnal layer as the input to
+the classiﬁer. The accuracy of the model on the
+subject-verb agreement task is 0.96. To facilitate
+replication of our experiments we will make the
+implementations of the models we use and algo-
+rithms we introduce publicly available at https:
+//github.com/samiraabnar/attention_flow.
+We start by visualizing raw attention in Figure 1a
+(like Vig 2019). The example given here is cor-
+rectly classiﬁed. Crucially, only in the ﬁrst couple
+of layers, there are some distinctions in the atten-
+tion patterns for different positions, while in higher
+layers the attention weights are rather uniform. Fig-
+ure 2 (left) gives raw attention scores of the CLS
+token over input tokens (x-axis) at different lay-
+ers (y-axis), which similarly lack an interpretable
+pattern.These observations reﬂect the fact that as
+we go deeper into the model, the embeddings are
+more contextualized and may all carry similar in-
+formation. This underscores the need to track down
+attention weights all the way back to the input layer
+and is in line with ﬁndings of Serrano and Smith
+(2019), who show that attention weights do not
+necessarily correspond to the relative importance
+of input tokens.
+To quantify the usefulness of raw attention
+weights, and the two alternatives that we consider
+in the next section, besides input gradients, we
+employ an input ablation method, blank-out, to es-
+timate an importance score for each input token.
+Blank-out replaces each token in the input, one
+by one, with UNK and measures how much it af-
+fects the predicted probability of the correct class.
+We compute the Spearman’s rank correlation co-
+efﬁcient between the attention weights of the CLS
+embedding in the ﬁnal layer and the importance
+scores from blank-out. As shown in the ﬁrst row
+of Table 1, the correlation between raw attention
+weights of the CLS token and blank-out scores is
+rather low, except for the ﬁrst layer. As we can see
+in Table 2 this is also the case when we compute
+the correlations with input gradients.
+L1
+L2
+L3
+L4
+L5
+L6
+Raw
+0.69±0.27
+0.10±0.43
+-0.11±0.49
+-0.09±0.52
+0.20±0.45
+0.29±0.39
+Rollout
+0.32±0.26
+0.38±0.27
+0.51±0.26
+0.62±0.26
+0.70±0.25
+0.71±0.24
+Flow
+0.32±0.26
+0.44±0.29
+0.70±0.25
+0.70±0.22
+0.71±0.22
+0.70±0.22
+Table 1: SpearmanR correlation of attention based im-
+portance with blank-out scores for 2000 samples from
+the test set for the verb number prediction model.
+3
+Attention Rollout and Attention Flow
+Attention rollout and attention ﬂow recursively
+compute the token attentions in each layer of a
+
+L1
+L2
+L3
+L4
+L5
+L6
+Raw
+0.53±0.33
+0.16±0.38
+-0.06±0.42
+0.00±0.47
+0.24±0.40
+0.46±0.35
+Rollout
+0.22±0.31
+0.27±0.32
+0.39±0.32
+0.47±0.32
+0.53±0.32
+0.54±0.31
+Flow
+0.22±0.31
+0.31±0.34
+0.54±0.32
+0.61±0.28
+0.60±0.28
+0.61±0.28
+Table 2: SpearmanR correlation of attention based im-
+portance with input gradients for 2000 samples from
+the test set for the verb number prediction model.
+given model given the embedding attentions as in-
+put. They differ in the assumptions they make
+about how attention weights in lower layers affect
+the ﬂow of information to the higher layers and
+whether to compute the token attentions relative to
+each other or independently.
+To compute how information propagates from
+the input layer to the embeddings in higher lay-
+ers, it is crucial to take the residual connections
+in the model into account as well as the attention
+weights. In a Transformer block, both self-attention
+and feed-forward networks are wrapped by resid-
+ual connections, i.e., the input to these modules is
+added to their output. When we only use attention
+weights to approximate the ﬂow of information in
+Transformers, we ignore the residual connections.
+But these connections play a signiﬁcant role in
+tying corresponding positions in different layers.
+Hence, to compute attention rollout and attention
+ﬂow, we augment the attention graph with extra
+weights to represent residual connections. Given
+the attention module with residual connection, we
+compute values in layer l+1 as Vl+1 = Vl+WattVl,
+where Watt is the attention matrix. Thus, we have
+Vl+1 = (Watt + I)Vl. So, to account for residual
+connections, we add an identity matrix to the at-
+tention matrix and re-normalize the weights. This
+results in A = 0.5Watt + 0.5I, where A is the raw
+attention updated by residual connections.
+Furthermore, analyzing individual heads re-
+quires accounting for mixing of information be-
+tween heads through a position-wise feed-forward
+network in Transformer block. Using attention roll-
+out and attention ﬂow, it is also possible to analyze
+each head separately. We explain in more details
+in Appendix A.1. However, in our analysis in this
+paper, for simplicity, we average the attention at
+each layer over all heads.
+Attention rollout
+Attention rollout is an intuitive
+way of tracking down the information propagated
+from the input layer to the embeddings in the higher
+layers. Given a Transformer with L layers, we want
+to compute the attention from all positions in layer
+li to all positions in layer lj, where j < i. In the
+attention graph, a path from node v at position k
+in li, to node u at position m in lj, is a series of
+edges that connect these two nodes. If we look
+at the weight of each edge as the proportion of
+information transferred between two nodes, we
+can compute how much of the information at v
+is propagated to u through a particular path by
+multiplying the weights of all edges in that path.
+Since there may be more than one path between
+two nodes in the attention graph, to compute the
+total amount of information propagated from v to u,
+we sum over all possible paths between these two
+nodes. At the implementation level, to compute the
+attentions from li to lj, we recursively multiply the
+attention weights matrices in all the layers below.
+˜A(li) =
+
+A(li) ˜A(li−1)
+if i > j
+A(li)
+if i = j
+(1)
+In this equation, ˜A is attention rollout, A is raw at-
+tention and the multiplication operation is a matrix
+multiplication. With this formulation, to compute
+input attention we set j = 0.
+Attention ﬂow
+In graph theory, a ﬂow network
+is a directed graph with a “capacity” associated
+with each edge. Formally, given G = (V, E) is a
+graph, where V is the set of nodes, and E is the set
+of edges in G; C = {cuv ∈R | ∀u, v where eu,v ∈
+E ∧u̸ = v} denotes the capacities of the edges and
+s, t ∈V are the source and target (sink) nodes re-
+spectively; ﬂow is a mapping of edges to real num-
+bers, f : E →R, that satisﬁes two conditions: (a)
+capacity constraint: for each edge the ﬂow value
+should not exceed its capacity, |fuv ≤cuv|; (b)
+ﬂow conservation: for all nodes except s and t the
+input ﬂow should be equal to output ﬂow –sum
+of the ﬂow of outgoing edges should be equal to
+sum of the ﬂow of incoming edges. Given a ﬂow
+network, a maximum ﬂow algorithm ﬁnds a ﬂow
+which has the maximum possible value between s
+and t (Cormen et al., 2009).
+Treating the attention graph as a ﬂow network,
+where the capacities of the edges are attention
+weights, using any maximum ﬂow algorithm, we
+can compute the maximum attention ﬂow from any
+node in any of the layers to any of the input nodes.
+We can use this maximum-ﬂow-value as an approx-
+imation of the attention to input nodes. In attention
+ﬂow, the weight of a single path is the minimum
+value of the weights of the edges in the path, in-
+stead of the product of the weights. Besides, we
+
+attention rollout
+attention ﬂow
+Figure 3: Attention maps for the CLS token
+.
+can not compute the attention for node s to node
+t by adding up the weights of all paths between
+these two nodes, since there might be an overlap
+between the paths and this might result in overﬂow
+in the overlapping edges.
+It is noteworthy that both of the proposed meth-
+ods can be computed in polynomial time. O(d∗n2)
+for attention rollout and O(d2 ∗n4) for attention
+ﬂow, where d is the depth of the model, and n is
+the number of tokens.
+4
+Analysis and Discussion
+Now, we take a closer look at these three views of
+attention. Figure 1 depicts raw attention, attention
+rollout and attention ﬂow for a correctly classiﬁed
+example across different layers. It is noteworthy
+that the ﬁrst layer of attention rollout and attention
+ﬂow are the same, and their only difference with
+raw attention is the addition of residual connec-
+tions. As we move to the higher layers, we see that
+the residual connections fade away. Moreover, in
+contrast to raw attention, the patterns of attention
+rollout and attention ﬂow become more distinctive
+in the higher layers.
+Figures 2 and 3 show the weights from raw at-
+tention, attention rollout and attention ﬂow for the
+CLS embedding over input tokens (x-axis) in all
+6 layers (y-axis) for three examples. The ﬁrst ex-
+ample is the same as the one in Figure 1. The sec-
+ond example is “the article on NNP large systems
+<?>”. The model correctly classiﬁes this exam-
+ple and changing the subject of the missing verb
+from “article” to “articles” ﬂips the decision of the
+model. The third example is “here the NNS differ
+in that the female <?>”, which is a miss-classiﬁed
+example and again changing “NNS” (plural noun)
+to “NNP” (singular proper noun) ﬂips the decision
+of the model.
+For all cases, the raw attention weights are al-
+most uniform above layer three (discussed before).
+raw attention
+attention rollout
+attention ﬂow
+(a) “The author talked to Sara about mask book.”
+raw attention
+attention rollout
+attention ﬂow
+(b) “Mary convinced John of mask love.”
+Figure 4: Bert attention maps. We look at the attention
+weights from the mask embedding to the two potential
+references for it, e.g. “author” and “Sara” in (a) and
+“Mary” and “John” in (b). The bars, at the left, show
+the relative predicted probability for the two possible
+pronouns, “his” and “her”.
+In the case of the correctly classiﬁed example, we
+observe that both attention rollout and attention
+ﬂow assign relatively high weights to both the sub-
+ject of the verb, “article’ and the attractor, “sys-
+tems”. For the miss-classiﬁed example, both at-
+tention rollout and attention ﬂow assign relatively
+high scores to the “NNS” token which is not the
+subject of the verb. This can explain the wrong
+prediction of the model.
+The main difference between attention rollout
+and attention ﬂow is that attention ﬂow weights are
+amortized among the set of most attended tokens,
+as expected. Attention ﬂow can indicate a set of
+input tokens that are important for the ﬁnal decision.
+Thus we do not get sharp distinctions among them.
+On the other hand, attention rollout weights are
+more focused compared to attention ﬂow weights,
+which is sensible for the third example but not as
+much for the second one.
+L1
+L3
+L5
+L6
+Raw
+0.12 ± 0.21
+0.09 ± 0.21
+0.08 ± 0.20
+0.09 ± 0.21
+Rollout
+0.11 ± 0.19
+0.12 ± 0.21
+0.13 ± 0.21
+0.13 ± 0.20
+Flow
+0.11 ± 0.19
+0.11 ± 0.21
+0.12 ± 0.22
+0.14 ± 0.21
+Table 3: SpearmanR correlation of attention based im-
+portance with input gradients for 100 samples from the
+test set for the DistillBERT model ﬁne tuned on SST-2.
+Furthermore, as shown in Table 1 and 2 both
+attention rollout and attention ﬂow, are better
+correlated with blank-out scores and input gradi-
+ents compared to raw attention, but attention ﬂow
+
+weights are more reliable than attention rollout.
+The difference between these two methods is rooted
+in their different views of attention weights. At-
+tention ﬂow views them as capacities, and at every
+step of the algorithm, it uses as much of the capac-
+ity as possible. Hence, attention ﬂow computes the
+maximum possibility of token identities to propa-
+gate to the higher layers. Whereas attention rollout
+views them as proportion factors and at every step,
+it allows token identities to be propagated to higher
+layers exactly based on this proportion factors. This
+makes attention rollout stricter than attention ﬂow,
+and so we see that attention rollout provides us with
+more focused attention patterns. However, since
+we are making many simplifying assumptions, the
+strictness of attention rollout does not lead to more
+accurate results, and the relaxation of attention ﬂow
+seems to be a useful property.
+At last, to illustrate the application of atten-
+tion ﬂow and attention rollout on different tasks
+and different models, we examine them on two
+pretrained BERT models.
+We use the models
+available at https://github.com/huggingface/
+transformers.
+Table 3 shows the correlation of the importance
+score obtained from raw attention, attention rollout
+and attention ﬂow from a DistillBERT (Sanh et al.,
+2019) model ﬁne-tuned to solve “SST-2” (Socher
+et al., 2013), the sentiment analysis task from the
+glue benchmark (Wang et al., 2018). Even though
+for this model, all three methods have very low
+correlation with the input gradients, we can still see
+that attention rollout and attention ﬂow are slightly
+better than raw attention.
+Furthermore, in Figure 4, we show an example
+of applying these methods to a pre-trained Bert
+to see how it resolves the pronouns in a sentence.
+What we do here is to feed the model with a sen-
+tence, masking a pronoun. Next, we look at the
+prediction of the model for the masked word and
+compare the probabilities assigned to “her” and
+“his”. Then we look at raw attention, attention roll-
+out and attention ﬂow weights of the embeddings
+for the masked pronoun at all the layers. In the
+ﬁrst example, in Figure 4a, attention rollout and
+attention ﬂow are consistent with each other and
+the prediction of the model. Whereas, the ﬁnal
+layer of raw attention does not seem to be consis-
+tent with the prediction of the models, and it varies
+a lot across different layers. In the second exam-
+ple, in Figure 4b, only attention ﬂow weights are
+consistent with the prediction of the model.
+5
+Conclusion
+Translating embedding attentions to token atten-
+tions can provide us with better explanations about
+models’ internals. Yet, we should be cautious about
+our interpretation of these weights, because, we
+are making many simplifying assumptions when
+we approximate information ﬂow in a model with
+the attention weights. Our ideas are simple and
+task/architecture agnostic. In this paper, we in-
+sisted on sticking with simple ideas that only re-
+quire attention weights and can be easily employed
+in any task or architecture that uses self-attention.
+We should note that all our analysis in this paper is
+for a Transformer encoder, with no casual masking.
+Since in Transformer decoder, future tokens are
+masked, naturally there is more attention toward
+initial tokens in the input sequence, and both atten-
+tion rollout and attention ﬂow will be biased toward
+these tokens. Hence, to apply these methods on a
+Transformer decoder, we should ﬁrst normalize
+based on the receptive ﬁeld of attention.
+Following this work, we can build the attention
+graph with effective attention weights (Brunner
+et al., 2020) instead of raw attentions. Furthermore,
+we can come up with a new method that adjusts the
+attention weights using gradient-based attribution
+methods (Ancona et al., 2019).
+Acknowledgements
+We thank Mostafa Dehghani, Wilker Aziz, and the
+anonymous reviewers for their valuable feedback
+and comments on this work. The work presented
+here was funded by the Netherlands Organization
+for Scientiﬁc Research (NWO), through a Gravita-
+tion Grant 024.001.006 to the Language in Interac-
+tion Consortium.
+References
+Marco Ancona, Enea Ceolini, Cengiz ¨Oztireli, and
+Markus Gross. 2019.
+Gradient-Based Attribution
+Methods, pages 169–191. Springer International
+Publishing.
+Dzmitry Bahdanau, Kyunghyun Cho, and Yoshua Ben-
+gio. 2015.
+Neural machine translation by jointly
+learning to align and translate.
+In proceedings of
+the 2015 International Conference on Learning Rep-
+resentations.
+Gino Brunner, Yang Liu, Damian Pascual, Oliver
+Richter, Massimiliano Ciaramita, and Roger Watten-
+
+hofer. 2020. On identiﬁability in transformers. In
+International Conference on Learning Representa-
+tions.
+Hanjie Chen and Yangfeng Ji. 2019. Improving the in-
+terpretability of neural sentiment classiﬁers via data
+augmentation. arXiv preprint arXiv:1909.04225.
+Kevin Clark, Urvashi Khandelwal, Omer Levy, and
+Christopher D. Manning. 2019. What does BERT
+look at? an analysis of BERT’s attention. In Pro-
+ceedings of the 2019 ACL Workshop BlackboxNLP:
+Analyzing and Interpreting Neural Networks for
+NLP, pages 276–286, Florence, Italy. Association
+for Computational Linguistics.
+Andy Coenen, Emily Reif, Ann Yuan, Been Kim,
+Adam Pearce, Fernanda Vi´egas, and Martin Watten-
+berg. 2019. Visualizing and measuring the geometry
+of bert. arXiv preprint arXiv:1906.02715.
+Thomas H. Cormen, Charles E. Leiserson, Ronald L.
+Rivest, and Clifford Stein. 2009.
+Introduction to
+Algorithms, Third Edition, 3rd edition.
+The MIT
+Press.
+Mostafa Dehghani, Stephan Gouws, Oriol Vinyals,
+Jakob Uszkoreit, and Łukasz Kaiser. 2019. Univer-
+sal transformers. In proceedings of the 2019 Inter-
+national Conference on Learning Representations.
+Jacob Devlin, Ming-Wei Chang, Kenton Lee, and
+Kristina Toutanova. 2019.
+BERT: Pre-training of
+deep bidirectional transformers for language under-
+standing.
+In proceedings of the 2019 Conference
+of the North American Chapter of the Association
+for Computational Linguistics: Human Language
+Technologies. Association for Computational Lin-
+guistics.
+Sarthak Jain and Byron C. Wallace. 2019. Attention
+is not Explanation. In proceedings of the 2019 Con-
+ference of the North American Chapter of the Asso-
+ciation for Computational Linguistics: Human Lan-
+guage Technologies, pages 3543–3556. Association
+for Computational Linguistics.
+Jaesong Lee, Joong-Hwi Shin, and Jun-Seok Kim.
+2017.
+Interactive visualization and manipulation
+of attention-based neural machine translation.
+In
+proceedings of the 2017 Conference on Empirical
+Methods in Natural Language Processing: System
+Demonstrations, pages 121–126.
+Tal Linzen, Emmanuel Dupoux, and Yoav Goldberg.
+2016.
+Assessing the ability of LSTMs to learn
+syntax-sensitive dependencies. Transactions of the
+Association for Computational Linguistics, 4:521–
+535.
+Danish Pruthi, Mansi Gupta, Bhuwan Dhingra, Gra-
+ham Neubig, and Zachary C Lipton. 2019. Learning
+to deceive with attention-based explanations. arXiv
+preprint arXiv:1909.07913.
+Alec Radford, Jeffrey Wu, Rewon Child, David Luan,
+Dario Amodei, and Ilya Sutskever. 2019. Language
+models are unsupervised multitask learners. OpenAI
+Blog, 1(8).
+Tim Rockt¨aschel, Edward Grefenstette, Karl Moritz
+Hermann, Tomas Kocisky, and Phil Blunsom. 2016.
+Reasoning about entailment with neural attention.
+In International Conference on Learning Represen-
+tations (ICLR).
+Victor Sanh, Lysandre Debut, Julien Chaumond, and
+Thomas Wolf. 2019. Distilbert, a distilled version of
+bert: smaller, faster, cheaper and lighter.
+Soﬁa Serrano and Noah A. Smith. 2019. Is attention
+interpretable?
+In proceedings of the 57th Annual
+Meeting of the Association for Computational Lin-
+guistics. Association for Computational Linguistics.
+Richard Socher, Alex Perelygin, Jean Wu, Jason
+Chuang, Christopher D. Manning, Andrew Ng, and
+Christopher Potts. 2013.
+Recursive deep models
+for semantic compositionality over a sentiment tree-
+bank.
+In Proceedings of the 2013 Conference on
+Empirical Methods in Natural Language Processing,
+pages 1631–1642, Seattle, Washington, USA. Asso-
+ciation for Computational Linguistics.
+Shikhar Vashishth, Shyam Upadhyay, Gaurav Singh
+Tomar, and Manaal Faruqui. 2019.
+Attention in-
+terpretability across nlp tasks.
+arXiv preprint
+arXiv:1909.11218.
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob
+Uszkoreit, Llion Jones, Aidan N Gomez, Łukasz
+Kaiser, and Illia Polosukhin. 2017. Attention is all
+you need. In Advances in neural information pro-
+cessing systems, pages 5998–6008.
+Jesse Vig. 2019. Visualizing attention in transformer-
+based
+language
+models.
+arXiv
+preprint
+arXiv:1904.02679.
+Alex Wang, Amanpreet Singh, Julian Michael, Fe-
+lix Hill, Omer Levy, and Samuel Bowman. 2018.
+GLUE: A multi-task benchmark and analysis plat-
+form for natural language understanding.
+In Pro-
+ceedings of the 2018 EMNLP Workshop Black-
+boxNLP: Analyzing and Interpreting Neural Net-
+works for NLP, pages 353–355, Brussels, Belgium.
+Association for Computational Linguistics.
+Yequan Wang, Minlie Huang, Li Zhao, et al. 2016.
+Attention-based lstm for aspect-level sentiment clas-
+siﬁcation. In proceedings of the 2016 conference on
+empirical methods in natural language processing,
+pages 606–615.
+Sarah Wiegreffe and Yuval Pinter. 2019. Attention is
+not not explanation. In proceedings of the 2019 Con-
+ference on Empirical Methods in Natural Language
+Processing and the 9th International Joint Confer-
+ence on Natural Language Processing (EMNLP-
+IJCNLP). Association for Computational Linguis-
+tics.
+
+Thomas Wolf, Lysandre Debut, Victor Sanh, Julien
+Chaumond, Clement Delangue, Anthony Moi, Pier-
+ric Cistac, Tim Rault, R’emi Louf, Morgan Funtow-
+icz, and Jamie Brew. 2019.
+Huggingface’s trans-
+formers: State-of-the-art natural language process-
+ing. ArXiv, abs/1910.03771.
+Kelvin Xu, Jimmy Ba, Ryan Kiros, Kyunghyun Cho,
+Aaron Courville, Ruslan Salakhudinov, Rich Zemel,
+and Yoshua Bengio. 2015.
+Show, attend and tell:
+Neural image caption generation with visual atten-
+tion. In proceedings of International Conference on
+Machine Learning, pages 2048–2057.
+
+A
+Appendices
+A.1
+Single Head Analysis
+For analysing the attention weights, with multi-
+head setup, we could either analyze attention heads
+separately, or we could average all heads and have a
+single attention graph. However, we should be care-
+ful that treating attention heads separately could
+potentially mean that we are assuming there is no
+mixing of information between heads, which is not
+true as we combine information of heads in the
+position-wise feed-forward network on top of self-
+attention in a transformer block. It is possible to
+analyse the role of each head in isolation of all other
+heads using attention rollout and attention ﬂow. To
+not make the assumption that there is no mixing
+of information between heads, for computing the
+“input attention”, we will treat all the layers below
+the layer of interest as single head layers, i.e., we
+sum the attentions of all heads in the layers below.
+For example, we can compute attention rollout for
+head k at layer i as ˜A(i, k) = A(i, k) ¯A(i), where,
+¯A(i) is attention rollout computed for layer i with
+the single head assumption.
+

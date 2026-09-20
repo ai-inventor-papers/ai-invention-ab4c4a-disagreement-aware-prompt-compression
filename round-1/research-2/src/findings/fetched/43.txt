@@ -1,0 +1,1639 @@
+URL: https://arxiv.org/pdf/2504.16574
+Type: PDF
+Length: 57450 chars (truncated)
+
+--- Content ---
+
+PIS: Linking Importance Sampling and Attention Mechanisms for Efficient
+Prompt Compression
+Lizhe Chen1, Binjia Zhou2, Yuyao Ge3, Jiayi Chen4, Shiguang Ni1
+1Shenzhen International Graduate School, Tsinghua University
+2Zhejiang University
+3CAS Key Laboratory of AI Security, Institute of Computing Technology, Chinese Academy of Sciences
+4Fudan University
+chenlizheme@outlook.com
+Abstract
+Large language models (LLMs) have achieved
+remarkable progress, demonstrating unprece-
+dented capabilities across various natural lan-
+guage processing tasks. However, the high
+costs associated with such exceptional per-
+formance limit the widespread adoption of
+LLMs, highlighting the need for prompt com-
+pression. Existing prompt compression meth-
+ods primarily rely on heuristic truncation or
+abstractive summarization techniques, which
+fundamentally overlook the intrinsic mecha-
+nisms of LLMs and lack a systematic evalua-
+tion of token importance for generation. In this
+work, we introduce Prompt Importance Sam-
+pling (PIS), a novel compression framework
+that dynamically compresses prompts by sam-
+pling important tokens based on the analysis of
+attention scores of hidden states. PIS employs
+a dual-level compression mechanism: 1) at the
+token level, we quantify saliency using LLM-
+native attention scores and implement adaptive
+compression through a lightweight 9-layer re-
+inforcement learning network; 2) at the seman-
+tic level, we propose a Russian roulette sam-
+pling strategy for sentence-level importance
+sampling. Comprehensive evaluations across
+multiple domain benchmarks demonstrate that
+our method achieves state-of-the-art compres-
+sion performance. In particular, our framework
+improves reasoning efficiency to some extent
+through optimized context structuring. This
+work advances prompt engineering by offering
+both theoretical grounding and practical effi-
+ciency in context management for LLMs.
+1
+Introduction
+Large language models (LLMs) have made re-
+markable progress, showing unprecedented capa-
+bilities across various natural language processing
+tasks (Vaswani, 2017; Devlin et al., 2018; Brown
+et al., 2020; Ouyang et al., 2022). However, the
+iterative generation process introduces critical com-
+putational bottlenecks that disproportionately af-
+Ours:
+Traditional:
+Compression
+Good Compression?
+Input
+Text
+Train:
+Test:
+Compressed Text
+Trained Model
+Trained Model
++
+=
+Compression
+Good Compression!
+Input
+Text
+Train:
+Test:
+TIS
+*TIS: Text-Level Important Sampling      *SIS: Sentence-Level Important Sampling
+SIS
+RL Model
+Figure 1: Compared to methods that train a specific
+model based on the LLM input and its compressed ver-
+sion, our approach achieves ultra-low-loss and high-
+performance compression through importance sampling
+at two levels, which only need a compact 9-layer RL
+policy network.
+fect system performance - particularly in reason-
+ing and planning tasks. As token sequences grow
+through successive iterations, memory consump-
+tion exhibits quadratic scaling relative to sequence
+length, while inference latency increases linearly.
+This fundamental conflict between the demand for
+deeper reasoning capabilities and practical com-
+putational constraints underscores the urgent need
+for efficient prompt compression methodologies.
+Such techniques require an optimal balance be-
+tween semantic preservation and token reduction,
+maintaining critical informational fidelity while sig-
+nificantly decreasing computational overhead.
+Current approaches primarily adapt conventional
+text summarization paradigms, which can be cat-
+egorized into two groups:
+1) generative com-
+pression methods (e.g., LLMLingua (Jiang et al.,
+2023a)), which employ auxiliary language models
+for prompt rewriting, and 2) heuristic pruning tech-
+niques (e.g., Selective Context (Li et al., 2023)),
+which eliminate tokens based on surface-level met-
+rics. Although these strategies offer some solutions,
+they fundamentally overlook two critical aspects
+of LLM operation: (a) the excessive computational
+arXiv:2504.16574v1  [cs.CL]  23 Apr 2025
+
+cost introduced by the reliance on external gener-
+ative models, which significantly increases train-
+ing and inference overhead, and (b) the failure of
+heuristic pruning to account for the internal mech-
+anisms of the LLM, resulting in token sequences
+that may not align with the model’s optimal rep-
+resentation of relevant information. These issues
+result in current methods being either not efficient
+or not effective.
+This work addresses two fundamental research
+questions through a unified theoretical and method-
+ological framework:
+• How to achieve higher compression quality with-
+out relying on generative models?
+• How to formalize prompt compression in align-
+ment with LLMs’ computational mechanisms?
+To resolve these challenges, we propose Prompt
+Importance Sampling (PIS), a novel compression
+methodology that synergizes LLM properties with
+importance sampling. First, we establish a measure-
+theoretic foundation for prompt compression, for-
+malizing the relationship between token impor-
+tance and the distribution of LLM attention scores.
+Building on this theoretical framework, we develop
+a dual-level compression architecture: 1) at the to-
+ken level, we quantify saliency through attention
+score analysis and implement adaptive pruning via
+a lightweight 9-layer RL network; 2) at the sen-
+tence level, we devise a Russian roulette mecha-
+nism for probabilistic redundancy reduction across
+semantic units. Figure 1 shows the advantages of
+our method over previous methods.
+Comprehensive evaluations across multi-domain
+benchmarks demonstrate that PIS significantly out-
+performs existing baselines. Our method achieves a
+15% performance improvement at equivalent com-
+pression ratios by strategically preserving attention-
+critical information.
+Our framework, relying
+solely on native attention computations and a com-
+pact RL module, reduces inference overhead by
+38% compared to strong baseline compression ap-
+proaches. Notably, the optimized context structur-
+ing serendipitously enhances reasoning efficiency,
+yielding a 5% accuracy improvement on down-
+stream tasks when using compressed prompts ver-
+sus original inputs. The source code is available as
+open-source on Github.
+Our principal contributions are threefold:
+• We present a measure-theoretic formulation of
+prompt compression that interprets LLM atten-
+tion score allocation as a measurable function,
+providing theoretical foundations for prompt
+context optimization.
+• We propose PIS, a novel prompt compression
+approach that performs importance sampling at
+both the token and sentence levels, achieving a
+balance between efficiency and effectiveness.
+• A
+comprehensive
+experimental
+evaluation
+demonstrates that our approach, by incorporat-
+ing the attention mechanism of LLMs, achieves
+higher compression quality and improves com-
+pression efficiency.
+2
+Related Works
+2.1
+Prompt Engineering
+Prompt engineering has been widely applied to
+enhance the performance of large language mod-
+els (LLMs) for various tasks. Significant progress
+has been made in improving reasoning abilities
+through techniques such as (Wei et al., 2022),
+which introduces step-by-step reasoning prompts.
+Subsequent refinements to the chain-of-thought
+(CoT) paradigm have been proposed in (Yao
+et al., 2024; Shao et al., 2024; Suzgun and Kalai,
+2024), demonstrating continuous improvements in
+problem-solving capabilities.
+The integration of Retrieval-Augmented Gener-
+ation (RAG) frameworks for information retrieval
+has been explored in (Ge et al., 2024b; Zhang et al.,
+2024a; Jiang et al., 2024a; Ng et al., 2024), while
+memory enhancement through structured prompt-
+ing is investigated in (Park et al., 2023; Liu et al.,
+2023; Li et al., 2024; Zeng et al., 2024; Hou et al.,
+2024). Applications in knowledge editing are ex-
+amined in (Muric et al., 2024; Chen et al., 2024;
+Zhang et al., 2024b; Ge et al., 2024a), with security-
+focused adaptations discussed in (Kumar et al.,
+2023; Zheng et al., 2024). These advancements
+highlight the critical role of compression in opti-
+mizing prompt engineering efficiency.
+2.2
+Text Compression Techniques
+Current prompt compression methods are primarily
+derived from two paradigms in the text summariza-
+tion domain.
+Generative compression methods are closely
+related to traditional text summarization tasks, as
+they involve content distillation and regeneration.
+This enables the cross-application of techniques be-
+tween the two domains. (Zhang et al., 2020; Cheva-
+lier et al., 2023) and other existing approaches typ-
+ically employ auxiliary models for content rewrit-
+
+ing, where (See et al., 2017) pioneered sequence-to-
+sequence frameworks with copy mechanisms, and
+(Guo et al., 2018) advanced the field by employing
+GAN-style training with generator-discriminator
+pairs. However, these methods incur substantial
+computational overhead from the use of external
+models, significantly limiting their practical utility
+for LLM deployment.
+Heuristic pruning methods focus on token elim-
+ination using surface-level metrics. (Mihalcea and
+Tarau, 2004) and other early work rank sentences
+via graph centrality, a strategy later adapted for
+prompting through similarity thresholds. (Zhou
+et al., 2018; Jiang et al., 2023a; Pan et al., 2024b;
+Yang and Xue, 2022) and other advancements in-
+corporate sentence interdependence modeling or
+apply reinforcement learning for sentence classi-
+fication. However, these methods fundamentally
+ignore the attention mechanism present in the LLM
+inference process.
+Our method fundamentally differs from exist-
+ing approaches in two key aspects: (1) Theoreti-
+cal grounding: We formalize compression through
+measure theory rather than heuristic rules; (2)
+Mechanism design: We implement dual-level dy-
+namic compression (token and sentence) using
+LLM-native attention patterns and reinforcement
+learning-based adaptation, avoiding the introduc-
+tion of external models. This represents a paradigm
+shift from rule-based elimination to theoretically
+grounded, model-aware compression.
+3
+Sampling Theory in LLM
+In this section, we examine the process of inputting
+a prompt into LLMs and generating a response
+through the lens of measure theory, framing it as a
+sampling problem. We subsequently demonstrate
+that the significance of each token within the text,
+in terms of overall information content, is closely
+correlated with its attention score.
+3.1
+Prior Knowledge
+We first present the following assumption: First,
+every question has one or more optimal answers,
+each of which represents the best possible response
+to the question, with no better alternatives. Sec-
+ond, the answer’s quality can be evaluated by its
+maximum semantic matching score, which repre-
+sents the highest degree of similarity to all possible
+optimal answers.
+Let the text space τ denote the set of all texts
+composed of characters. For a given text q, there
+exists a (potentially infinite) set A of texts that can
+serve as answers to q. Within this set A, there exists
+a unique optimal answer a∗∈A, which satisfies
+the following:
+a∗= argmaxa∈AS(q, a),
+where S : τ × τ →[0, 1] is a semantic matching
+function that quantifies the semantic compatibility
+between question q and answer a.
+3.2
+Reframing Prompts as Text Sampling
+The generation process of an LLM can be modeled
+using a triple probability space (Ω, F, P):
+• Ω= ST
+t=1 V t is the space of all possible token
+sequences, where V represents the vocabulary.
+• F is the σ-algebra generated by all possible gen-
+eration paths.
+• P(ω) = Q|ω|
+t=1 pθ(xt | x<t) denotes the proba-
+bility of autoregressive generation.
+where ω = (x1, ..., xT ) is a token sequence with
+|ω| = T, xt ∈V is the token generated at timestep
+t, x<t ≜(x1, ..., xt−1) represents the preceding
+context. From this perspective, the LLM’s process-
+ing of a prompt is essentially a sampling procedure
+over the text space, generating an answer based
+on this sampling. When the sampling distribution
+deviates from the distribution for the optimal an-
+swer, the resulting generation is likely to exhibit
+increased bias and variance, thereby reducing over-
+all quality. As demonstrated in our pre-experiment
+(see Figure 2), the introduction of noise through
+randomly added tokens negatively impacts the cor-
+rectness of the LLM’s responses.
+For lengthy prompts, if the distribution of certain
+critical tokens is sampled suboptimally, noise or
+irrelevant content may be amplified while key se-
+mantic features are neglected. This non-uniform or
+erroneous sampling typically increases both vari-
+ance and systematic bias, causing the model to
+produce less stable answers.
+Importance Sampling can mitigate sampling
+errors. By introducing an appropriate weighting
+function that emphasizes tokens crucial to the opti-
+mal answer and de-emphasizes noise or irrelevant
+tokens, the model can more accurately approximate
+the target answer with reduced sampling costs. For-
+mally, we define an importance weight as:
+w(ω) = p∗(ω)
+pθ(ω),
+
+0
+2
+4
+6
+8
+10
+Number of Extra Tokens
+0
+20
+40
+60
+80
+100
+Success Rate (%)
+Effect of Random Word Addition on LLM Response Accuracy
+Model
+gpt-3.5-turbo
+gpt-4o
+gpt-4o-mini
+Figure 2: Pre-experiment setup: Evaluating the impact
+of randomly adding words to a prompt. The original
+question “Which is larger, 9.9 or 9.11?” is modified
+by inserting varying numbers of random words at ran-
+dom positions within the prompt. The results show that
+as more random words are added, the correctness of
+the LLM’s responses decreases, with nearly complete
+failure in answering correctly after adding 10 random
+words.
+where p∗(ω) represents the “optimal sampling dis-
+tribution”. By reweighting or filtering tokens, one
+can reduce variance, leading to more consistent
+generations that are closer to the optimal answer.
+3.3
+Linking Importance and Attention
+The attention mechanism in Transformer(Vaswani,
+2017) assigns different attention weights to tokens,
+which can be viewed as proxies for token impor-
+tance. Let αt,i denote the attention score of token i
+when generating the t-th token. This score is anal-
+ogous to the importance weight w∗(xi) in an ideal
+importance sampling scenario.
+To formally establish the relationship between
+attention scores and token importance, we analyze
+the mathematical properties of the attention mecha-
+nism. The attention score αt,i is computed as:
+αt,i =
+exp(⟨Qt, Ki⟩/
+√
+d)
+Pn
+j=1 exp(⟨Qt, Kj⟩/
+√
+d)
+,
+where Qt and Ki are the query and key vectors, re-
+spectively, and d is the dimensionality of the model.
+This softmax operation ensures that αt,i represents
+a normalized probability distribution over the input
+tokens.
+Assume that there exists a target distribution p∗
+that can generate the optimal answer a∗. Our goal
+is to adjust the sampling distribution pθ to approxi-
+mate p∗.
+According to the importance sampling theory,
+the optimal weight function is defined as:
+w∗(xi) = p∗(xi)
+pθ(xi).
+The attention score αt,i can be interpreted as
+the conditional probability of token i given the
+previous tokens up to step t:
+αt,i = pθ(xi | x<t).
+If the model is sufficiently trained, pθ(xi | x<t)
+should approximate p∗(xi | x<t). Thus, the atten-
+tion score αt,i is related to the importance weight
+w∗(xi) as follows:
+αt,i ∝w∗(xi) · exp
+⟨Qt, Ki⟩
+√
+d
+
+.
+Here, exp
+
+⟨Qt,Ki⟩
+√
+d
+
+reflects the contextual rele-
+vance of token i with respect to the current genera-
+tion step t.
+The attention score αt,i can be interpreted as a
+measure of the relevance of token i to the current
+generation step t. Intuitively, tokens with higher
+attention scores contribute more significantly to
+the output distribution at step t. This aligns with
+the concept of importance sampling, where tokens
+with higher importance weights w∗(xi) should be
+sampled more frequently to reduce variance. A
+well-trained language model should be able to ef-
+fectively recognize which tokens are important and
+which are not, achieving a form of importance sam-
+pling over the token sequence during input process-
+ing.
+4
+Prompt Importance Sampling
+In this section, we describe our method. As shown
+in Figure 3, we begin by splitting a prompt into
+sentences. We then apply token-level importance
+sampling to remove redundant tokens.
+Finally,
+sentence-level sampling is performed using the
+Russian roulette technique to eliminate redundant
+sentences, resulting in a more concise prompt.
+4.1
+Token-Level Importance Sampling
+At the token level, since token sequences are dis-
+crete, importance sampling can be implemented
+by directly removing specific tokens from the se-
+quence.
+This reduces the sampling space and
+guides the LLM toward more relevant tokens.
+We first split the text into sentences based on
+punctuation marks, as sentences represent distinct
+semantic units. For each sentence, we extract token-
+level attention scores using a small encoder-only
+language model. Although this encoder and tar-
+get LLMs operate in different embedding spaces,
+
+As a ...  study python?
+maybe i can have a try?
+what’s your idea?
+how do you think so?
+Give me your reasons.
+Give me your reasons .
+how 
+ you think 
+?
+do
+so 
+what’s your idea ?
+maybe i 
+ 
+try ?
+can have a
+Sentence Segmentation
+Token-Level Important Sampling
+Sentence-Level Important Sampling
+Q
+ As a high school 
+student in China, 
+should I study 
+python? maybe i can 
+have a try? what’s 
+your idea? how do 
+you think so?  Give 
+me your reasons.
+Remove
+student China, 
+should python? 
+maybe i try? 
+reasons.
+Compressed Prompt
+?
+?
+?
+?
+?
+?
+Keep
+Russia 
+Roulette
+As a high shcool
+in 
+I study 
+ student 
+China, should  
+python ?
+Figure 3: Our method first applies token-level importance sampling, followed by sentence-level sampling using the
+Russian roulette technique, minimizing redundancy to generate the most concise prompt.
+their token representations share a key property:
+in well-trained models, the relative relationships
+between tokens are consistent. Thus, the encoder’s
+attention scores provide an efficient approximation
+of token importance rankings without the computa-
+tional cost of extracting scores directly from LLMs.
+Rather than removing tokens based on low atten-
+tion scores, we prioritize tokens with high variance
+in attention scores, as they are more likely to be
+over- or under-sampled by the LLM. This variance-
+based criterion improves reasoning quality. For
+each sentence, we specify a target compression
+ratio r and delete tokens with higher variance first.
+Additionally, relying solely on attention scores
+may lead to the removal of important tokens with
+high attention scores. To address this, we introduce
+TF-IDF scores as a corrective measure for attention
+scores of each token. The weighted importance
+score for a token xi is computed as:
+w(xi) = αt,i ×
+ 
+TF(xi)
+P
+j TF(xj)
+!γ
+× IDF(xi),
+where αt,i is the attention score, TF(xi) is the
+term frequency of xi, IDF(xi) is the inverse doc-
+ument frequency, and γ is a hyperparameter con-
+trolling the balance between term frequency and
+attention score. This approach ensures that tokens
+with high attention and term frequency are less
+likely to be discarded.
+4.2
+Optimizing with Reinforcement Learning
+In token level importance sampling, different sen-
+tences may require different compression ratios.
+For example, a sentence like "As a high school stu-
+dent, should I study Python?" may need significant
+compression, while "I’m Jack" may require little
+to no compression. To address this, we use a Dou-
+ble Deep Q-Network (DDQN) to learn the optimal
+compression ratio for each sentence.
+The RL agent receives the encoder-only lan-
+guage embeddings of the current, previous, and
+next sentences and outputs Q-values for available
+compression ratios. The reward mechanism evalu-
+ates three critical aspects of text compression:
+Rcomp = λ −ρ,
+ρ = lcompressed
+loriginal
+Rcontent = rROUGE-1 −τ
+Rfluency = bBLEU −τ
+The composite reward combines these compo-
+nents with custom coefficients:
+R = αRcomp + βRcontent + γRfluency
+ROUGE-1 measures lexical overlap to preserve
+core content, while BLEU assesses n-gram pat-
+terns to maintain linguistic structure. The com-
+pression term balances output brevity through a
+configurable target ratio λ, with τ acting as quality
+guardrails. This formulation enables joint optimiza-
+tion of conciseness and semantic fidelity without
+manual threshold tuning.
+The DDQN architecture processes contextual
+encoder-only language model embeddings through
+dense layers to estimate Q-values for compression
+
+LLMs require 
+optimization. Techniques 
+like prompt tuning may 
+help. How can we 
+measure their impact?
+Pre
+Relu1
+Next
+Relu1
+X
+Relu1
+X
+Fc2
+X
+Relu2
+Techniques like prompt tuning 
+may help.
+How can we measure their 
+impact?
+Large-scale models require 
+optimization.
+X
+Bert
+Next
+Bert
+Pre
+Bert
+Pre
+fc1
+Next
+fc1
+X
+fc1
+fc3
+relu3
+Act
+fc4
+Figure 4: DDQN-based adaptive compression ratio selection. The model takes a encoder-only model embeddings as
+input states and outputs Q-values for candidate compression ratios. DDQN balances effectiveness and efficiency.
+actions. Prioritized experience replay and delayed
+target updates ensure stable policy learning, allow-
+ing the agent to discover context-aware compres-
+sion strategies that maximize cumulative rewards.
+4.3
+Sentence-Level Importance Sampling with
+Russian Roulette
+Although token-level importance sampling ensures
+that all sentences are in their simplest form, redun-
+dant sentences with similar meanings can still lead
+to over-sampling. To address this, we introduce a
+sentence deletion mechanism based on the Russian
+Roulette. When a new sentence is encountered,
+we compute its similarity with previously stored
+sentences. If the similarity exceeds a predefined
+threshold, we apply a deletion probability that in-
+creases with each subsequent similar sentence.
+Specifically, we compute the similarity between
+the current sentence scurrent and all previously
+stored sentences sstored using cosine similarity. If
+the similarity sim(scurrent, sstored) ≥0.9, we apply
+the Russian Roulette deletion probability, which
+increases incrementally. The deletion probability
+is defined as:
+Pdelete = k
+6,
+k = 1, 2, 3, . . . , 6
+where k represents the number of consecutive
+similar sentences encountered. The probability
+Pdelete starts at 1
+6 and increases up to 1 as more
+similar sentences are detected. If the current sen-
+tence is randomly selected for deletion according
+to Pdelete, it is removed from the prompt, and the
+probability counter k is reset for the next sentence.
+If the sentence is not deleted, the process continues
+to evaluate the next sentence.
+5
+Experiments
+5.1
+Experimental Setup
+We evaluate the performance of the PIS method on
+GPT-4O-MINI-2024-07-18. For compression, we
+compare with three baseline methods: LLMLin-
+gua(Jiang et al., 2023a), LLMLingua-2(Pan et al.,
+2024a) and SelectiveContext(Li et al., 2023). Our
+9-layer DDQN is trained on the MeetingBank
+dataset’s training split. The evaluation method-
+ology follows the approach used in LLMLingua-2,
+where we assess the impact of using compressed
+prompts on LLM performance for both summariza-
+tion and QA tasks. The experimental results are
+averaged over five rounds of evaluation to ensure
+robustness and mitigate any potential variance in
+performance. In addition to GPT-4O-MINI-2024-
+07-18, we also tested our method on other models.
+The detailed results and analysis are provided in
+the appendix D.
+5.2
+Datasets
+We evaluate on four datasets that cover QA and
+summarization tasks.
+These datasets vary in
+domain (open-domain, scientific, meeting tran-
+scripts) and complexity (single-sentence vs. multi-
+paragraph).
+For each dataset, we compress prompts using
+PIS and the baselines (BERT-BASE-UNCASED is
+employed for semantic similarity computation and
+embedding extraction in our method), and then
+feed the results into GPT-4O-MINI-2024-07-18
+for generation. Both compression effectiveness
+ratio and semantic quality (e.g., ROUGE-L, BLEU,
+or ExactMatch) are measured.
+5.3
+Evaluation
+5.3.1
+In-Domain Tasks
+Table 1 shows the results of In-Domain Tasks. Our
+method outperforms the baselines across all met-
+rics, thanks to its importance sampling approach,
+which prioritizes tokens based on relevance to the
+LLM’s output. Using BERT-BASE-UNCASED and
+a small RL network for compression, it is both
+efficient and lightweight. Interestingly, methods
+like LLMLingua-2, which also employ token re-
+
+Methods
+QA
+Summary
+Compression
+EM
+BLEU
+ROUGE-1
+ROUGE-2
+ROUGE-L
+BERTScore
+1/τ
+Selective-Context
+70.08
+14.52
+25.45
+4.91
+15.65
+50.85
+3.01×
+LLMLingua
+68.85
+12.77
+24.59
+5.23
+15.15
+50.54
+3.02×
+LLMLingua-2
+87.19
+20.77
+28.38
+8.61
+18.25
+52.36
+2.96×
+Ours
+89.05
+23.98
+29.63
+9.93
+19.42
+54.43
+3.01×
+w/o Compress
+88.14
+22.34
+27.61
+9.97
+18.41
+52.94
+-
+Table 1: In-Domain QA&Summary Tasks evaluation on MeetingBank.
+Methods
+GSM8K
+BBH
+1-shot
+half-shot
+1-shot
+half-shot
+EM
+1/τ
+EM
+1/τ
+EM
+1/τ
+EM
+1/τ
+Selective-Context
+76.04
+3.02×
+70.52
+5.03×
+64.16
+2.97×
+52.75
+4.98×
+LLMLingua
+76.53
+3.01×
+72.48
+5.04×
+66.52
+2.99×
+60.59
+5.01×
+LLMLingua-2
+78.75
+2.98×
+75.34
+4.95×
+67.98
+3.03×
+60.03
+5.02×
+Ours
+80.19
+3.04×
+79.12
+5.05×
+68.94
+2.96×
+63.45
+4.97×
+Full-Shot
+80.18
+-
+80.18
+-
+68.59
+-
+68.59
+-
+Table 2: Out-of-Domain QA Tasks evaluation on GSM8K and BBH.
+Methods
+Summary
+Compression
+BLEU
+ROUGE-1
+ROUGE-2
+ROUGE-L
+BERTScore
+1/τ
+Selective-Context
+30.38
+45.45
+26.81
+32.03
+64.42
+2.99×
+LLMLingua
+28.54
+46.28
+30.55
+28.65
+65.88
+3.01×
+LLMLingua-2
+42.13
+59.24
+30.95
+38.64
+69.80
+3.02×
+Ours
+44.44
+63.18
+31.17
+41.33
+74.00
+2.95×
+Table 3: Out-of-Domain Summary Tasks evaluation on LongBench-GovReport.
+Tokens
+1/τ
+SC
+Lingua
+Lingua-2
+Ours
+300
+2×
+>15
+4.04
+2.67
+1.16
+3×
+>15
+3.82
+2.51
+1.29
+5×
+>15
+3.43
+2.25
+1.03
+600
+2×
+>15
+4.12
+3.34
+2.05
+3×
+>15
+4.32
+3.30
+2.03
+5×
+>15
+4.01
+2.58
+2.17
+900
+2×
+>15
+4.87
+3.11
+2.42
+3×
+>15
+4.78
+3.43
+2.25
+5×
+>15
+4.58
+2.92
+2.38
+1200
+2×
+>15
+5.92
+3.38
+2.74
+3×
+>15
+6.51
+3.59
+2.63
+5×
+>15
+6.56
+3.14
+2.55
+1500
+2×
+>15
+7.38
+3.97
+3.08
+3×
+>15
+7.04
+4.05
+2.79
+5×
+>15
+7.12
+3.85
+2.65
+Table 4: Latency Comparisonon MeetingBank (s).
+duction strategies for compression, sometimes pro-
+duce prompts that outperform the original prompt.
+This observation supports our theoretical frame-
+work in measure theory for LLM text generation.
+By treating the prompt as a sampling problem, we
+compress less relevant tokens without sacrificing
+response quality.
+5.3.2
+Out-of-Domain Tasks
+For out-of-domain QA tasks (Table 2), our method
+demonstrates stronger generalization than baselines
+across both datasets, nearly matching full-shot per-
+formance under 1-shot settings with compressed
+contexts. The advantage amplifies in half-shot sce-
+narios, where our approach maintains higher accu-
+racy despite aggressive compression, particularly
+on GSM8K. Similar robustness is observed for
+BBH under limited context availability.
+Our method achieves superior quality across met-
+rics, showing balanced improvements in content
+selection and semantic preservation. While main-
+taining comparable compression rates, it better re-
+tains critical information for coherent summaries
+
+Variants
+EM
+Summary
+Compression
+QA
+BLEU
+Rough1
+Rough2
+RoughL
+BERTScore
+1/τ
+w/o TIS
+65.21
+10.05
+23.34
+4.12
+13.89
+47.69
+2.89
+w/o SIS
+83.95
+20.17
+25.01
+7.95
+18.33
+52.22
+2.96
+Full
+89.05
+23.98
+29.63
+9.93
+19.42
+54.43
+3.01
+Table 5: Ablation study on MeetingBank.
+Variants
+Summary
+Compression
+BLEU
+Rough1
+Rough2
+RoughL
+BERTScore
+1/τ
+w/o TIS
+26.32
+30.15
+13.88
+21.01
+44.24
+2.97
+w/o SIS
+39.07
+47.33
+31.00
+36.85
+66.15
+2.99
+Full
+44.44
+63.18
+31.17
+41.33
+74.00
+2.95
+Table 6: Ablation study on LongBench-GovReport.
+compared to existing approaches.
+Particularly noteworthy is the method’s stability
+across different compression intensities in out-of-
+domain settings. This robustness stems from the
+dual-level sampling architecture, where sentence-
+level pruning maintains global coherence while
+token-level compression preserves local precision
+– a combination particularly valuable when han-
+dling novel document structures or unfamiliar task
+formats.
+5.3.3
+Latency Comparison
+The latency comparison in Table 4 shows that our
+method outperforms LLMLingua-2 and LLMLin-
+gua. The acceleration effect is more pronounced
+with longer inputs, as seen at 1,500 tokens with
+5×compression, where our method takes only 2.65s
+compared to 3.85s for LLMLingua-2.
+This efficiency is driven by three key factors: a
+lightweight architecture that simplifies the pro-
+cessing pipeline, adaptive sampling that dynami-
+cally prioritizes the most critical tokens, and linear-
+time computation which is much more efficient
+than the quadratic complexity of baseline methods.
+Our current implementation processes sentences se-
+quentially, future parallelization could offer further
+speed improvements.
+Our method maintains stable performance in
+most real-world scenarios, although processing
+time may increase when excessive sentence frag-
+mentation occurs in artificial edge cases. However,
+such extreme cases are rare in natural text, and our
+experiments demonstrate consistent advantages on
+general domain corpora, with latency remaining
+30–40% lower than competitors across all lengths.
+5.3.4
+Ablation Study
+The ablation results in Tables 5 and 6 reveal key
+insights. Removing Token-Level Importance Sam-
+pling (TIS) causes a significant performance drop.
+In MeetingBank QA tasks, the Exact Match score
+drops sharply, highlighting that token-level granu-
+larity is essential for preserving numerical values
+and named entities.
+While the ablation of Sentence-Level Impor-
+tance Sampling (SIS) shows less severe degrada-
+tion, its absence still results in poorer performance
+compared to LLMLingua-2 across all metrics. Both
+ablated variants underperform LLMLingua-2, rein-
+forcing our core premise: the synergy of TIS and
+SIS provides a superior mechanism that neither can
+achieve alone.
+6
+Conclusion
+We propose PIS, a dual-level compression frame-
+work that dynamically optimizes prompts through
+attention-aware token pruning and semantic unit
+sampling. By grounding compression decisions
+in LLMs’ native attention patterns and employing
+lightweight adaptive policies, our method achieves
+efficient context reduction while preserving critical
+reasoning pathways. The framework demonstrates
+that strategic prompt compression can enhance
+computational efficiency without sacrificing—and
+occasionally improving—task performance. This
+work opens new directions for resource-efficient
+LLM deployment through intrinsic context analysis
+rather than external modeling.
+
+7
+Limitations
+Our method has three key limitations suggesting
+future improvements:
+Segmentation
+Generalizability
+Punctuation-
+based sentence splitting works well on general
+texts but misaligns with technical document
+structures.
+Syntax-aware segmentation models
+could better preserve domain-specific logical units.
+Training Efficiency
+RL training incurs high com-
+putational costs from iterative LLM reward evalua-
+tion. Distilled reward models or surrogate metrics
+might maintain quality verification while improv-
+ing efficiency.
+Ratio Flexibility
+Ratio-specific models ensure
+stability but limit adaptation. Though training a sin-
+gle model for adaptive compression remains chal-
+lenging (17% increased policy gradient variance
+in trials), hierarchical architectures or curriculum
+learning could decouple ratio selection from editing
+operations.
+Ethics Statement
+In conducting our research, we place paramount
+importance on ethical standards to ensure integrity
+and contribute positively to the scientific commu-
+nity. We exclusively utilize open-source datasets,
+ensuring that our work is built upon accessible
+and transparent resources. Our methods employ
+models that are either open-source or have gained
+wide recognition for their reliability and ethical use
+within the academic community. Furthermore, we
+have meticulously designed our methodology to
+prevent the generation of harmful or misleading
+information, thereby safeguarding the integrity of
+our findings.
+References
+Ahmet Yusuf Alan, Enis Karaarslan, and Ömer Ay-
+din. 2024. A rag-based question answering system
+proposal for understanding islam: Mufassirqas llm.
+arXiv preprint arXiv:2401.15378.
+Tom Brown, Benjamin Mann, Nick Ryder, Melanie
+Subbiah, Jared D Kaplan, Prafulla Dhariwal, Arvind
+Neelakantan, Pranav Shyam, Girish Sastry, Amanda
+Askell, et al. 2020. Language models are few-shot
+learners. Advances in neural information processing
+systems, 33:1877–1901.
+Qizhou Chen, Taolin Zhang, Xiaofeng He, Dongyang Li,
+Chengyu Wang, Longtao Huang, and Hui Xue. 2024.
+Lifelong knowledge editing for llms with retrieval-
+augmented continuous prompt learning.
+arXiv
+preprint arXiv:2405.03279.
+Alexis Chevalier, Alexander Wettig, Anirudh Ajith,
+and Danqi Chen. 2023.
+Adapting language
+models to compress contexts.
+arXiv preprint
+arXiv:2305.14788.
+Jacob Devlin, Ming-Wei Chang, Kenton Lee, and
+Kristina Toutanova. 2018. Bert: Pre-training of deep
+bidirectional transformers for language understand-
+ing. arXiv preprint arXiv:1810.04805.
+Elozino Egonmwan and Yllias Chali. 2019.
+Trans-
+former and seq2seq model for paraphrase generation.
+In Proceedings of the 3rd Workshop on Neural Gen-
+eration and Translation, pages 249–255.
+Masoomali Fatehkia, Ji Kim Lucas, and Sanjay Chawla.
+2024. T-rag: lessons from the llm trenches. arXiv
+preprint arXiv:2402.07483.
+Weizhi Fei, Xueyan Niu, Pingyi Zhou, Lu Hou, Bo Bai,
+Lei Deng, and Wei Han. 2023. Extending context
+window of large language models via semantic com-
+pression. arXiv preprint arXiv:2312.09571.
+Huaizhi Ge, Frank Rudzicz, and Zining Zhu. 2024a.
+How well can knowledge edit methods edit perplex-
+ing knowledge? arXiv preprint arXiv:2406.17253.
+Yuyao Ge, Shenghua Liu, Baolong Bi, Yiwei Wang,
+Lingrui Mei, Wenjie Feng, Lizhe Chen, and Xueqi
+Cheng. 2024b.
+Can graph descriptive order af-
+fect solving graph problems with llms? Authorea
+Preprints.
+Yuyao Ge, Zhongguo Yang, Lizhe Chen, Yiming Wang,
+and Chengyang Li. 2023. Attack based on data: a
+novel perspective to attack sensitive points directly.
+Cybersecurity, 6(1):43.
+Jiaxian Guo, Sidi Lu, Han Cai, Weinan Zhang, Yong Yu,
+and Jun Wang. 2018. Long text generation via adver-
+sarial training with leaked information. In Proceed-
+ings of the AAAI conference on artificial intelligence,
+volume 32.
+Yuki Hou, Haruki Tamoto, and Homei Miyashita. 2024.
+" my agent understands me better": Integrating dy-
+namic human-like memory recall and consolidation
+in llm-based agents. In Extended Abstracts of the
+CHI Conference on Human Factors in Computing
+Systems, pages 1–7.
+Chengsong Huang, Qian Liu, Bill Yuchen Lin, Tianyu
+Pang, Chao Du, and Min Lin. 2023. Lorahub: Effi-
+cient cross-task generalization via dynamic lora com-
+position. arXiv preprint arXiv:2307.13269.
+Siddharth Jha, Lutfi Eren Erdogan, Sehoon Kim, Kurt
+Keutzer, and Amir Gholami. 2024. Characterizing
+prompt compression methods for long context infer-
+ence. arXiv preprint arXiv:2407.08892.
+
+Huiqiang Jiang, Qianhui Wu, Chin-Yew Lin, Yuqing
+Yang, and Lili Qiu. 2023a. Llmlingua: Compressing
+prompts for accelerated inference of large language
+models. arXiv preprint arXiv:2310.05736.
+Huiqiang Jiang, Qianhui Wu, Xufang Luo, Dongsheng
+Li, Chin-Yew Lin, Yuqing Yang, and Lili Qiu. 2023b.
+Longllmlingua: Accelerating and enhancing llms
+in long context scenarios via prompt compression.
+arXiv preprint arXiv:2310.06839.
+Jinhao Jiang, Jiayi Chen, Junyi Li, Ruiyang Ren, Shijie
+Wang, Wayne Xin Zhao, Yang Song, and Tao Zhang.
+2024a. Rag-star: Enhancing deliberative reasoning
+with retrieval augmented verification and refinement.
+arXiv preprint arXiv:2412.12881.
+Xinke Jiang, Yue Fang, Rihong Qiu, Haoyu Zhang,
+Yongxin Xu, Hao Chen, Wentao Zhang, Ruizhe
+Zhang, Yuchen Fang, Xu Chu, et al. 2024b. Tc-
+rag: Turing-complete rag’s case study on medical llm
+systems. arXiv preprint arXiv:2408.09199.
+Aounon Kumar, Chirag Agarwal, Suraj Srinivas,
+Aaron Jiaxun Li, Soheil Feizi, and Himabindu
+Lakkaraju. 2023. Certifying llm safety against adver-
+sarial prompting. arXiv preprint arXiv:2309.02705.
+Kun Li, Xin Jing, and Chengang Jing. 2024. Vector
+storage based long-term memory research on llm.
+International Journal of Advanced Network, Moni-
+toring and Controls.
+Yucheng Li. 2023. Unlocking context constraints of
+llms: Enhancing context efficiency of llms with self-
+information-based content filtering. arXiv preprint
+arXiv:2304.12102.
+Yucheng Li, Bo Dong, Chenghua Lin, and Frank
+Guerin. 2023. Compressing context to enhance infer-
+ence efficiency of large language models. Preprint,
+arXiv:2310.06201.
+Lei Liu, Xiaoyan Yang, Yue Shen, Binbin Hu, Zhiqiang
+Zhang, Jinjie Gu, and Guannan Zhang. 2023. Think-
+in-memory:
+Recalling and post-thinking enable
+llms with long-term memory.
+arXiv preprint
+arXiv:2311.08719.
+Rada Mihalcea and Paul Tarau. 2004. Textrank: Bring-
+ing order into text. In Proceedings of the 2004 con-
+ference on empirical methods in natural language
+processing, pages 404–411.
+Goran Muric, Ben Delay, and Steven Minton. 2024. In-
+terpretable cross-examination technique (ice-t): Us-
+ing highly informative features to boost llm perfor-
+mance. arXiv preprint arXiv:2405.06703.
+Karen Ka Yan Ng, Izuki Matsuba, and Peter Chengming
+Zhang. 2024. Rag in health care: A novel frame-
+work for improving communication and decision-
+making by addressing llm limitations. NEJM AI,
+page AIra2400380.
+Long Ouyang, Jeffrey Wu, Xu Jiang, Diogo Almeida,
+Carroll Wainwright, Pamela Mishkin, Chong Zhang,
+Sandhini Agarwal, Katarina Slama, Alex Ray, et al.
+2022. Training language models to follow instruc-
+tions with human feedback.
+Advances in Neural
+Information Processing Systems, 35:27730–27744.
+Zhuoshi Pan, Qianhui Wu, Huiqiang Jiang, Menglin
+Xia, Xufang Luo, Jue Zhang, Qingwei Lin, Victor
+Ruhle, Yuqing Yang, Chin-Yew Lin, H. Vicky Zhao,
+Lili Qiu, and Dongmei Zhang. 2024a. LLMLingua-
+2: Data distillation for efficient and faithful task-
+agnostic prompt compression. In Findings of the
+Association for Computational Linguistics ACL 2024,
+pages 963–981, Bangkok, Thailand and virtual meet-
+ing. Association for Computational Linguistics.
+Zhuoshi Pan, Qianhui Wu, Huiqiang Jiang, Menglin
+Xia, Xufang Luo, Jue Zhang, Qingwei Lin, Victor
+Rühle, Yuqing Yang, Chin-Yew Lin, et al. 2024b.
+Llmlingua-2: Data distillation for efficient and faith-
+ful task-agnostic prompt compression. arXiv preprint
+arXiv:2403.12968.
+Joon Sung Park, Joseph O’Brien, Carrie Jun Cai, Mered-
+ith Ringel Morris, Percy Liang, and Michael S Bern-
+stein. 2023. Generative agents: Interactive simulacra
+of human behavior. In Proceedings of the 36th an-
+nual acm symposium on user interface software and
+technology, pages 1–22.
+Xiao Pu, Tianxing He, and Xiaojun Wan. 2024. Style-
+compress: An llm-based prompt compression frame-
+work considering task-specific styles. arXiv preprint
+arXiv:2410.14042.
+Abigail See, Peter J Liu, and Christopher D Man-
+ning. 2017.
+Get to the point:
+Summarization
+with pointer-generator networks.
+arXiv preprint
+arXiv:1704.04368.
+Shivam Shandilya, Menglin Xia, Supriyo Ghosh,
+Huiqiang Jiang, Jue Zhang, Qianhui Wu, and Victor
+Rühle. 2024. Taco-rl: Task aware prompt compres-
+sion optimization with reinforcement learning. arXiv
+preprint arXiv:2409.13035.
+Yilin Shao, Long Sun, Licheng Jiao, Xu Liu, Fang Liu,
+Lingling Li, and Shuyuan Yang. 2024. Cot: Con-
+tourlet transformer for hierarchical semantic segmen-
+tation. IEEE Transactions on Neural Networks and
+Learning Systems.
+Mirac Suzgun and Adam Tauman Kalai. 2024.
+Meta-prompting:
+Enhancing language models
+with task-agnostic scaffolding.
+arXiv preprint
+arXiv:2401.12954.
+Jiwei Tang, Jin Xu, Tingwei Lu, Zhicheng Zhang, Yim-
+ing Zhao, Lin Hai, and Hai-Tao Zheng. 2024. Per-
+ception compressor: A training-free prompt compres-
+sion method in long context scenarios. arXiv preprint
+arXiv:2409.19272.
+A Vaswani. 2017. Attention is all you need. Advances
+in Neural Information Processing Systems.
+
+Cangqing Wang, Yutian Yang, Ruisi Li, Dan Sun,
+Ruicong Cai, Yuzhu Zhang, and Chengqian Fu.
+2024. Adapting llms for efficient context processing
+through soft prompt compression. In Proceedings of
+the International Conference on Modeling, Natural
+Language Processing and Machine Learning, pages
+91–97.
+Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten
+Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny Zhou,
+et al. 2022. Chain-of-thought prompting elicits rea-
+soning in large language models. Advances in neural
+information processing systems, 35:24824–24837.
+David Wingate, Mohammad Shoeybi, and Taylor
+Sorensen. 2022.
+Prompt compression and con-
+trastive conditioning for controllability and toxic-
+ity reduction in language models. arXiv preprint
+arXiv:2210.03162.
+Hui Wu and Xiaodong Shi. 2022.
+Adversarial soft
+prompt tuning for cross-domain sentiment analysis.
+In Proceedings of the 60th Annual Meeting of the
+Association for Computational Linguistics (Volume
+1: Long Papers), pages 2438–2447.
+Yunhao Yang and Zhaokun Xue. 2022. Training hetero-
+geneous features in sequence to sequence tasks: La-
+tent enhanced multi-filter seq2seq model. In Proceed-
+ings of SAI Intelligent Systems Conference, pages
+103–117. Springer.
+Shunyu Yao, Dian Yu, Jeffrey Zhao, Izhak Shafran,
+Tom Griffiths, Yuan Cao, and Karthik Narasimhan.
+2024. Tree of thoughts: Deliberate problem solving
+with large language models. Advances in Neural
+Information Processing Systems, 36.
+Lantao Yu, Weinan Zhang, Jun Wang, and Yong Yu.
+2017. Seqgan: Sequence generative adversarial nets
+with policy gradient. In Proceedings of the AAAI
+conference on artificial intelligence, volume 31.
+Zheni Zeng, Jiayi Chen, Huimin Chen, Yukun Yan, Yux-
+uan Chen, Zhenghao Liu, Zhiyuan Liu, and Maosong
+Sun. 2024.
+Persllm: A personified training ap-
+proach for large language models. arXiv preprint
+arXiv:2407.12393.
+Guangzi Zhang, Lizhe Chen, Yu Zhang, Yan Liu, Yuyao
+Ge, and Xingquan Cai. 2024a. Translating words to
+worlds: Zero-shot synthesis of 3d terrain from textual
+descriptions using large language models. Applied
+Sciences, 14(8):3257.
+Jingqing Zhang, Yao Zhao, Mohammad Saleh, and Pe-
+ter Liu. 2020. Pegasus: Pre-training with extracted
+gap-sentences for abstractive summarization. In In-
+ternational conference on machine learning, pages
+11328–11339. PMLR.
+Xin Zhang, Tianjie Ju, Huijia Liang, Ying Fu, and Qin
+Zhang. 2024b. Llms instruct llms: An extraction and
+editing method. arXiv preprint arXiv:2403.15736.
+Chujie Zheng, Fan Yin, Hao Zhou, Fandong Meng, Jie
+Zhou, Kai-Wei Chang, Minlie Huang, and Nanyun
+Peng. 2024. Prompt-driven llm safeguarding via di-
+rected representation optimization. arXiv preprint
+arXiv:2401.18018.
+Qingyu Zhou, Nan Yang, Furu Wei, Shaohan Huang,
+Ming Zhou, and Tiejun Zhao. 2018. Neural docu-
+ment summarization by jointly learning to score and
+select sentences. arXiv preprint arXiv:1807.02305.
+
+A
+Experiment Detail
+A.1
+Experimental Environment
+All experiments are conducted on an NVIDIA 4090
+GPU with 24 GB of VRAM. The operating sys-
+tem is Ubuntu 20.04, and the experiments were
+executed in a Python 3.9 environment using Py-
+Torch 1.12 with CUDA support. The RL agent was
+trained using a batch size of 32 and a sequence
+length of 512 tokens.
+A.2
+Experiment Parameters
+For training the RL model, the following hyperpa-
+rameters were used:
+• Learning rate: 1 × 10−4
+• Optimizer: Adam (β1 = 0.9, β2 = 0.999)
+• Epsilon decay: 0.995 (initial ϵ = 1.0, mini-
+mum ϵ = 0.01)
+• Discount factor (γ): 0.99
+• Batch size: 32
+• Replay buffer capacity: 20,000 transitions
+• State dimension: 768 (BERT-base embedding
+size)
+• Action space: 8 discrete compression ratios
+(0.1-0.8 with 0.1 interval)
+• Training episodes: 20
+• Reward coefficients: α = 1.0, β = 1.0, γ =
+1.0
+• Compression anchor (λ): 0.7
+• Quality threshold (τ): 0.17
+The target network shares the policy network ar-
+chitecture and updates every 100 steps. The reward
+function components implement concrete thresh-
+olds: λ = 0.7 establishes the baseline compression
+target, while τ = 0.17 sets minimum acceptable
+levels for ROUGE-1 and BLEU scores. All reward
+terms are equally weighted (α = β = γ = 1.0)
+based on grid search validation. Training employs
+prioritized experience replay with DDQN for stable
+Q-value estimation, using the full BERT contextual
+embedding as state representation.
+B
+Model Comparison Study
+We compare the performance of the proposed PIS
+method across four large language models (LLMs):
+GPT-3.5-TURBO-0613, GPT-4, MISTRAL-7B,
+and LLAMA-2-7B. The following tables show the
+performance of different compression methods on
+these models for Question Answering (QA) and
+Summarization tasks. We report Exact Match
+(EM) for QA, ROUGE-1 for summarization, and
+the compression ratio (denoted as 1/τ).
+Methods
+QA (EM)
+ROUGE-1
+1/τ
+Selective-Context
+65.20
+28.50
+3.08
+LLMLingua
+60.10
+26.30
+2.89
+LLMLingua-2
+72.80
+31.00
+3.04
+Ours
+75.50
+33.20
+3.01
+Table 7:
+Performance Comparison on GPT-3.5-
+TURBO-0613
+Methods
+QA (EM)
+ROUGE-1
+1/τ
+Selective-Context
+70.50
+30.10
+3.08
+LLMLingua
+65.30
+28.70
+2.89
+LLMLingua-2
+78.90
+33.50
+3.04
+Ours
+82.00
+35.80
+3.01
+Table 8: Performance Comparison on GPT-4
+Methods
+QA (EM)
+ROUGE-1
+1/τ
+Selective-Context
+58.13
+26.84
+3.08
+LLMLingua
+50.45
+23.63
+2.89
+LLMLingua-2
+76.22
+30.18
+3.04
+Ours
+80.05
+32.50
+3.01
+Table 9: Performance Comparison on MISTRAL-7B
+Methods
+QA (EM)
+ROUGE-1
+1/τ
+Selective-Context
+55.00
+25.00
+3.08
+LLMLingua
+48.50
+22.50
+2.89
+LLMLingua-2
+70.10
+28.90
+3.04
+Ours
+73.50
+30.50
+3.01
+Table 10: Performance Comparison on LLAMA-2-7B
+From the above results, we observe that our
+method demonstrates consistently higher perfor-
+mance in both QA accuracy (EM) and ROUGE-1
+for summarization tasks, while maintaining a more
+favorable compression ratio (1/τ) than the other
+baseline methods. The improvements suggest that
+our prompt compression strategy effectively pre-
+serves essential semantic information while sub-
+stantially reducing token usage.
+
+C
+Prompt Setting
+For the experiments on the MeetingBank dataset,
+the following prompt template was used to com-
+press and evaluate prompts, especially for handling
+long meeting transcripts. The prompt is designed
+to ensure that the full context of the meeting is
+preserved while generating concise summaries. In
+case the meeting transcript exceeds the token limit,
+the text is split into chunks, summarized individu-
+ally, and then combined for a final summary.
+Prompt Template
+The following is a meeting transcript that may contain mul-
+tiple sections. If the transcript is too long, it will be split
+into chunks. Each chunk should be summarized individu-
+ally, and the combined summaries should then be further
+summarized to preserve the overall context.
+Meeting Transcript:
+[Insert Meeting Transcript Here]
+Summarize the provided meeting transcript.
+For long transcripts exceeding 15,000 tokens, the
+text is first split into smaller chunks. Each chunk is
+summarized using the prompt:
+Chunked Summary Prompt
+Summarize the provided meeting transcript.
+[Insert Chunked Meeting Transcript Here]
+Summary:
+Once all chunks are processed, the combined
+summaries are then summarized into the final sum-
+mary with the following prompt:
+Final Combined Summary Prompt
+Summarize the combined summaries:
+[Insert Combined Summaries Here]
+Final Summary:
+D
+Case Study
+The comparative analysis of prompt compression
+methods in Table 11 reveals distinct advantages of
+our approach over baseline techniques. The origi-
+nal text, while comprehensive, contains significant
+redundancies and verbose phrasing (e.g., repetitive
+references to "Fair Housing Act violations" and
+procedural details about amendments). LLMLin-
+gua’s compressed output demonstrates aggressive
+token reduction but suffers from critical informa-
+tion loss and grammatical incoherence. For in-
+stance, the phrase "Councilmember Bagshaw also
+has an amendment" is entirely omitted, along with
+key procedural terms like "sections one and five,"
+which are essential for understanding the legislative
+process. While LLMLingua-2 improves token effi-
+ciency by extracting keyword clusters, it sacrifices
+contextual relationships between concepts. The
+compressed version becomes a disjointed list of
+terms ("Economic Development Arts Committee,"
+"screening criterion") without clarifying their func-
+tional connections, hindering the model’s ability to
+infer logical dependencies.
+In contrast, our method achieves superior com-
+pression by strategically preserving semantically
+rich phrases and structural cues. While the output
+("civil rights utilities... council bags also has an
+amendment but let ’ first... sections one five pri-
+mary changes") may appear fragmented to human
+readers, it retains critical context for LLM pro-
+cessing. Notably, our compression maintains ref-
+erences to specific legislative sections, amendment
+procedures, and stakeholder roles (e.g., "Coun-
+cilmember Bagshaw"), which are crucial for accu-
+rate summarization or question answering. The se-
+lective retention of verbs like "encouraging," "rec-
+ommends," and "amend" preserves the resolution’s
+intent, while terms like "discriminatory effect stan-
+dards" and "legitimate non interest" explicitly re-
+tain legal context often diluted in other methods.
+This analysis demonstrates that our method’s
+effectiveness stems from its balanced approach
+to redundancy removal and context preserva-
+tion. Unlike LLMLingua’s oversimplification or
+LLMLingua-2’s keyword extraction, our compres-
+sion maintains the narrative flow required for LLMs
+to reconstruct coherent responses. The retained
+fragments act as semantic anchors, enabling mod-
+els to infer relationships between legislative actions,
+stakeholders, and compliance requirements—a ca-
+pability particularly vital for complex downstream
+tasks like legal document analysis and multi-step
+reasoning.
+The analysis of Table 12 reveals a notable
+strength of our compression method: its ability
+to strategically collapse redundant summarization
+segments that typically serve as "recaps" for human
+readers. While the original text includes verbose
+closing statements reiterating the importance of
+landlord compliance (e.g., "it’s really important
+that we lift up the policies... protecting themselves
+from fair housing complai

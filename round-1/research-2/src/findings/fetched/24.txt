@@ -1,0 +1,1070 @@
+URL: https://arxiv.org/pdf/2309.03882
+Type: PDF
+Length: 77957 chars (truncated)
+
+--- Content ---
+
+Published as a conference paper at ICLR 2024
+LARGE LANGUAGE MODELS ARE NOT ROBUST
+MULTIPLE CHOICE SELECTORS
+Chujie Zheng†
+Hao Zhou‡
+Fandong Meng‡
+Jie Zhou‡
+Minlie Huang†∗
+†The CoAI Group, DCST, BNRist, Tsinghua University, Beijing 100084, China
+‡Pattern Recognition Center, WeChat AI, Tencent Inc., China
+chujiezhengchn@gmail.com
+aihuang@tsinghua.edu.cn
+ABSTRACT
+Multiple choice questions (MCQs) serve as a common yet important task format
+in the evaluation of large language models (LLMs). This work shows that modern
+LLMs are vulnerable to option position changes in MCQs due to their inherent
+“selection bias”, namely, they prefer to select specific option IDs as answers (like
+“Option A”). Through extensive empirical analyses with 20 LLMs on three bench-
+marks, we pinpoint that this behavioral bias primarily stems from LLMs’ token
+bias, where the model a priori assigns more probabilistic mass to specific option
+ID tokens (e.g., A/B/C/D) when predicting answers from the option IDs. To mit-
+igate selection bias, we propose a label-free, inference-time debiasing method,
+called PriDe, which separates the model’s prior bias for option IDs from the over-
+all prediction distribution. PriDe first estimates the prior by permutating option
+contents on a small number of test samples, and then applies the estimated prior
+to debias the remaining samples. We demonstrate that it achieves interpretable
+and transferable debiasing with high computational efficiency. We hope this work
+can draw broader research attention to the bias and robustness of modern LLMs.1
+1
+INTRODUCTION
+Question:
+In an SR latch
+built from NOR gates, which
+condition is not allowed
+Options:
+A. S=0, R=0
+B. S=0, R=1
+C. S=1, R=0
+D. S=1, R=1
+Answer:
+D
+Figure 1: A multiple choice ques-
+tion (MCQ) example from MMLU.
+Multiple choice question (MCQ) is a prevalent input format
+of large language models (LLMs). An MCQ typically encom-
+passes a question accompanied by multiple candidate options,
+from which the model is tasked to select the most suitable an-
+swer, as exemplified in Figure 1. Current LLM-centric scenar-
+ios have widely utilized the task format of MCQ, for instance,
+within benchmarks targeted at assessing LLMs (Hendrycks
+et al., 2020; Zhong et al., 2023; Huang et al., 2023) and in
+LLM-based automatic evaluation frameworks (Chiang et al., 2023; Zheng et al., 2023b). In any
+scenario, we always expect LLMs to robustly select reliable answers in MCQs.
+Unfortunately, we observe that modern LLMs are vulnerable to option position changes in MCQs
+(Robinson & Wingate, 2022). We show in Table 1 that, in the 0-shot MMLU evaluation (Hendrycks
+et al., 2020), a simple “answer-moving attack” by always moving the golden answers to a specific
+position causes LLMs’ dramatic performance fluctuations. For instance, moving the golden answers
+to position D degrades the accuracy of gpt-3.5-turbo by 6.3 (from 67.2 to 60.9). When moving
+to A, llama-30b is boosted by 15.2 and surpasses gpt-3.5-turbo (68.2 vs. 65.3), which starkly
+contrasts with their original performance (53.1 vs. 67.2).
+LLMs’ poor robustness to option position changes results from their biased behavior: they prefer
+to select specific option IDs as answers (like “Option A”), which we term as selection bias. As
+a simple verification, we randomly sampled 1,000 MMLU test samples, where we controlled the
+number of correct answers being A/B/C/D as 250 each. Among these samples, llama-30B selects
+A/B/C/D 34.6% / 27.3% / 22.3% / 15.8% of the time, while gpt-3.5-turbo for 22.5% / 25.6% /
+∗Corresponding author.
+1Project repository: https://github.com/chujiezheng/LLM-MCQ-Bias.
+1
+arXiv:2309.03882v4  [cs.CL]  22 Feb 2024
+
+Published as a conference paper at ICLR 2024
+Table 1: Simply moving the golden answers of MCQs to
+a specific option position can cause dramatic performance
+fluctuations (0-shot MMLU), suggesting LLMs’ poor ro-
+bustness to option position changes in MCQs.
+Move Golden to
+Orig
+A
+B
+C
+D
+llama-30B
+53.1
+68.2
+(+15.2)
+54.1
+(+1.1)
+50.1
+(-2.9)
+41.2
+(-11.9)
+vicuna-v1.3-33B
+57.0
+59.5
+(+2.5)
+58.6
+(+1.5)
+65.8
+(+8.8)
+44.8
+(-12.3)
+falcon-40B
+51.8
+46.3
+(-5.5)
+45.2
+(-6.7)
+64.8
+(+13.0)
+47.9
+(-3.9)
+falcon-inst-40B
+51.5
+38.3
+(-13.3)
+38.9
+(-12.7)
+55.7
+(+4.1)
+69.1
+(+17.6)
+llama-2-70B
+64.0
+61.5
+(-2.6)
+68.6
+(+4.5)
+64.1
+(+0.1)
+62.0
+(-2.1)
+gpt-3.5-turbo
+67.2
+65.3
+(-1.9)
+68.5
+(+1.3)
+74.2
+(+6.9)
+60.9
+(-6.3)
+10
+0
+10
+ Acc (%)
+llama-30B
+vicuna-v1.3-33B
+falcon-40B
+falcon-inst-40B
+llama-2-70B
+gpt-3.5-turbo
+25
+50
+75
+Recall (%)
+A
+B
+C
+D
+Figure 2: The performance fluctua-
+tion (left) correlates with the balance
+of different option IDs’ recalls in the
+original inputs, as the original recall
+of option ID X is actually calculated
+on a subset of samples where all the
+golden answers are moved to X.
+32.3% / 19.6%, respectively (averaged over 10 runs). These proportions are statistically nonuniform
+(χ2 Test, p-value ≪10−4) and align well with the performance fluctuations in Table 1.
+Through extensive empirical evaluation (§2.3), with 20 LLMs, on three benchmarks, and with vary-
+ing option numbers (from two to five), we show that selection bias is prevalent across various LLMs
+and cannot be well mitigated by simple prompting strategies (§2.6), like Chain-of-Thought prompt-
+ing (Wei et al., 2022; Kojima et al., 2022). It varies with models but manifests a cross-domain
+similarity within the same model (§2.3). With careful ablation analyses (§2.4), we find that, con-
+trary to the common view in previous work (Wang et al., 2023a; Pezeshkpour & Hruschka, 2023),
+selection bias arises less from LLMs’ position bias, where they are deemed to favor options pre-
+sented at specific ordering positions (like first or last). In contrast, we pinpoint one more salient
+intrinsic cause of selection bias as the model’s token bias when predicting answers from the option
+IDs given the standard MCQ prompt, where the model a priori assigns more probabilistic mass to
+specific ID tokens (e.g., A/B/C/D).
+To efficiently mitigate selection bias, we propose a method called PriDe (§3), referring to Debiasing
+with Prior estimation. In PriDe, we assume the model’s prior bias for option IDs can be separated
+from the overall prediction distribution. PriDe first estimates the prior by permutating option con-
+tents on a small number of test samples (e.g., 5%), and then applies it to debias the remaining
+samples. The whole debiasing procedure needs no sample labels, takes place during the inference
+time, and requires only negligible extra computational costs, which is especially suitable for modern
+LLMs. We demonstrate that PriDe achieves superior debiasing effectiveness to strong baselines, es-
+pecially in the low-cost scenario (§4.1). Furthermore, the prior estimated by PriDe provides a good
+interpretation for selection bias (§4.1) and can transfer well across different domains (§4.2), which
+highlights its practical potential in broader scenarios.
+Summary of Contributions
+(1) We identify the ubiquitous selection bias in LLMs and provide
+extensive empirical analyses (with 20 LLMs, on three MCQ benchmarks) and valuable insights on
+this problem. (2) We pinpoint LLMs’ token bias as one primary intrinsic cause of selection bias.
+(3) We propose a label-free, inference-time debiasing method PriDe, which demonstrates notable
+effectiveness and efficiency, interpretability, and cross-domain transferability. We hope this work
+can inspire future research on the bias and robustness of LLMs.
+2
+INVESTIGATION ON SELECTION BIAS
+2.1
+EXPERIMENTAL SETUP
+Models
+Our study focuses on the causal, decoder-only LLMs since this architecture has become
+the dominant choice for modern LLMs. We experiment with 20 LLMs from popular LLM families
+across various sizes: llama-7/13/30/65B (Touvron et al., 2023a), llama-2(-chat)-7/13/70B
+(Touvron et al., 2023b), vicuna-v1.3-7/13/33B, vicuna-v1.5-7/13B (Chiang et al., 2023),
+falcon(-inst)-7/40B (Almazrouei et al., 2023), and gpt-3.5-turbo-0613 (OpenAI, 2022).
+The models except gpt-3.5-turbo are all open source on the HuggingFace website, and we can
+2
+
+Published as a conference paper at ICLR 2024
+access their output probabilities. gpt-3.5-turbo is the commercial API of ChatGPT. It accepts
+textual prompts and returns generated texts without providing access to output probabilities.
+Benchmarks We conduct experiments on MMLU (Hendrycks et al., 2020), ARC-Challenge (Clark
+et al., 2018), and CommonsenseQA (CSQA) (Talmor et al., 2019), which are all MCQ benchmarks
+widely used for LLM evaluation. Our selection of benchmarks takes into account the diversity
+of tasks and domains. Specifically, MMLU and ARC consist of 4-option MCQs, while CSQA
+consists of 5-option ones, and MMLU covers tests from 4 domain categories spanning 57 subjects.
+The diverse domains facilitate us to derive general observations and enable cross-domain transfer
+exploration. See Appendix E for detailed data statistics.
+Evaluation
+Our evaluation protocol follows the mainstream LLM evaluation frameworks, such
+as HuggingFace LLM Leaderboard, EleutherAI lm-harness, the original MMLU implementation,
+and OpenAI Evals (see Appendix F). Specifically, for open-source models, we access the output
+probabilities of option ID tokens A/B/C/D/E and use the maximal one as the model prediction. For
+gpt-3.5-turbo, we compare the golden answer with the first generated token, with the decoding
+temperature set to 0. See Figure 7 and 6 in Appendix A for the input formats.
+Our evaluation mainly considers the 0-shot setting, which excludes biases introduced by in-context
+examples, but we also conduct 5-shot experiments. The in-context examples come from the devel-
+opment sets and are shared across all the test samples within the same task.
+2.2
+MEASUREMENT OF SELECTION BIAS
+In our study, selection bias is defined as the model’s behavioral bias to select specific option IDs as
+answers. To measure selection bias, one naive way is based on the counting for model predictions,
+which, however, is susceptible to label imbalance. We instead propose to measure selection bias
+based on the balance of recalls of different option IDs and use the standard deviation of recalls
+(RStd) as a quantitative metric. This measurement is intuitive that greater recall imbalance indicates
+more pronounced selection bias and is not as susceptible to label imbalance as the counting-based
+measurement. More importantly, recall balance well reflects the model’s robustness to option posi-
+tion changes, as illustrated in Figure 2. Hence, we reasonably expect that reducing selection bias
+(measured by recall balance) will improve LLMs’ robustness to option position changes in MCQs.
+Note that measuring selection bias with recall balance implies the premise that the golden answers
+should be randomly placed. We show in Figure 18 in Appendix C that randomly shuffling the options
+does not obviously change selection bias, validating the above premise.
+2.3
+KEY OBSERVATIONS
+We first conduct an extensive evaluation of LLMs on various benchmarks to gain a preliminary
+understanding of selection bias. We show partial results in Figure 3 for a brief presentation and put
+the full results in Appendix B. We draw the following main observations and insights:
+Selection bias is prevalent across various LLMs and varies with model families and sizes.
+In-
+tuitively, selection bias is likely to originate from LLMs’ training data, where some answers (e.g., C)
+may occur more frequently than others. However, we do not observe consistent patterns of selection
+bias within the same model family where the models are trained with the same training data (e.g.,
+llama-7/13/30/65B, llama-2-7/13/70B). We speculate that selection bias arises as a product of
+complex interactions between training data composition and ordering, model capacity (number of
+parameters), and other factors like hyperparameters.
+Selection bias within the same model displays a moderate similarity across different domains.
+For instance, under the 0-shot setting, llama-30B consistently prefers A/B on various benchmarks,
+while gpt-3.5-turbo favors C/B more. While the preference ranking may not strictly persist
+across tasks or domains, there is an overarching tendency for each model to lean towards certain
+option IDs (e.g., A and B) and away from others (e.g., C and D). It suggests that selection bias is an
+inherent behavioral bias of LLMs that is less impacted by tasks or domains.
+In-context examples can reduce but may meanwhile alter selection bias.
+As exemplified in
+Figure 3, llama-30B disfavors C under the 0-shot setting but becomes biased towards it under the
+5-shot setting. We find that this alteration still does not display noticeable patterns within the same
+3
+
+Published as a conference paper at ICLR 2024
+10
+0
+10
+20
+llama-30B
+0-shot
+5-shot
+0-shot, Removing IDs
+STEM
+Social Science
+Humanities
+Others
+MMLU
+ARC
+CSQA
+10
+5
+0
+5
+10
+gpt-3.5-turbo
+STEM
+Social Science
+Humanities
+Others
+MMLU
+ARC
+CSQA
+STEM
+Social Science
+Humanities
+Others
+MMLU
+ARC
+CSQA
+A
+B
+C
+D
+E
+Figure 3: Selection bias of llama-30B and gpt-3.5-turbo on various benchmarks, see Appendix B for all
+the 20 LLMs’ results. Y-axis: the recall score (%) normalized by subtracting the overall accuracy. MMLU is
+additionally split into four domains (STEM, Social Science, Humanities, Others) based on its subject categories.
+model family. It indicates that in-context examples can introduce new biases that will be intertwined
+with the inherent selection bias, making the latter complex and less regular.
+2.4
+WHAT CAUSES SELECTION BIAS?
+Given the ubiquity of selection bias in various LLMs, we now seek to figure out the intrinsic causes
+resulting in this behavioral bias. We propose two hypotheses: (1) Token bias. In the standard MCQ
+prompt (Figure 1), when selecting answers from the option IDs, the model may a priori assign
+more probabilistic mass to specific ID tokens (such as A or C). (2) Position bias. The model may
+favor options presented at specific ordering positions (such as the first or last one). Note that in a
+recent work, Wang et al. (2023a) similarly found that GPT-4 exhibits the bias towards the responses
+from “Assistant 1”. However, it is still unclear whether it is because the preferred responses are
+“selected via the ID token 1” or because they are “presented first”.
+Table 2: Preliminary debiasing results (0-shot,
+gpt-3.5-turbo), measured by the standard
+deviation of recalls (RStd) and accuracy (Acc).
+Methods
+MMLU
+ARC
+RStd
+Acc
+RStd
+Acc
+Default
+5.5
+67.2
+3.3
+84.3
+a/b/c/d
+6.8
+67.0
+2.1
+83.1
+1/2/3/4
+3.8
+65.8
+2.1
+82.3
+(A)/(B)/(C)/(D)
+8.1
+66.5
+4.0
+82.4
+Debiasing Instruct
+6.1
+66.3
+3.9
+84.2
+Chain-of-Thought
+4.5
+66.8
+3.4
+84.5
+Shuffling IDs
+5.1
+63.9
+3.7
+80.3
+Removing IDs
+1.0
+66.7
+0.6
+84.9
+One challenge here is that option IDs are bound
+with options’ ordering positions, e.g., the ID B
+is naturally tied with the second-presented option.
+To distinguish the impacts of the two hypothesized
+causes, we conduct two ablation experiments. (1)
+Shuffling option IDs. We randomly shuffle the
+default ID ordering A/B/C/D, for instance, into
+B/D/A/C or C/A/D/B, etc. In this way, B can de-
+note the option presented at any ordering position,
+thus eliminating the impact of position bias and
+leaving only token bias. Note that this ablation
+will obviously impair the naturalness and qual-
+ity of the MCQ prompt, and may consequently de-
+grade model performance (as shown in Table 2).
+(2) Removing option IDs and asking the model to directly select option contents. In this way, the
+change of selection bias would indicate the impact of token bias, while the remaining part corre-
+sponds to position bias. When evaluating LLMs without option IDs, we require gpt-3.5-turbo to
+generate the whole selected option, which is then compared with the golden answer. For open-source
+models, we compute the likelihoods of options, normalized by their lengths, and use the maximum
+one as the model prediction. See Figure 9 and 8 in Appendix A for the input formats.
+As shown in Figure 3 and Table 2, the removal of option IDs notably reduces selection bias (RStd
+decreases), while RStd is little changed by shuffling option IDs. The former observation, in most
+cases, holds for various LLMs, on different benchmarks, and with varying option numbers (from two
+to five, where 2/3-option settings are constructed from the original data), see Appendix B and Table
+3 in Appendix C for detailed results. We also try to replace the default ID symbols A/B/C/D with
+several reasonable alternatives, including a/b/c/d, 1/2/3/4, and (A)/(B)/(C)/(D), but observe
+no remarkable reduction in RStd from the default one, as shown in Table 2. These results confirm
+that the model’s token bias is one primary intrinsic cause of selection bias.
+4
+
+Published as a conference paper at ICLR 2024
+However, with option IDs removed, the remaining selection bias (corresponding to the impact of
+position bias) varies with models and tasks, see Appendix B and Table 3 in Appendix C. For in-
+stance, the remaining selection bias of llama-13B, vicuna-v1.3-7B, and gpt-3.5-turbo is only
+marginal, while that of llama-30B, vicuna-v1.3-33B, and falcon-40B is still pronounced (al-
+though having been reduced much). The selection bias of llama-2-13/70B even slightly increases
+in MMLU and ARC after option IDs being removed while still decreasing in CSQA, implying the
+potential counteraction between token bias and position bias. These results suggest that the model’s
+position bias is somewhat present but quite irregular, largely depending on models and tasks.
+2.5
+CAN WE DEBIAS LLMS BY REMOVING OPTION IDS?
+Despite the notably reduced selection bias, we find that removing option IDs usually degrades model
+performance (except in a few cases under the 5-shot setting), see Table 3 and 4 in Appendix C. This
+performance degradation results from the way we leverage LLMs to answer MCQs without option
+IDs, i.e., calculating and comparing the likelihoods of options, which is referred to as the “cloze
+prompt” format in Robinson & Wingate (2022). Their study demonstrates that asking LLMs to
+predict option IDs forms a better MCQ prompt than the “cloze prompt”, which is consistent with
+our observation. Besides, selecting answers by calculating and comparing the likelihoods of options
+is not as convenient and straightforward to implement as directly predicting option IDs. We thus
+suggest that removing option IDs is not a practical method to mitigate selection bias.
+2.6
+CAN SIMPLE PROMPTING STRATEGIES MITIGATE SELECTION BIAS?
+As a preliminary debiasing attempt, we apply two simple prompting strategies to gpt-3.5-turbo:
+(1) Explicit debiasing instruction: We append an explicit debiasing instruction in the system mes-
+sage of gpt-3.5-turbo (“Please note that the provided options have been randomly shuffled, so
+it is essential to consider them fairly and without bias.”). (2) Chain-of-Thought prompting (Wei
+et al., 2022; Kojima et al., 2022): gpt-3.5-turbo is first prompted with “Let’s think step by step:”
+to generate its thought process and then produces the final answer. We follow the implementation
+in OpenAI Evals, see Figure 10 in Appendix A for details. As shown in Table 2, the two prompting
+strategies cannot mitigate selection bias well. It suggests that selection bias is an inherent behavioral
+bias of LLMs that cannot be addressed by simple prompt engineering.
+3
+METHODOLOGY
+3.1
+PERMUTATION-BASED DEBIASING BASELINE AND FORMULATION
+Before proposing our debiasing method, we first introduce a strong permutation-based debiasing
+baseline that our method builds upon. It averages the model’s prediction distributions under various
+option permutations (Wang et al., 2023a; Zheng et al., 2023b), which intuitively cancels out both the
+model’s token bias and position bias.
+Formally, we use q to denote the MCQ question. Suppose the n default-ordered option IDs (e.g.,
+A/B/C/D) are di and the default-ordered option contents are oi, i ∈{1, 2, . . . , n}. We use I to denote
+a permutation of {1, 2, . . . , n}, I to a set of possible Is. We use gI(i) to denote the index of i in I,
+and xI to the concatenation of the default-ordered option IDs and the I-permuted option contents,
+so that oi is tied with dgI(i) in xI. The permutation-based debiasing baseline can be formulated as:
+ePdebiased(oi|q, x) = 1
+|I|
+X
+I∈I
+Pobserved(dgI(i)|q, xI), i ∈{1, 2, . . . , n},
+(1)
+where x is the default input of option IDs and option contents, Pobserved(dgI(i)|q, xI) is the observed
+prediction probability for the option ID dgI(i) (meaning oi being correct) under the option permu-
+tation I, and ePdebiased(oi|q, x) denotes the debiased prediction probability for the option content
+oi. Since computing full permutations is prohibitively expensive (×n! costs), we adopt a practical
+alternative, called Cyclic Permutation, where I = {(i, i + 1, . . . , n, 1, . . . , i −1)}n
+i=1. It reduces
+the computational cost (e.g., LLM forward times) from ×n! to ×n and ensures one pairing between
+each option ID di and option content oj. In Figure 16 in Appendix C, we show that selecting other
+permutations I in Cyclic Permutation, where we still ensure one pairing between each di and oj,
+leads to similar debiasing results. However, the overhead of Cyclic Permutation is still somewhat
+high (×n inference costs), which stimulates us to design more efficient debiasing methods.
+5
+
+Published as a conference paper at ICLR 2024
+3.2
+PREDICTION PROBABILITY DECOMPOSITION
+The core idea of our method PriDe is to obtain a debiased prediction distribution by separating the
+model’s prior bias for option IDs from the overall prediction distribution. Equivalently, it assumes
+that the observed prediction distribution Pobserved over di can be decomposed as a prior distribution
+Pprior over di and a debiased distribution Pdebiased over oi:
+Pobserved(di|q, xI) = Z−1
+q,xIPprior(di|q, xI)Pdebiased(ofI(i)|q, xI), ∀I ∈I, i ∈{1, 2, ..., n}, (2)
+where fI(i) denotes i-th element in I. Note that we can rewrite the form of Pobserved as a joint proba-
+bility P(di, oj|q, xI) for di and oj, which equals to Pobserved(di|q, xI) if j = fI(i) and 0 otherwise.
+Therefore, the above prediction probability decomposition can be interpreted as the conditional in-
+dependent assumption (ignore the normalization item Zq,xI), where the model holds independent
+beliefs about di and oj. Specifically, Pdebiased(oj|q, xI) reflects the model’s true belief about the
+option content oj, which is not influenced by the option ID di. In contrast, Pprior(di|q, xI) indi-
+cates the model’s prior bias for the option ID di, which actually involves not only the model’s
+token bias but also position bias (§2.4), due to the natural binding between option IDs and options’
+ordering positions. Hence, under this formulation, we do not need to strictly distinguish the two
+biases laboriously, but can instead address them together by eliminating Pprior.
+For tractable derivation, we reasonably assume that Pdebiased is not affected by how the options are
+ordered, which implies its invariance to option permutation I so we can replace xI with the default
+input x. We also assume Pprior to be independent of xI, which means that the prior for option IDs
+depends on only the question q. Equation 2 is then simplified to:
+Pobserved(di|q, xI) = Z−1
+q,xIPprior(di|q)Pdebiased(ofI(i)|q, x), ∀I ∈I, i ∈{1, 2, ..., n}.
+(3)
+3.3
+DEBIASING WITH PRIOR ESTIMATION
+Taking the logarithm of both sides of Equation 3 and summing over all I ∈I, we can obtain:
+X
+I∈I
+log Pobserved(di|q, xI) = |I| log Pprior(di|q) +
+ X
+I∈I
+log Pdebiased(ofI(i)|q, x)
+
++ C
+(4)
+= |I| log Pprior(di|q) +
+|I|
+n
+n
+X
+j=1
+log Pdebiased(oj|q, x)
+
++ C
+(5)
+= |I| log Pprior(di|q) + C′, i ∈{1, 2, ..., n}.
+(6)
+We derive Equation 5 because P
+I∈I log Pdebiased(ofI(i)|q, x) actually involves |I|/n iterations
+over each Pdebiased(oj|q, x) (given I contains either full or cyclic permutations), whose aggregation
+over j ∈{1, 2, . . . , n} is a constant. Therefore, without any sample labels, we can obtain:
+Pprior(di|q) = softmax
+ 1
+|I|
+X
+I∈I
+log Pobserved(di|q, xI)
+
+, i ∈{1, 2, ..., n}.
+(7)
+Recall our observation in §2.3 that selection bias within the same model displays a moderate cross-
+domain similarity. This implies that the prior for option IDs is likely to transfer across different
+samples and domains, which motivates us to compute the priors of partial test samples and use them
+as an approximation for the remaining samples. It can largely improve debiasing efficiency since no
+more computational overhead is needed for the remaining samples once the prior is estimated.
+Drawing the above inspiration, PriDe first takes K test samples De from the test set D, where K can
+be adjusted based on the estimation budget. Each sample in De undergoes the standard permutation-
+based debiasing in Equation 1, during which we estimate each sample-specific prior Pprior(di|q)
+using Equation 7. For the remaining samples Dr = D\De, we compute the “global prior” ePprior(di)
+by averaging the previously computed priors as an approximation to the new sample’s Pprior(di|q)
+in Equation 3. We can thus compute the approximated ePdebiased(oi|q, x) and obtain the debiased
+prediction (omit the superscript I as we only use the default input here):
+ePdebiased(oi|q, x) ∝Pobserved(di|q, x)/ ePprior(di), i ∈{1, 2, ..., n}.
+(8)
+When K ≪|D|, the overhead for prior estimation will become negligible compared to the whole
+inference cost. The overall procedure of PriDe is summarized as Algorithm 1.
+6
+
+Published as a conference paper at ICLR 2024
+Algorithm 1 PriDe: Debiasing with Prior Estimation
+Require: Language model, test samples D = {(qi, xi)}i, option number n, estimation budget K
+Ensure: Model predictions Y
+1: Initialize the model prediction set Y = ∅and the prior set P = ∅
+▷Initialization
+2: Sample the estimation samples De under K and the remaining samples Dr = D\De
+3: for (q, x) ∈De do
+4:
+Debias the model prediction using Equation 1, add the predicted answer to Y
+5:
+Estimate the sample-specific prior Pprior(di|q) using Equation 7, add it into P
+6: end for
+7: Estimate the global prior ePprior(di) by averaging P
+▷Prior Estimation
+8: for (q, x) ∈Dr do
+9:
+Debias the model prediction using Equation 8
+▷Efficient Debiasing
+10:
+Add the predicted answer to Y
+11: end for
+12: return Y
+-9
+-6
+-3
+0
+ Recall Std (%)
+MMLU
+Full Perm
+Cyclic Perm
+PriDe
+-9
+-6
+-3
+0
+ARC
+Full Perm
+Cyclic Perm
+PriDe
+-12
+-9
+-6
+-3
+0
+CSQA
+Cyclic Perm
+PriDe
+x1
+x2
+x4
+x8
+x24
+0
+2
+4
+6
+ Accuracy (%)
+Full Perm
+Cyclic Perm
+PriDe
+x1
+x2
+x4
+x8
+x24
+0
+2
+4
+6
+Full Perm
+Cyclic Perm
+PriDe
+x1
+x2
+x3
+x4
+x5
+0
+2
+4
+6
+8
+Cyclic Perm
+PriDe
+Figure 4: Debiasing results (0-shot, averaged over all the 20 LLMs) under varying computational costs (X-
+axis), see Table 3 and 4 in Appendix C for detailed breakdowns. We control the costs of Cyclic/Full Perm via
+the ratio β of the debiased test samples, where we take β ∈{0%, 10%, 20%, 40%, 60%, 80%, 100%}. For
+PriDe, we control the costs via the ratio α of test samples for prior estimation (these samples are meanwhile
+directly debiased via Cyclic Perm), where we take α ∈{2%, 5%, 10%, 20%, 40%, 60%, 80%}. Note that
+when α = 100%, PriDe degenerates to Cyclic Perm, so we do not plot them.
+4
+EXPERIMENTS
+4.1
+MAIN RESULTS
+We compare PriDe with two strong permutation-based debiasing baselines: Cyclic Permutation
+and Full Permutation. The latter is not experimented on the 5-option CSQA benchmark due to the
+extremely high cost. Since gpt-3.5-turbo does not return the output probability, we sample 100
+generated answers as an approximation to Pobserved. For PriDe, we randomly sample K = α|D|
+test samples as De and report the average results over 5 runs. Here, we use α ∈(0, 1) as the ratio of
+test samples for prior estimation to control the estimation overhead.
+Figure 4 presents the debiasing results (averaged over all the models) versus the computational costs
+under the 0-shot setting, see detailed breakdowns in Table 3 and 4 in Appendix C. PriDe achieves
+superior debiasing effectiveness and performance improvement to Full/Cyclic Perm, especially in
+the low-cost scenario. This also holds under the 5-shot setting, see Figure 19 in Appendix C. In
+Figure 17 in Appendix C, we show that the estimated prior manifests a clear correlation with the
+empirical selection bias (i.e., the recalls of different option positions before debiasing). It suggests
+that PriDe can provide a good interpretation for the model’s selection bias. Furthermore, we observe
+that the priors are stable when estimated with different sizes of test samples (from 2% to 20%). It
+suggests that we are able to obtain a reliable estimate of prior even with a limited computational
+7
+
+Published as a conference paper at ICLR 2024
+Figure 5: Cross-domain debiasing results of PriDe (0-shot, averaged over all the 20 LLMs), with priors esti-
+mated using α = 5% test samples from the source domains.
+budget. It also implies that the model’s prior bias for option IDs exhibits a similar pattern across
+different samples, confirming our design motivation of PriDe in §3.3.
+Note that one may propose to debias with fewer permutations (such as 2 or 3 random permutations,
+with ×2 or ×3 costs) as a low-cost alternative to Cyclic (×n) or Full (×n!) Perm. In Figure 21 and
+22 in Appendix C, we show that PriDe can still be combined with these methods and notably boost
+debiasing effectiveness and efficiency.
+4.2
+TRANSFERABILITY ANALYSIS
+In practical scenarios, we may not guarantee that the test samples always come from the same or
+similar domains. We hope the prior estimated by PriDe to be transferable: Once the prior is estimated
+using a small number of samples from domain X, it can be used to debias not only other samples
+from domain X but also samples from domain Y. To this end, we evaluate the cross-domain transfer
+performance of estimated priors on the four category domains of MMLU and ARC (5 domains in
+total, all are 4-option MCQs). We first use PriDe to estimate the prior with α test samples from a
+source domain X, and then apply it to debiasing the test samples from a target domain Y. As shown
+in Figure 5, the estimated priors exhibit reasonable transferability across different domains.
+However, we find that although the transferability in terms of debiasing is promising, there may be a
+slight degradation in model performance when the domain gap is large (e.g., from STEM/Humanities
+to ARC). While PriDe is not designed to improve model performance but rather to mitigate selection
+bias and thereby improve LLMs’ robustness, we suggest updating the estimated prior using new
+samples when there are predictable domain shifts in test samples, whose overhead is still negligible
+compared to the whole inference cost.
+4.3
+HOW DEBIASING AFFECTS MODEL PREDICTIONS?
+We notice that although it is not our initial intention, the debiasing methods (PriDe and Cyclic/Full
+Perm) usually improve the model performance. With PriDe (α = 5%) and Cyclic Perm as examples,
+we seek further insights on how debiasing affects model predictions and consequently improves
+model performance. We are especially interested in how PriDe works with the estimated prior and
+how it works differently from Cyclic Perm.
+We put the breakdown of the model prediction changes in Table 5 and 6 in Appendix C, and summa-
+rize our main observations as follows: (1) For both PriDe and Cyclic Perm, the samples with predic-
+tions changing from wrong to correct always surpass those from correct to wrong, which illustrates
+the improvement in model performance. (2) For the samples where the predictions are altered after
+PriDe debiasing, the model usually holds low confidence in the original predictions. Meanwhile,
+the debiased predictions typically rank top-2 in the original prediction distribution, which holds es-
+pecially for the larger models. It is because the predictions that the model is uncertain about are
+more susceptible to the model’s prior bias for option IDs, which is exactly what PriDe aims to al-
+8
+
+Published as a conference paper at ICLR 2024
+leviate. (3) Cyclic Perm even alters high-confidence predictions and brings more drastic prediction
+changes, e.g., the lowest-ranked option becomes the debiased prediction more frequently than in
+PriDe. It also remarkably flattens the prediction distribution, i.e., ePdebiased(oi|q, x) is smoother than
+Pobserved(di|q, x). This is probably because the permutation-based debiasing is essentially a kind of
+“mixture of experts”, where each “expert model” prepends the LLM with an option permutation op-
+eration. It leads to more deliberate and moderately confident predictions (corresponding to a flatter
+distribution), but on the other hand, requires more computational overhead than PriDe.
+5
+RELATED WORK
+Large Language Models (LLMs) The realm of large language models (LLMs) has been undergo-
+ing rapid and significant developments since the launch of GPT-3 (Brown et al., 2020). Prominent
+examples, such as ChatGPT (OpenAI, 2022), LLaMA (Touvron et al., 2023a;b), Alpaca (Taori et al.,
+2023), and Vicuna (Chiang et al., 2023), have emerged successively over the past year. These mod-
+els usually boast billions of parameters and are trained to comprehend natural language and follow
+human instructions (Ouyang et al., 2022; Wang et al., 2023b).
+Multiple Choice Questions (MCQs)
+As a concise task format, MCQs are widely adopted in
+LLM-centric scenarios. For instance, in the automatic evaluation framework of Chiang et al. (2023);
+Zheng et al. (2023b), GPT-4 (OpenAI, 2023) is presented with a question and two model answers
+and is tasked to determine which one is better. Numerous standard language model benchmarks
+also employ the task format of MCQs, such as MMLU (Hendrycks et al., 2020), ARC (Hendrycks
+et al., 2020), AGIEval (Zhong et al., 2023), C-Eval (Huang et al., 2023). It thus piques our research
+interest in the robustness of LLMs in the context of MCQs.
+Bias and Robustness of LLMs
+In our study, we use “bias” to refer to the systematic error within
+LLMs rather than the prejudice in culture or gender studied in the field of LLM safety (Zheng et al.,
+2023a; 2024). The bias in language models has always been an important research area closely
+related to model robustness. For instance, Zhao et al. (2021) showed that GPT-3 is sensitive to task
+instructions and in-context examples, which arises from its bias towards certain answers. Chen et al.
+(2022); Si et al. (2023); Pan et al. (2023) explored how LLMs’ few-shot learning is influenced by
+the construction of in-context examples. Wang et al. (2023a); Zheng et al. (2023b) found that GPT-4
+leans towards the first presented answers and may produce unfair evaluation results.
+Contemporaneous with our work, Pezeshkpour & Hruschka (2023) similarly observed that LLMs
+are sensitive to option position changes in MCQs and verified position bias as one cause of sensi-
+tivity. However, their study does not ablate the impact of option IDs, making their investigation on
+“position bias” less convincing. In fact, our study finds that position bias is less regular and largely
+depends on models and tasks, while token bias is a more salient intrinsic cause of LLMs’ selec-
+tion bias and, consequently, poor robustness. Their study is also conducted on very limited models
+(only GPT-4 and InstructGPT without open-source models, somewhat hindering reproducibility) and
+tasks (only three MMLU subtasks, one Big-Bench subtask (Srivastava et al., 2023), and CSQA). In
+contrast, we draw more general observations through extensive cross-model and cross-task empir-
+ical evaluation, which further inspires our proposal of the computation-efficient, interpretable, and
+transferable debiasing method PriDe.
+6
+CONCLUSION
+This work studies the inherent selection bias of large language models (LLMs), which makes them
+vulnerable to option position changes in multiple choice question (MCQ) evaluation. Through ex-
+tensive empirical analyses, we pinpoint that this behavioral bias stems primarily from token bias,
+where the model a priori assigns more probabilistic mass to specific option ID tokens when predict-
+ing answers from the option IDs, and partially from position bias, where the model favors options
+presented at specific ordering positions. In particular, token bias is a more salient intrinsic cause of
+selection bias, while position bias is less regular and depends on models and tasks. Our proposed
+debiasing method PriDe estimates the model’s prior bias for option IDs and separates it from the
+overall prediction distribution. It remarkably mitigates selection bias, with no need for sample la-
+bels and only negligible computational overhead. We especially highlight PriDe’s high efficiency,
+interpretability, and cross-domain transferability. We hope the empirical analyses in this work and
+our debiasing method can inspire future research on the bias and robustness of LLMs.
+9
+
+Published as a conference paper at ICLR 2024
+REPRODUCIBILITY STATEMENT
+We release the preprocessed evaluation data (MMLU, ARC, and CSQA) used in our experiments
+(§2.1) and preprocessing scripts at https://github.com/chujiezheng/LLM-MCQ-Bias. De-
+tailed data statistics are provided in Appendix E. Considering that it may be prohibitively expensive
+to reproduce our experimental results from scratch, we also release the main experimental code as
+well as the evaluation results to facilitate reproducibility.
+Our experiments were run on A100 40GB GPUs (for 70B models) and V100 32GB (for other mod-
+els). All the raw versions of evaluation data are accessible from their official repositories (see Ap-
+pendix E). All the evaluated models are accessible either on the HuggingFace website (the open-
+source models, see Appendix G) or through the OpenAI API (gpt-3.5-turbo-0613).
+ACKNOWLEDGMENTS
+This work was supported by the National Science Foundation for Distinguished Young Scholars
+(with No. 62125604). This work was also supported by the NSFC projects (Key project with No.
+61936010).
+REFERENCES
+Ebtesam Almazrouei, Hamza Alobeidli, Abdulaziz Alshamsi, Alessandro Cappelli, Ruxandra Co-
+jocaru, Merouane Debbah, Etienne Goffinet, Daniel Heslow, Julien Launay, Quentin Malartic,
+Badreddine Noune, Baptiste Pannier, and Guilherme Penedo. Falcon-40B: an open large lan-
+guage model with state-of-the-art performance, 2023.
+Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared D Kaplan, Prafulla Dhariwal,
+Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell, et al. Language models are
+few-shot learners. In Advances in neural information processing systems, volume 33, pp. 1877–
+1901, 2020.
+Yanda Chen, Chen Zhao, Zhou Yu, Kathleen McKeown, and He He.
+On the relation between
+sensitivity and accuracy in in-context learning. arXiv preprint arXiv:2209.07661, 2022.
+Wei-Lin Chiang, Zhuohan Li, Zi Lin, Ying Sheng, Zhanghao Wu, Hao Zhang, Lianmin Zheng,
+Siyuan Zhuang, Yonghao Zhuang, Joseph E. Gonzalez, Ion Stoica, and Eric P. Xing. Vicuna:
+An open-source chatbot impressing gpt-4 with 90%* chatgpt quality, March 2023. URL https:
+//lmsys.org/blog/2023-03-30-vicuna/.
+Peter Clark, Isaac Cowhey, Oren Etzioni, Tushar Khot, Ashish Sabharwal, Carissa Schoenick, and
+Oyvind Tafjord. Think you have solved question answering? try arc, the ai2 reasoning challenge.
+arXiv preprint arXiv:1803.05457, 2018.
+Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob
+Steinhardt. Measuring massive multitask language understanding. In International Conference
+on Learning Representations, 2020.
+Yuzhen Huang, Yuzhuo Bai, Zhihao Zhu, Junlei Zhang, Jinghan Zhang, Tangjun Su, Junteng Liu,
+Chuancheng Lv, Yikai Zhang, Jiayi Lei, et al. C-eval: A multi-level multi-discipline chinese
+evaluation suite for foundation models. arXiv preprint arXiv:2305.08322, 2023.
+Zhengbao Jiang, Jun Araki, Haibo Ding, and Graham Neubig. How can we know when language
+models know? on the calibration of language models for question answering. Transactions of the
+Association for Computational Linguistics, 9:962–977, 2021. doi: 10.1162/tacl a 00407. URL
+https://aclanthology.org/2021.tacl-1.57.
+Saurav Kadavath, Tom Conerly, Amanda Askell, Tom Henighan, Dawn Drain, Ethan Perez,
+Nicholas Schiefer, Zac Hatfield-Dodds, Nova DasSarma, Eli Tran-Johnson, et al. Language mod-
+els (mostly) know what they know. arXiv preprint arXiv:2207.05221, 2022.
+10
+
+Published as a conference paper at ICLR 2024
+Takeshi Kojima, Shixiang Shane Gu, Machel Reid, Yutaka Matsuo, and Yusuke Iwasawa. Large
+language models are zero-shot reasoners. In Advances in neural information processing systems,
+volume 35, pp. 22199–22213, 2022.
+OpenAI. https://chat.openai.com.chat, 2022.
+OpenAI. Gpt-4 technical report. arXiv preprint arXiv:2303.08774, 2023.
+Long Ouyang, Jeffrey Wu, Xu Jiang, Diogo Almeida, Carroll Wainwright, Pamela Mishkin, Chong
+Zhang, Sandhini Agarwal, Katarina Slama, Alex Ray, et al. Training language models to fol-
+low instructions with human feedback. In Advances in Neural Information Processing Systems,
+volume 35, pp. 27730–27744, 2022.
+Jane Pan, Tianyu Gao, Howard Chen, and Danqi Chen.
+What in-context learning “learns” in-
+context: Disentangling task recognition and task learning. In Findings of the Association for
+Computational Linguistics: ACL 2023, pp. 8298–8319, Toronto, Canada, July 2023. Associ-
+ation for Computational Linguistics.
+doi: 10.18653/v1/2023.findings-acl.527.
+URL https:
+//aclanthology.org/2023.findings-acl.527.
+Pouya Pezeshkpour and Estevam Hruschka. Large language models sensitivity to the order of op-
+tions in multiple-choice questions. arXiv preprint arXiv:2308.11483, 2023.
+Joshua Robinson and David Wingate. Leveraging large language models for multiple choice ques-
+tion answering. In The Eleventh International Conference on Learning Representations, 2022.
+Chenglei Si, Dan Friedman, Nitish Joshi, Shi Feng, Danqi Chen, and He He. Measuring inductive
+biases of in-context learning with underspecified demonstrations.
+In Proceedings of the 61st
+Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pp.
+11289–11310, Toronto, Canada, July 2023. Association for Computational Linguistics. doi: 10.
+18653/v1/2023.acl-long.632. URL https://aclanthology.org/2023.acl-long.632.
+Aarohi Srivastava, Abhinav Rastogi, Abhishek Rao, Abu Awal Md Shoeb, Abubakar Abid, Adam
+Fisch, Adam R Brown, Adam Santoro, Aditya Gupta, Adri`a Garriga-Alonso, et al. Beyond the
+imitation game: Quantifying and extrapolating the capabilities of language models. Transactions
+on Machine Learning Research, 2023.
+Alon Talmor, Jonathan Herzig, Nicholas Lourie, and Jonathan Berant. CommonsenseQA: A ques-
+tion answering challenge targeting commonsense knowledge. In Proceedings of the 2019 Con-
+ference of the North American Chapter of the Association for Computational Linguistics: Human
+Language Technologies, Volume 1 (Long and Short Papers), pp. 4149–4158, Minneapolis, Min-
+nesota, June 2019. Association for Computational Linguistics. doi: 10.18653/v1/N19-1421. URL
+https://aclanthology.org/N19-1421.
+Rohan Taori, Ishaan Gulrajani, Tianyi Zhang, Yann Dubois, Xuechen Li, Carlos Guestrin, Percy
+Liang, and Tatsunori B. Hashimoto. Stanford alpaca: An instruction-following llama model.
+https://github.com/tatsu-lab/stanford_alpaca, 2023.
+Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet, Marie-Anne Lachaux, Timoth´ee
+Lacroix, Baptiste Rozi`ere, Naman Goyal, Eric Hambro, Faisal Azhar, et al. Llama: Open and
+efficient foundation language models. arXiv preprint arXiv:2302.13971, 2023a.
+Hugo Touvron, Louis Martin, Kevin Stone, Peter Albert, Amjad Almahairi, Yasmine Babaei, Niko-
+lay Bashlykov, Soumya Batra, Prajjwal Bhargava, Shruti Bhosale, et al. Llama 2: Open founda-
+tion and fine-tuned chat models. arXiv preprint arXiv:2307.09288, 2023b.
+Peiyi Wang, Lei Li, Liang Chen, Dawei Zhu, Binghuai Lin, Yunbo Cao, Qi Liu, Tianyu Liu, and
+Zhifang Sui. Large language models are not fair evaluators. arXiv preprint arXiv:2305.17926,
+2023a.
+Yizhong Wang, Yeganeh Kordi, Swaroop Mishra, Alisa Liu, Noah A. Smith, Daniel Khashabi, and
+Hannaneh Hajishirzi. Self-instruct: Aligning language models with self-generated instructions. In
+Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume
+1: Long Papers), pp. 13484–13508, Toronto, Canada, July 2023b. Association for Computational
+Linguistics. doi: 10.18653/v1/2023.acl-long.754. URL https://aclanthology.org/2023.
+acl-long.754.
+11
+
+Published as a conference paper at ICLR 2024
+Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny
+Zhou, et al. Chain-of-thought prompting elicits reasoning in large language models. In Advances
+in Neural Information Processing Systems, volume 35, pp. 24824–24837, 2022.
+Zihao Zhao, Eric Wallace, Shi Feng, Dan Klein, and Sameer Singh. Calibrate before use: Improving
+few-shot performance of language models. In International Conference on Machine Learning, pp.
+12697–12706. PMLR, 2021.
+Chujie Zheng, Pei Ke, Zheng Zhang, and Minlie Huang. Click: Controllable text generation with
+sequence likelihood contrastive learning.
+In Anna Rogers, Jordan Boyd-Graber, and Naoaki
+Okazaki (eds.), Findings of the Association for Computational Linguistics: ACL 2023, 2023a.
+URL https://aclanthology.org/2023.findings-acl.65.
+Chujie Zheng, Fan Yin, Hao Zhou, Fandong Meng, Jie Zhou, Kai-Wei Chang, Minlie Huang, and
+Nanyun Peng. Prompt-driven llm safeguarding via directed representation optimization. arXiv
+preprint arXiv:2401.18018, 2024.
+Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu, Yonghao Zhuang,
+Zi Lin, Zhuohan Li, Dacheng Li, Eric Xing, et al. Judging llm-as-a-judge with mt-bench and
+chatbot arena. arXiv preprint arXiv:2306.05685, 2023b.
+Wanjun Zhong, Ruixiang Cui, Yiduo Guo, Yaobo Liang, Shuai Lu, Yanlin Wang, Amin Saied,
+Weizhu Chen, and Nan Duan. Agieval: A human-centric benchmark for evaluating foundation
+models. arXiv preprint arXiv:2304.06364, 2023.
+12
+
+Published as a conference paper at ICLR 2024
+A
+PROMPTS USED IN EXPERIMENTS
+The following are multiple choice questions about electrical engineering.
+You
+should directly answer the question by choosing the correct option.
+[ in-context examples (if few-shot) ]
+Question:
+In an SR latch built from NOR gates, which condition is not allowed
+Options:
+A. S=0, R=0
+B. S=0, R=1
+C. S=1, R=0
+D. S=1, R=1
+Answer: D
+Figure 6: Input formats for open-source models (e.g., llama(-2) and vicuna). The black text is the
+templated input. The next-token prediction probabilities of the option IDs at the red text is used as the
+observed prediction distribution. Note that for all the open-source models, we do not prepend the input text
+with a bos token.
+{ "role":
+"system", "content":
+"The following are multiple choice questions about
+electrical engineering.
+You should directly answer the question by choosing the
+correct option." }
+[ in-context examples (if few-shot) ]
+{ "role":
+"user", "content":
+"""Question:
+In an SR latch built from NOR gates,
+which condition is not allowed
+Options:
+A. S=0, R=0
+B. S=0, R=1
+C. S=1, R=0
+D. S=1, R=1
+Answer:""" }
+{ "role":
+"assistant", "content":
+"D" }
+Figure 7: Input formats for gpt-3.5-turbo. The black text is the templated API request. The blue text
+is in-context or test samples. The red text is the expected API-returned result. The orange text is the
+subject in MMLU (57 different ones in total).
+The following are multiple choice questions about electrical engineering.
+You
+should directly answer the question by choosing the correct option.
+[ in-context examples (if few-shot) ]
+Question:
+In an SR latch built from NOR gates, which condition is not allowed
+Options:
+S=0, R=0
+S=0, R=1
+S=1, R=0
+S=1, R=1
+Answer: S=1, R=1
+Figure 8: Input formats for open-source models with option IDs removed. We compute the likelihoods of
+options, normalized by their lengths, and use the maximum one as the model prediction.
+13
+
+Published as a conference paper at ICLR 2024
+{ "role":
+"system", "content":
+"The following are multiple choice questions about
+electrical engineering.
+You should directly answer the question by choosing the
+correct option." }
+[ in-context examples (if few-shot) ]
+{ "role":
+"user", "content":
+"""Question:
+In an SR latch built from NOR gates,
+which condition is not allowed
+Options:
+S=0, R=0
+S=0, R=1
+S=1, R=0
+S=1, R=1
+Answer:""" }
+{ "role":
+"assistant", "content":
+"S=1, R=1" }
+Figure 9: Input formats for gpt-3.5-turbo with option IDs removed. We require it to generate the whole
+selected option, which is then compared with the golden answer.
+The first API call
+{ "role":
+"system", "content":
+"The following are multiple choice questions about
+electrical engineering.
+You should reason in a step-by-step manner as to get the
+right answer." }
+{ "role":
+"user", "content":
+"""Question:
+In an SR latch built from NOR gates,
+which condition is not allowed
+Options:
+A. S=0, R=0
+B. S=0, R=1
+C. S=1, R=0
+D. S=1, R=1
+Answer:
+Let’s think step by step:""" }
+{ "role":
+"assistant", "content":
+"[ thought or reasoning process ]" }
+The second API call
+{ "role":
+"system", "content":
+"The following are multiple choice questions about
+electrical engineering.
+You should reason in a step-by-step manner as to get the
+right answer." }
+{ "role":
+"user", "content":
+"""Question:
+In an SR latch built from NOR gates,
+which condition is not allowed
+Options:
+A. S=0, R=0
+B. S=0, R=1
+C. S=1, R=0
+D. S=1, R=1
+Answer:
+Let’s think step by step:""" }
+{ "role":
+"assistant", "content":
+"[ thought or reasoning process ]" }
+{ "role":
+"assistant", "content":
+"Given all of the above, the answer of the
+question is:" }
+{ "role":
+"assistant", "content":
+"D" }
+Figure 10: Chain-of-Thought prompt for gpt-3.5-turbo, generally following the implementation of OpenAI
+Evals, where the decoding temperature is set to 0.
+14
+
+Published as a conference paper at ICLR 2024
+B
+EVALUATION RESULTS OF SELECTION BIAS
+25
+0
+25
+50
+llama-7B
+0-shot
+5-shot
+0-shot, Removing IDs
+A
+B
+C
+D
+E
+20
+0
+20
+40
+llama-13B
+10
+0
+10
+20
+llama-30B
+20
+0
+20
+llama-65B
+20
+0
+20
+vicuna-v1.3

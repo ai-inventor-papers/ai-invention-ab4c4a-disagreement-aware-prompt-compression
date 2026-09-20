@@ -1,0 +1,2686 @@
+URL: https://dl.acm.org/doi/pdf/10.1145/130385.130417
+Type: PDF
+Length: 27444 chars
+
+--- Content ---
+
+Query
+&
+Committee
+H.
+S. Seung*
+M.
+Oppert
+H.
+Sompolinsky
+Racah
+Institute
+of Physics
+and
+Institut
+fiir Theoretische
+Physik
+Racah Institute
+of Physics and
+Center for Neural
+Computation
+Justus-Liebig-Universitat
+Giessen
+Center for Neural
+Computation
+Hebrew
+University
+D-6300 Giessen, Germany
+Hebrew University
+Jerusalem
+91904, Israel
+manf red. opper@
+Jerusalem
+91904, Israel
+seungtiars
+.huj i. ac. il
+physik.
+uni-giessen.
+dbp. de
+haim@galaxy.
+huj i. ac. il
+Abstract
+We propose an algorithm
+called
+query
+by comm-
+ittee,
+in
+which
+a committee
+of students
+is
+trained
+on the same data set. The next query
+is chosen according to the principle
+of maximal
+disagreement.
+The algorithm
+is studied for two
+toy models:
+the high-low
+game and perception
+learning of another perception.
+As the number
+of queries goes to infinity,
+the committee
+algo-
+rithm
+yields asymptotically
+finite
+information
+gain.
+This
+leads to generalization
+error
+that
+decreases exponentially
+with the number of ex-
+amples.
+This
+in marked
+contrast
+to learning
+from randomly
+chosen inputs,
+for which the in-
+formation
+gain approaches zero and the gener-
+alization
+error decreases with
+a relatively
+slow
+inverse power law. We suggest that
+asymptot-
+ically finite information
+gain may be an impor-
+tant
+characteristic
+of good query algorithms.
+1
+Introduction
+Although
+query algorithms
+have been proposed for a va-
+riety
+of learning
+problems [Bau91],
+little
+work has gone
+into understanding
+the general principles
+by which these
+algorithms
+should be constructed.
+In this work,
+we ar-
+gue that
+the
+Shannon
+information
+of a query
+can be
+a suitable
+guide[Fed72].
+We further
+show that
+the de-
+gree of disagreement
+among a committee
+of learners can
+serve as an estimate
+of this information
+value.
+The al-
+*Present address: AT&T
+Bell Laboratories,
+600 Moun-
+tain Ave., Murray Hill, NJ 07974,
+seungOphyslcs. att. com
+tPresent
+address:
+Institut
+fur
+Theoretische
+Physik,
+Julius Maximilian
+Universit5t
+Wiirzburg,
+Am Hubland, D-
+8700 Wiirzburg,
+Germany, opperOvax. rz. uni-vuerzburg.
+dbp. de
+Permission
+to
+copy
+without
+fee
+all
+or
+part
+of
+this
+material
+is
+granted
+provided
+that
+the
+copies
+are
+not
+made
+or distributed
+for
+direct
+commercial
+advantage,
+the
+ACM
+copyright
+notice
+and the
+title
+of
+the
+publication
+end
+its
+date
+appear,
+and
+notice
+is given
+that
+copying
+is by permission
+of the
+Association
+for
+Computing
+Machinary.
+To
+copy
+otherwise,
+or to
+republish,
+requires
+a fee
+and/or
+specific
+permission.
+COLT’92-71921PA,
+USA
+Q 1992
+ACM
+0-89791
+-498
+-81921000710287
+...$ 1.50
+287
+gorithms
+considered
+in this work
+focus on minimizing
+the number of queries required,
+and hence are most rel-
+evant to situations
+in which
+queries carry
+the heaviest
+computational
+cost.
+We consider the paradigm
+of incremental
+query learn-
+ing, in which
+the training
+set is built
+up one example
+at a time.
+We restrict
+our scope to parametric
+learning
+models with cent inuously
+varying
+weights, learning per-
+fectly
+realizable,
+boolean-valued
+target
+rules. The prior
+distribution
+on the weight space is assumed to be flat.
+An incremental
+learning
+procedure
+consists of two com-
+ponents:
+a training
+algorithm
+and a query
+algorithm.
+Given a set of P examples,
+the
+training
+algorithm
+pro-
+duces a set of weights satisfying
+the training
+set.
+The
+query
+algorithm
+is then used to select example
+P
++
+1.
+Then the training
+algorithm
+is run again on the newly
+incremented
+training
+set, and so on.
+In this paper, the only training
+algorithm
+that
+we con-
+sider is the (zero temperature)
+Gibbs algorithm,
+which
+selects a weight
+vector
+at
+random
+from
+the
+version
+space,
+the set of all weight
+vectors
+that
+are consistent
+with
+the training
+set.
+This
+will
+enable us to use tech-
+niques from statistical
+mechanics [SST92].
+After
+training
+2k students on the same training
+set, the
+query
+by
+committee
+algorithm
+selects an input
+that
+is
+classified as positive
+by half of the committee,
+and neg-
+ative by the other
+half.
+By maximizing
+disagreement
+among the committee,
+the information
+gain of the query
+can be made high.
+In the k -
+co limit,
+each query bi-
+sects the version
+space, so that
+the information
+gain
+saturates
+the bound of 1 bit per query.
+In the following,
+the query
+by committee
+algorithm
+is
+first illustrated
+using a very simple model, the high-low
+game. We then move on to a more complicated
+model,
+perception
+learning
+of another
+perceptron[GD89].
+For
+both
+models,
+the information
+gain approaches
+a finite
+value as the number
+of queries goes to infinity.
+This
+asymptotically
+finite
+information
+gain leads to general-
+ization error that decreaees exponentially
+with the num-
+ber of queries.
+This
+is in
+marked
+contrast
+to
+the
+case of
+learning
+with
+random
+inputs,
+in
+which
+the
+information
+gain
+
+approaches
+zero as the number
+of examples
+increases.
+In the random
+input
+case, the generalization
+error de-
+creases relatively
+slowly, as an inverse power law in the
+number of examples.
+2
+The
+information
+content
+of a query
+Denote
+the
+target
+function,
+or
+“teacher,”
+by
+co(X),
+and the parametric
+learning
+model,
+or
+“student ,“
+by
+a( W; X).
+Both teacher and student
+are boolean-valued
+functions,
+i.e. maps into the set {+1}.
+We further
+as-
+sume that
+the target
+function
+is perfectly
+realizable
+by
+the student,
+which means that
+there exists some weight
+vector
+W.
+such that
+so(X)
+=
+a(Wo;
+X)
+for
+all
+X.
+The input
+vector Xt
+is called a positive
+or negative
+ex-
+ample
+depending
+on the sign of the teacher’s
+output
+Ut =
+cro(Xt).
+The
+training
+set of input-output
+pairs
+t~ = (Xt,
+at) determines
+the version space
+)4+={
+w:cr(w;xt)=at,
+t=l,...,
+P},
+(1)
+which is the set of all W
+consistent with the training
+set.
+If the prior
+distribution
+PO(W)
+is assumed to be flat,
+then the posterior
+distribution
+is uniform
+on the version
+space, and vanishes outside[TLS89].
+This is written
+as
+T(wl.fl,...,
+f’)
+=
+{ ~-”
+~h:~’,’
+(2)
+where
+VP is the volume of WP.
+We consider the Gibbs
+training
+algorithm
+[HKS91],
+in which
+the weight
+vector
+W is drawn at random
+from this posterior
+distribution.
+A
+query
+algorithm
+specifies a way of choosing another
+input
+Xp+l
+with which to query the teacher.
+In general,
+it can be written
+as a conditional
+probability
+P(xp+llp,
+. . .,’$P),
+(3)
+which
+we leave unspecified
+for now.
+An input
+Xp+l
+is
+chosen from this distribution
+and receives a label Up+l
+from
+the teacher.
+The
+results
+of this
+query
+are then
+added to the training
+set.
+The
+entropy
+of the
+posterior
+distribution
+(2)
+on the
+weight space is
+S=logvp
+.
+(4)
+Since the entropy
+quantifies
+our uncertainty
+about
+W,
+the information
+gained from query
+P + 1 can be defined
+as the reduction
+in the entropy,
+or
+Ip+l
+= –As
+= – logxp+l
+.
+(5)
+Here we have defined the volume ratio
+Vp+l
+“+1
+= F
+“
+(6)
+The
+information
+ain
+Ip+l
+depends on the query
+se-
+quence {cl,
+. . . ..fS+l }, although
+the dependence is not
+explicit
+in the notation
+of (5).
+This dependence can be
+eliminated
+by considering
+averaged quantities.
+For ex-
+ample, one can average the information
+gain (and other
+quantities
+of interest)
+over query
+sequences, and then
+over the prior
+distribution
+of W..
+For our
+purposes,
+only
+a partial
+average will
+suffice.
+Holding
+the query sequence cl,...,
+~p constant,
+we will
+average over the input
+Xptl
+with respect to (3) and the
+teacher weight vector
+W.
+with
+respect to the posterior
+distribution
+(2).
+In other words, the average is over all
+teacher vectors WO that
+are consistent
+with
+the first
+P
+examples, and over all inputs
+Xp+l
+given by the query
+algorithm.
+So the average information
+gain is given by
+(Ip+,)
+=
+-(log
+xp+,)wo,xp+,
+(7)
+Similarly,
+we can calculate
+the complete probability
+dis-
+tribution
+for the volume ratio,
+which is
+P(xp+l ](1,...,&’) =(6 (Xp+l
+- %))W
+x.+,
+cl,
+(8)
+,-,
+Note that these quantities
+still contain
+a dependence on
+the query sequence <1, . . . ..$P.
+Performing
+the WO average in (7) leads to a bayesian
+interpretation
+of the formula,
+Any input
+XP+l
+divides
+the version space WP into two parts,
+w+
+=
+{w
+G w’
+: a(w;
+xp+l)
+= +1}
+,
+(9)
+w-
+=
+{W
+EW’:U(W;
+X p+’)
+= -1}
+.
+(lo)
+Averaging
+over the posterior
+distribution
+of W.,
+we find
+that the average information
+gain (7) is given by
+(Ip+,)
+=
+(
+.;log:
+–;log~
+)
+VP
+x.+,
+,
+(11)
+where
+V*
+are the volumes
+of
+W*
+and hence depend
+upon
+Xp+l
+implicitly.
+After
+the teacher
+answers the
+query, u‘+1
+is known with
+certainty.
+Before the answer
+arrives, the value of UP+l is uncertain:
+according to the
+bayesian, it is +1 with probability
+V+/VP,
+and –1 with
+probability
+V-/VP.
+The entropy
+of this distribution
+is
+precisely the information
+value of the query, and is the
+$1
+expression inside the average
+11 . The average infor-
+mation gain is maximized
+by X
++
+such that
+V+
+=
+V-,
+i.e. by queries that
+divide
+the version space in half.
+In
+this case of exact bisection,
+1 = 1 bit exactly.
+Unfortunately,
+for most nontrivial
+learning
+models, the
+geometry
+of the version space is complex,
+and one can-
+not practically
+calculate
+the volumes
+V*
+for any given
+input,
+much
+less find
+an input
+for which
+V+
+=
+V-.
+Training
+algorithms
+typically
+yield single points
+in the
+version space, not global information
+about
+the version
+space.
+However,
+a committee
+of students
+can be used
+to obtain
+global information.
+Train
+a committee
+of 2k
+weight vectors using the Gibbs
+algorithm.
+Find
+an in-
+put vector
+that
+is classified as a positive
+example
+by k
+members
+of the committee,
+and classified
+as negative
+by the other k. Query the teacher about this input
+vec-
+tor.
+Train
+the committee
+again using the new enlarged
+training
+set, and repeat.
+As
+k
+a
+co
+this
+algorithm
+approaches the bisection
+algorithm.
+This
+algorithm
+is
+very much in the spirit
+of [OH91],
+in which
+consensus
+was used to improve
+generalization
+performance.
+Here
+we use lack of consensus to choose a query, or a principle
+of maximal
+disagreement.
+288
+
+We define the generalization
+function
+by
+Cg(w, wrJ)
+= (@(–a(w;
+X)u(wo;
+X)))x
+!
+(12)
+where the average is taken over the prior
+distribution
+TO(X)
+of inputs.
+This measures the probability
+of error
+by a student
+W
+on input-output
+pairs
+drawn
+from
+a
+teacher
+Wo.
+Given
+a query
+sequence cl,...,
+<p,
+the
+generalization
+error is defined by
+Cg(&l, . . . )Cp) = (~g(w,
+Wo))w,wo
+,
+(13)
+where the averages over W
+and WO are taken over the
+posterior
+distribution.
+The average generalization
+error
+Cg(P)
+is defined
+as the average of (13) over the query
+sequence.
+3
+High-Low
+The game of high-low,
+perhaps
+the simplest
+model
+of
+query learning,
+can be formalized
+within
+our parametric
+learning
+framework.
+The teacher and student
+are
+Uo(x)
+=
+sgn(X
+– Wo) ,
+(14)
+a(X,
+W’)
+=
+sgn(X
+– IV)
+.
+(15)
+The input
+and weight spaces are the unit
+interval
+[0, 1],
+and the prior
+distributions
+on these spaces are flat,
+PI)(WO) = 1,
+(16)
+?%(x)
+= 1.
+(17)
+Given
+any query X,
+the teacher will
+respond
+with
++1
+or – 1, depending
+on whether
+X is higher or lower than
+w.
+Suppose that there already exists a training
+set of P
+~
+2
+examples.
+Let XL be the largest negative example,
+and
+XR
+the smallest
+positive
+example.
+Then
+the version
+space is
+WP = [XL, XR]
+,
+(18)
+with
+volume
+VP=
+XR–
+XL.
+(19)
+The posterior
+weight
+distribution
+has entropy
+S = log Vp.
+The Gibbs training
+algorithm
+simply
+picks a W at random
+from the version space, i.e.
+from the interval
+[XL, X~].
+We first
+consider
+the case of randomly
+chosen inputs.
+With
+probability
+1 –
+Vp
+the
+next
+input
+Xp+l
+will
+fall
+outside
+the version
+space, so that
+the volume
+ra-
+tio
+will
+be 1.
+If Xp+l
+falls
+inside
+the version
+space,
+the probability
+distribution
+of the volume ratio iS given
+by 2x, where this result
+is obtained
+by averaging over
+all Xp+l,
+W
+G
+[XL,
+XR].
+Combining
+these two alter-
+natives, we find ~hat
+volume ratio
+is
+?yxp+l!vp)
+= (1 -
+the-probability
+distribution
+vp)(5(xp+l
+– 1)+
+vp2xp+l
+of the
+. (21)
+The expected
+information
+gain is given by the average
+of —log Xp+l
+with
+respect to this distribution,
+or
+(22)
+As the number
+of examples
+increases, the volume
+VP
+shrinks,
+and the information
+gain tends to zero.
+The generalization
+error
+(13) is linear
+in the volume of
+the version space,
+q(~l,.
+. . ,( P)=
+;Vp .
+(23)
+Averaging
+this over all possible
+training
+sets, one can
+show that
+the average generalization
+error satisfies
+21
+~9(p)=:p+27
+(24)
+an inverse power law in the number
+of examples.
+Maximal
+information
+gain can be attained
+by the bisec-
+tion algorithm,
+in which
+XP+l
+is chosen to be halfway
+between XL
+and XR.
+In this case, the probability
+dis-
+tribution
+of the volume ratio
+is
+(25)
+so that
+the information
+gain is 1 bit
+per query.
+The
+volume decreases exponentially,
+l+
+=
+2-P
+.
+(26)
+Indeed,
+our knowledge
+of the binary
+representation
+of
+W.
+increases by one bit per query.
+For a committee
+with
+2k members, the probability
+dis-
+tribution
+of the volume ratio
+is given by
+x
+//
+1
+pl(l
+_ ~)k-l
+P(X)
+cx 2X
+dy
+d.z
+(27)
+o
+x
+%—y
+‘
+where
+we have
+omitted
+the
+normalization
+constant.
+Here we have written
+l’(x)
+rather
+than
+P(xP),
+since
+the distribution
+is independent
+of the query history,
+un-
+like the random input
+case (21).
+Figure
+1 shows (27) for
+various values of k.
+Note that
+as k approaches infinity,
+the curves approach the delta function
+(25) of the bisec-
+tion algorithm.
+The average information
+gain in nats is
+given by
+/
+1
+I(k)
+=
+dx
+log XP(X)
+o
+(28)
+where @(z) =
+I“(z)/I’(x)
+is the Euler
+~-function.
+As
+k -
+co, this saturates
+the bound of 1 bit per query.
+Since ~g = VP/3
+is the product
+of the volume ratio%
+P
+log Cg= ~
+log Xt + const .
+t=l
+(29)
+289
+
+3.!5 I
+I
+I
+I
+I
+. . .
+I
+P(x)
+3
+2.5
+2
+1.5
+1
+0.5
+0
+0
+0.2
+0.4
+0.6
+0.8
+1
+x
+Figure
+1: Probability
+distribution
+of the volume ratio for a 2k-member
+committee
+playing
+the high-low
+game.
+The volume
+ratios
+Xt are independent,
+identically
+dis-
+tributed
+random
+variables
+drawn
+from
+(27).
+Hence by
+the central
+limit
+theorem
+C9 approaches
+a log-normal
+random
+variable
+as P
+~
+m.
+The most probable
+cg(P)
+scales like
+cg(P)
+N e-Pi(k)
+,
+(30)
+where l(k)
+is given by (28).1 Thus for query learning
+of
+high-low
+there is a very simple exponential
+relationship
+between information
+gain and generalization
+error.
+In
+the next section we will
+see that
+a similar
+relationship
+can be written
+for perceptions.
+4
+Perception
+Learning
+We now consider perception
+learning
+of another percep-
+tion,
+where the teacher and student
+are given by
+Co(x)
+=
+sgn(WO
+oX)
+,
+(31)
+u(X;
+W)
+=
+sgn(W
+.X)
+.
+(32)
+The
+vectors
+W,
+W.,
+and
+X
+all
+have
+N
+components,
+The
+weight
+space is taken
+to be the hypersphere
+YV={W:W,
+W=
+N},
+(33)
+and the input
+distribution
+is Gaussian
+To(X)
+= (2m)-Ni2
+exp-~x”x
+.
+(34)
+Given
+P examples the posterior
+distribution
+is uniform
+on the version space
+Wp={wew:
+(w.
+x’)(wo.
+x’)>
+o,vt
+=1,...
+P}
+(35)
+1We could also calculate the average of C9rather than
+log C9. The coefficient of P in the resulting exponential is
+given by log(x) rather than (log x).
+4.1
+Random
+inputs
+When all inputs
+are chosen at random from the distribu-
+tion
+(34), the replica
+method
+can be used to calculate
+the entropy
+of the posterior
+distribution[GT90].
+The
+calculation
+is exact in the thermodynamic
+limit,
+where
+P,jV*oo
+witha=
+P/N
+constant.
+The entropy
+per
+weight s ~ S/N
+is then
+S(Q)= ;k%(l
+–9) + ~q+2a /
+Dz H(yz) logII(7Z)
+,
+(36)
+where
+(37)
+(38)
+pm
+1
+H(y)
+s
+DZ
+.
+(39)
+Y
+The entropy
+must be extremized
+with respect to the or-
+der parameter
+q, from which the average generalization
+error can be obtained
+using the relation
+tg=7r
+-lcos-lq
+.
+(40)
+In the large a limit,
+this leads to the inverse power law
+behavior
+(41)
+The large a asymptotic
+can also be obtained
+by ex-
+amining
+the scaling of the entropy
+with
+the generaliza-
+tion
+error,
+similar
+to the arguments
+in [SST92] using
+the microcanonical
+high-T
+limit
+for a general classifica-
+tion of learning
+curves. As q s
+1, the first
+term of (36)
+290
+
+dominates,
+so that
+the entropy
+has a simple logarithmic
+~
+p;.;
+$it~
+dependence on the generalization
+error
+(42)
+4
+0.592
+0.854
+6
+0.621
+0.896
+where
+we
+have
+used
+the
+asymptotic
+result
+cg
+%
+co
+0.693
+1
+T-l
+~~.
+The information
+gain is given by
+as
+/
+Table
+1: Information
+gain of the query by committee
+l(a)
+= –x
+=
+–2
+Dx H(yx)
+log H(p)
+algorithm
+for perception
+learning
+%
+1.60cg ,
+(43)
+This condition
+combined with
+(42) can only be satisfied
+by the inverse power law CgN l/cr,
+as in (41).
+We
+have
+performed
+a
+Monte
+Carlo
+simulation
+of
+this
+algorithm.
+The
+deterministic
+perception
+algorithm[MP88]
+was used to obtain
+a weight vector in
+the version space. Then
+zero-temperature
+Monte
+Carlo
+was used to random
+walk inside the version space. To
+maintain
+accept ante
+rates of approximately
+50Y0, the
+size of the Monte
+Carlo step was scaled downward
+with
+increasing
+a.
+The resulting
+learning
+curve is shown in
+Fig. 2, and fits the analytic
+results obtained
+through
+the
+replica method.
+4.2
+Query
+by
+committee
+Because each query depends on the previous
+history
+of
+queries,
+the commit tee algorithm
+is a dynamical
+pro-
+cess, where the number
+of examples
+plays the role of
+“time.”
+In the replica
+calculations
+for this
+algorithm,
+we must
+know the overlaps
+between weight
+vectors
+at
+different
+“times.”
+This
+makes the
+calculations
+much
+more difficult
+than for the case of random-inputs.
+The
+replica calculation
+in the appendix
+makes the simplify-
+ing assumption
+that
+the typical
+overlap between weight
+vectors at different
+“times”
+is equal to the typical
+over-
+lap of two vectors at the earlier
+“time.”
+In other words,
+we assume that
+the overlaps satisfy
+~t
+. ~t’
+N
+= q(min{t,
+t’})
+,
+(44)
+and are self-averaging
+quantities.
+Taking the thermody-
+namic
+limit
+N ~
+00 turns
+the discrete-time
+dynamics
+in t into a continuous-time
+dynamics
+in a = t/N.
+The
+entropy
+of the weight
+space at time
+a is calculated
+by
+treating
+q(cr’) for previous
+“times”
+a’ < a as an exter-
+nal field.
+The resulting
+saddle point
+equation
+for q(a)
+is an integral
+equation
+that
+can be solved numerically.
+The replica
+results for the two-member
+committee
+are
+shown in Fig.
+2, along with
+Monte
+Carlo simulations.
+In
+the
+simulations,
+zero-temperature
+Gibbs
+training
+was implemented
+by training
+two perceptions
+using the
+standard
+perception
+algorithm,
+and then equilibrating
+them
+with
+zero-temperature
+Monte
+Carlo.
+Input
+vec-
+tors were then selected at random from the prior
+distri-
+bution
+(34) until
+an input
+that
+produced
+disagreement
+was found.
+The teacher was queried on this input,
+and
+the input
+and the teacher’s
+output
+were added to the
+training
+set.
+Note that
+the generalization
+error
+of the two-member
+committee
+is very close to the random
+input
+results for
+a of order 1 or less. Even for relatively
+large a, different
+committee
+sizes (not shown) perform
+almost identically.
+However, the algorithms
+are quite different
+in their large
+a asymptotic
+properties.
+By taking the derivative
+of the
+committee
+entropy
+(66) with
+respect to a, we find that
+the information
+gain approaches the limit
+~(a)~
+_2JddP(z)H’(-z)
+H((c)
+log H(z)
+(45)
+fd.H’(z)H’(-z)
+as a ~
+co. These limiting
+values for some small k can
+be found
+in Table
+1. As k
+-+
+cm, the information
+gain
+saturates
+the bound of one bit per query.
+How does the information
+gain affect the generalization
+performance?
+For the committee
+algorithm,
+we have
+found that the information
+gain approaches a finite con-
+stant value
+(LS
+—
++
+–l(m)
+da
+(46)
+We assume that
+the entropy
+is still
+given
+by s(a)
+%
+log cg as in (42).
+This
+assumption,
+which
+is shown to
+be consistent
+in the appendix,
+leads to the asymptotic
+result
+Eg-e
+-CYI(CO)
+(47)
+The generalization
+error is asymptotically
+exponential
+in
+a, with a decay constant
+determined
+by the information
+gain. This is markedly
+faster than the inverse power law
+(41) for random
+inputs.
+In our implementation
+of the committee
+algorithms,
+a
+source of random
+inputs
+is screened by a committee
+un-
+til one is found that provokes disagreement.
+A practical
+drawback of this scheme is that the time to find a query
+diverges like the inverse of the generalization
+error.
+In
+this respect, algorithms
+which construct
+queries directly
+may be superior.
+For example,
+the
+query
+algorithm
+proposed
+by Kinzel
+and Ruj6.n[KR90,
+WR92]
+for per-
+ception
+learning
+constructs
+input
+vectors that
+are per-
+pendicular
+to the student
+weight vector.
+In conjunction
+with
+the Gibbs
+training
+algorithm,
+this method
+yields
+generalization
+performance
+only slightly
+worse than that
+of the committee
+algorithms
+for moderate
+a, but much
+faster query times.
+However, the committee
+algorithms
+appear
+to possess a generality
+that
+other
+query
+algo-
+rithms
+do not.
+291
+
+0.5
+0.4
+0.3
+tg
+0.2
+0.1
+0
+I
+I
+I
+I
+committee
+of two
+0
+random
+inputs
++
+t
+I
+I
+I
+I
+I
+o
+1
+2
+3
+4
+5
+a
+Figure
+2:
+Generalization
+curves
+for
+perception
+learning
+using
+the
+random-input,
+committee,
+and
+minimal
+training
+set algorithms.
+The
+Monte
+Carlo
+simulations
+were done
+with
+N
+= 25, averaged
+over
+64 samples.
+After
+each query,
+the
+perception
+was equilibrated
+for
+1024 steps.
+The
+standard
+error
+of measurement
+is smaller
+than
+the
+size of the
+symbol.
+The
+solid
+lines
+are analytic
+results
+from
+replica
+theory.
+5
+Conclusion
+We
+have
+compared
+query
+by
+committee
+and
+random–
+input
+training
+for
+the
+case of the
+perception.
+For
+ran-
+dom
+inputs,
+the
+information
+gain
+approaches
+zero with
+the generalization
+error,
+(48)
+For
+the
+committee
+algorithm,
+the
+information
+gain
+is
+asymptotically
+finite
+I(a)
++ 1(00) ,
+(49)
+where
+l(oo)
+>0
+is given
+by
+(45).
+For perception
+learning,
+the entropy
+behaves
+asymptot-
+ically
+as
+s
+S=
+—-logeg,
+N
+(50)
+for
+both
+random–input
+and
+query
+algorithms.
+Given
+dslda
+and
+s in
+terms
+of Cg, one
+can derive
+the
+generalization
+curve
+as a function
+of
+a.
+For
+random
+inputs,
+(48)
+and
+(50)
+imply
+(51)
+For the
+committee
+algorithms,
+(49)
+and
+(50)
+imply
+logcg
+-
+–I(co)a!
+.
+(52)
+The
+high-low
+game
+and
+the
+perception
+have
+provided
+simple
+illustrations
+of
+the
+query
+by
+committee
+algo-
+rithm,
+and of the relationship
+between
+information
+gain
+and
+generalization
+error.
+However,
+we
+have
+not
+ad-
+dressed
+the
+issue
+of
+whether
+the
+behaviors
+exhibited
+by
+these
+toy
+models
+are
+general.
+For
+what
+architectures
+does
+query
+by
+committee
+lead
+to
+asymptotically
+finite
+information
+gain?
+Under
+what
+conditions
+does
+asymp-
+totically
+finite
+information
+gain
+lead
+to
+exponential
+gen-
+eralization
+curves?
+These
+questions
+are currently
+under
+investigation.
+Acknowledgements
+We acknowledge
+helpful
+discussions
+with
+Y. Freund,
+M.
+Griniasty,
+D. Hansel,
+N. Tishby,
+and T.
+Watkin.
+References
+{Bau91]
+[Fed72]
+[GD89]
+[GT90]
+E. Baum.
+Neural
+net algorithms
+that
+learn
+in
+polynomial
+time
+from
+examples
+and
+queries.
+IEEE
+Trans.
+in
+Neural
+Networks,
+2:5-19,
+1991.
+V.
+V.
+Fedorov.
+Theory
+of
+Optimal
+Experi-
+ments.
+Academic
+Press,
+New York,
+1972.
+E. Gardner
+and
+B. Derrida.
+Three
+unfinished
+works
+on the optimal
+storage
+capacity
+of net-
+works.
+J. Phys.,
+A22:1983–1994,
+1989.
+G. Gyorgyi
+and
+N. Tishby.
+Statistical
+theory
+of
+learning
+a
+rule.
+I.
+W.
+K.
+Theumann
+and
+R.
+Koberle,
+editors,
+Neural
+Networks
+and $pin
+Glasses,
+pages
+3-36,
+Singapore,
+1990.
+World
+Scientific.
+[HKS91]
+D.
+Haussler,
+M.
+Kearns,
+and
+R.
+Schapire.
+Bounds
+on the
+sample
+complexity
+of bayesian
+292
+
+— ---
+[KR90]
+[MP88]
+[OH91]
+[SST92]
+[TLS89]
+[WR92]
+learning
+using
+information
+theory
+and
+the
+VC
+dimension.
+In
+M.
+K.
+Warmuth
+and
+L.
+G.
+Valiant,
+editors,
+Proceedings
+of the Fourth
+An-
+nual
+Workshop
+on
+Computational
+Learning
+Theory,
+pages
+61-74,
+San
+Mateo,
+CA,
+1991.
+Morgan
+Kaufmann.
+W.
+Kinzel
+and
+P. Rujzin.
+Improving
+a net-
+work
+generalization
+ability
+by selecting
+exam-
+ples.
+Europhys.
+Lett.,
+13:473-477,
+1990.
+M.
+L.
+Minsky
+and
+S. Papert.
+Perceptions.
+MIT
+Press,
+Cambridge,
+expanded
+edition,
+1988.
+M.
+Opper
+and
+D.
+Haussler.
+Generalization
+performance
+of bayes optimal
+classification
+al-
+gorithm
+for learning
+a perception.
+Phys.
+Rev.
+Lett.,
+66:2677-2680,
+1991.
+H. S. Seung,
+H. Sompolinsky,
+and
+N. Tishby.
+Statistical
+mechanics
+of learning
+from
+exam-
+ples.
+Phys.
+Rev.,
+A45:6056-6091,
+1992.
+N. Tishby,
+E. Levin,
+and
+S. Solla.
+Consistent
+inference
+of probabilities
+in layered
+networks:
+Predictions
+and
+generalization.
+In
+Proc.
+lnt.
+Joint
+Conf.
+on
+Neural
+Networks,
+volume
+2,
+pages 403-409,
+Washington,
+DC,
+1989. IEEE.
+T.
+L. H. Watkin
+and A. Rau.
+Selecting
+exam-
+ples
+for
+perceptions.
+J. Phys.,
+A25: 113-121,
+1992.
+Appendix:
+Replica
+calculations
+for
+query
+by
+committee
+The
+volume
+VP of the version
+space determines
+the en-
+tropy
+S = in VP for
+a fixed
+teacher
+W..
+The
+average
+of
+the entropy
+over all possible
+query
+sequences
+<1, ...,
+<p
+consistent
+with
+the
+teacher
+is denoted
+by
+SaV.
+From
+this
+quantity
+we shall
+find
+the
+overlap
+q between
+two
+random
+weight
+vectors
+inside
+the
+version
+space
+YVP.
+If
+we
+take
+one
+them
+to
+be
+the
+target
+vector,
+this
+in
+turn
+will
+give
+us
+the
+generalization
+error
+on
+a new
+random
+input.
+We begin
+with
+the
+definition
+sau =
+(ln VP){ Xi}
+(53)
+= }yo&in((W){X1})WO
+(54)
+In the second
+line
+we have introduced
+the replica
+trick,
+and
+an
+average
+of
+W.
+over
+the
+prior
+distribution
+of
+teachers
+has
+been
+added,
+as in
+[OH9
+1].
+This
+makes
+the
+symmetry
+of
+the
+teacher
+and
+the
+students
+explicit,
+so
+that
+the
+teacher
+vector
+W.
+can
+be
+treated
+as
+another
+replica,
+1P
+n
+\t=lp=o
+I {Xt}
+Note
+that
+for
+all
+integer
+n we
+have
+now
+n +
+1 replicas.
+Recall
+that
+for
+the
+k =
+2 committee,
+the
+t + 1st input
+Xtfl
+is selected
+so as to
+cause
+disagreement
+between
+two committee
+members
+W:
+and W:
+drawn
+at random
+from
+the version
+space Wt.
+Thus
+the probability
+density
+for Xt+l
+is
+qx~+llw:,
+w:)
+a ?l)(x~+l)x
+where
+a prefactor
+must
+be
+added
+to
+achieve
+the
+correct
+normalization
+~ dXt+lP(Xt+l
+lW~,
+Wl)
+=
+1.
+The
+prior
+distribution
+of patterns
+TO(X)
+is the
+Gaussian
+Po(X)
+= (27r)N/2e-*x’x
+.
+(57)
+Let
+us
+consider
+the
+average
+over
+Xt+l,
+with
+the
+com-
+mittee
+weights
+W$
+and
+W?
+fixed
+for
+the time
+being.
+= p+’iJ@((7t+1wfl.xt+l)P(xt+l
+Iwj, w::
+=
+[ dx~+ln)(xt+l)
+fj
+e(d+lwp
+.x~+l)
+x
+0=+1
+The
+average
+with
+respect
+to
+70(Xt+l)
+involves
+n + 3
+quantities
+W=
+. Xt/&,
+where
+a can
+be
+any
+of
+the
+symbols
+O, 1, . . . . n, +, –.
+These
+quantities
+are Gaussian
+random
+variables
+with
+zero mean,
+and
+covariance
+given
+by
+(
+waxwb.x
+)
+W.
+. wb
+fi
+m
+PO(X)=
+N
+= ‘“’
+.
+(59)
+The
+average
+(58)
+depends
+on
+the
+vectors
+W.
+only
+through
+these
+overlaps
+qab.
+In
+accord
+with
+the
+ansatz
+(44)
+and
+the ansatz
+of replica
+symmetry,
+we assume
+9P.
+=
+bp” +(1
+– c$pv)q
+(60)
+!?pk
+=
+q(t)
+(61)
+9+*
+=
+1
+(62)
+9++
+=
+q(t)
+.
+(63)
+We now make
+the replacements
+293
+
+where
+x, y, ZP,z+
+are uncorrelated
+Gaussian
+random
+variables
+of unit
+variance.
+This
+change of variables
+yields the proper
+covariances.
+This
+average must
+be done for
+every
+Xt,
+and yields
+an entropy
+that
+depends on the order parameters
+q(t),
+t
+=
+1 to
+P
+–
+1, and on the overlap
+q at time
+P
+of
+the weight
+vectors
+WP.
+We treat
+the
+q(t)
+as exter-
+nal fields
+and determine
+q variationally.
+This
+is valid
+provided
+that
+the
+q(t)
+are self-averaging
+quantities,
+so
+that the fluctuations
+in the committee
+members at times
+t <
+P
+do not
+affect
+the
+calculation
+of the
+entropy
+at
+time
+P.
+To take the continuum
+limit
+N +
+co, we de-
+fine P=aNandt=
+cr’~
+and replace the product
+11~=1(...)
+bY exP(N ~~ da’ ln(..
+.). Finally,
+the Wp
+in-
+tegrals are done, as usual, by introducing
+entropic
+terms
+containing
+q.
+Generalizing
+to a committee
+of 2k members, we find for
+the entropy
+per weight
+s=
+~q + ~ ln(l
+– q)
+(66)
+where
+7“
+=
+r
+q(a”)
+1 – q(a’)
+‘
+(67)
+“ “ ‘E+’m
+’68)
+The value of q =
+q(~)
+is determined
+variationally
+from
+(66).
+The information
+gain can be calculated
+by differentiat-
+ing (66) with
+respect to a,
+~(q)
+=
+_2JDzH’(~2)H’(-yx)
+H(~z)log
+H(yz)
+fD2@(y.)H’(-~2)
+(;9)
+where
+~ is defined
+as in (37).
+As q ~
+1, this yields the
+asymptotic
+result
+(45).
+Assuming that the generalization
+error is asymptotically
+exponent ial in CY,one can show that the disorder term in
+(66), the integral
+over cd, approaches a constant.
+Hence
+the ln(l
+– q) term dominates,
+s z log Cg,and the deriva-
+tion in the text of asymptotically
+exponential
+~g is self-
+consistent.
+294
+

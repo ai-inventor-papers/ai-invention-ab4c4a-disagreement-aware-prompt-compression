@@ -1,0 +1,415 @@
+URL: https://huggingface.co/datasets/hotpotqa/hotpot_qa
+Type: HTML
+Length: 27829 chars
+
+--- Content ---
+
+[ Hugging Face](/)
+
+  * [ Models ](/models)
+  * [ Datasets ](/datasets)
+  * [ Spaces ](/spaces)
+  * [ Buckets new](/storage)
+  * [ Docs ](/docs)
+  * [ Enterprise ](/enterprise)
+  * [Pricing](/pricing)
+  *     * Website
+
+      * [ Tasks](/tasks)
+      * [ HuggingChat](/chat)
+      * [ Collections](/collections)
+      * [ Languages](/languages)
+      * [ Organizations](/organizations)
+    * Community
+
+      * [ Blog](/blog)
+      * [ Posts](/posts)
+      * [ Daily Papers](/papers)
+      * [ Hardware](/hardware)
+      * [ Learn](/learn)
+      * [ Discord](/join/discord)
+      * [ Forum](https://discuss.huggingface.co/)
+      * [ GitHub](https://github.com/huggingface)
+    * Solutions
+
+      * [ Team & Enterprise](/enterprise)
+      * [ Hugging Face PRO](/pro)
+      * [ Enterprise Support](/support)
+      * [ Inference Providers](/inference/models)
+      * [ Inference Endpoints](/inference-endpoints)
+      * [ Storage Buckets](/storage)
+
+  * * * *
+
+  * [Log In](/login)
+  * [Sign Up](/join)
+
+
+
+# [ Datasets:](/datasets)
+
+* * *
+
+[ ](/hotpotqa)
+
+[hotpotqa](/hotpotqa)
+
+/
+
+[hotpot_qa](/datasets/hotpotqa/hotpot_qa)
+
+Like 332
+
+Follow
+
+hotpotqa 40
+
+Tasks: [ Question Answering ](/datasets?task_categories=task_categories%3Aquestion-answering)
+
+Modalities: [ Text ](/datasets?modality=modality%3Atext)
+
+Formats: [ parquet ](/datasets?format=format%3Aparquet)
+
+Languages: [ English ](/datasets?language=language%3Aen)
+
+Size: [ 100K - 1M ](/datasets?size_categories=size_categories%3A100K%3Cn%3C1M)
+
+ArXiv:
+
+arxiv: 1809.09600
+
+Tags: [ multi-hop ](/datasets?other=multi-hop)
+
+Libraries: [ Datasets ](/datasets?library=library%3Adatasets)[ Dask ](/datasets?library=library%3Adask)[ Polars ](/datasets?library=library%3Apolars) \+ 1
+
+License:
+
+cc-by-sa-4.0
+
+[ Dataset card ](/datasets/hotpotqa/hotpot_qa)[ Data Studio ](/datasets/hotpotqa/hotpot_qa/viewer/)[ Files Files and versions xet ](/datasets/hotpotqa/hotpot_qa/tree/main)[ Community 12 ](/datasets/hotpotqa/hotpot_qa/discussions)
+
+Dataset Viewer
+
+[ Auto-converted to Parquet](/datasets/hotpotqa/hotpot_qa/tree/refs%2Fconvert%2Fparquet/distractor) API Embed [ Duplicate](/datasets/hotpotqa/hotpot_qa?duplicate=true) Data Studio
+
+Subset (2)
+
+distractor · 97.9k rows
+
+distractor (97.9k rows)fullwiki (105k rows)
+
+Split (2)
+
+train · 90.4k rows
+
+train (90.4k rows)validation (7.41k rows)
+
+SQL
+
+Console
+
+id stringlengths 24 24 | question stringlengths 13 654 | answer stringlengths 1 623 | type stringclasses 2 values | level stringclasses 3 values | supporting_facts dict | context dict  
+---|---|---|---|---|---|---  
+5a7a06935542990198eaf050 |  Which magazine was started first Arthur's Magazine or First for Women? |  Arthur's Magazine |  comparison |  medium |  { "title": [ "Arthur's Magazine", "First for Women" ], "sent_id": [ 0, 0 ] } |  { "title": [ "Radio City (Indian radio station)", "History of Albanian football", "Echosmith", "Women's colleges in the Southern United States", "First Arthur County Courthouse and Jail", "Arthur's Magazine", "2014–15 Ukrainian Hockey Championship", "First for Women", "Freeway Comp...  
+5a879ab05542996e4f30887e |  The Oberoi family is part of a hotel company that has a head office in what city? |  Delhi |  bridge |  medium |  { "title": [ "Oberoi family", "The Oberoi Group" ], "sent_id": [ 0, 0 ] } |  { "title": [ "Ritz-Carlton Jakarta", "Oberoi family", "Ishqbaaaz", "Hotel Tallcorn", "Mohan Singh Oberoi", "Hotel Bond", "The Oberoi Group", "Future Fibre Technologies", "289th Military Police Company", "Glennwanis Hotel" ], "sentences": [ [ "The Ritz-Carlton Jaka...  
+5a8d7341554299441c6b9fe5 |  Musician and satirist Allie Goertz wrote a song about the "The Simpsons" character Milhouse, who Matt Groening named after who? |  President Richard Nixon |  bridge |  hard |  { "title": [ "Allie Goertz", "Allie Goertz", "Allie Goertz", "Milhouse Van Houten" ], "sent_id": [ 0, 1, 2, 0 ] } |  { "title": [ "Lisa Simpson", "Marge Simpson", "Bart Simpson", "Allie Goertz", "Milhouse Van Houten", "Los Angeles Reader", "Homer Simpson", "List of The Simpsons video games", "The Simpsons: An Uncensored, Unauthorized History", "List of The Simpsons guest stars" ], "senten...  
+5a82171f5542990a1d231f4a |  What nationality was James Henry Miller's wife? |  American |  bridge |  medium |  { "title": [ "Peggy Seeger", "Peggy Seeger", "Ewan MacColl" ], "sent_id": [ 0, 1, 0 ] } |  { "title": [ "Moloch: or, This Gentile World", "Launceston by-election, 1874", "Incest: From a Journal of Love", "James Henry Deakin (junior)", "Ewan MacColl", "Peggy Seeger", "Henry Miller Memorial Library", "June Miller", "James Innes-Ker, 7th Duke of Roxburghe", "Jim Miller ...  
+5a84dd955542997b5ce3ff79 |  Cadmium Chloride is slightly soluble in this chemical, it is also called what? |  alcohol |  bridge |  medium |  { "title": [ "Cadmium chloride", "Ethanol" ], "sent_id": [ 1, 0 ] } |  { "title": [ "Cadmium chloride", "Water blue", "Diflucortolone valerate", "Heptanoic acid", "Magnesium chloride", "Ethanol", "Tributyltin oxide", "Benzamide", "Gold(III) chloride", "Chloride" ], "sentences": [ [ "Cadmium chloride is a white crystalline compound of...  
+5a7e36045542991319bc9440 |  Which tennis player won more Grand Slam titles, Henri Leconte or Jonathan Stark? |  Jonathan Stark |  comparison |  medium |  { "title": [ "Jonathan Stark (tennis)", "Jonathan Stark (tennis)", "Henri Leconte" ], "sent_id": [ 0, 1, 1 ] } |  { "title": [ "Li Na", "Williams sisters", "Henri Leconte", "Steffi Graf", "1986 Grand Prix German Open", "Jonathan Stark (tennis)", "Pam Teeguarden", "Ken Rosewall", "2009 Serena Williams tennis season", "Larisa Neiland" ], "sentences": [ [ "Li Na (; ; born 26 Feb...  
+5adf44985542993a75d2646d |  Which genus of moth in the world's seventh-largest country contains only one species? |  Crambidae |  bridge |  hard |  { "title": [ "Indogrammodes", "Indogrammodes", "India", "India" ], "sent_id": [ 0, 1, 0, 1 ] } |  { "title": [ "India", "List of companies of India", "Eutrapela", "Geography of India", "Yoshiyasua", "Nepita", "Parectropis", "Indogrammodes", "Eumacaria", "Nymphuliella" ], "sentences": [ [ "India, officially the Republic of India (\"Bhārat Gaṇarājya\"), is a cou...  
+5a832c3455429954d2e2ec41 |  Who was once considered the best kick boxer in the world, however he has been involved in a number of controversies relating to his "unsportsmanlike conducts" in the sport and crimes of violence outside of the ring. |  Badr Hari |  bridge |  easy |  { "title": [ "Global Fighting Championship", "Global Fighting Championship", "Badr Hari", "Badr Hari" ], "sent_id": [ 1, 2, 0, 2 ] } |  { "title": [ "Verano de Escándalo (1998)", "Triplemanía VII", "Protection racket", "E. Gordon Gee", "Badr Hari", "Guerra de Titanes (1998)", "Global Fighting Championship", "Outrageous Betrayal", "Betting controversies in cricket", "Prosecution of gender-targeted crimes" ], ...  
+5a7d0db955429909bec76924 |  The Dutch-Belgian television series that "House of Anubis" was based on first aired in what year? |  2006 |  bridge |  medium |  { "title": [ "House of Anubis", "Het Huis Anubis" ], "sent_id": [ 0, 1 ] } |  { "title": [ "House of Anubis", "Batibot", "Wolfblood", "List of House of Anubis episodes", "Majisuka Gakuen", "Graduation Day (Buffy the Vampire Slayer)", "Fish Police (TV series)", "Nathalia Ramos", "Het Huis Anubis", "Das Haus Anubis" ], "sentences": [ [ "House...  
+5a89372855429951533612e6 |  What is the length of the track where the 2013 Liqui Moly Bathurst 12 Hour was staged? |  6.213 km long |  bridge |  hard |  { "title": [ "2013 Liqui Moly Bathurst 12 Hour", "2013 Liqui Moly Bathurst 12 Hour", "Mount Panorama Circuit", "Mount Panorama Circuit" ], "sent_id": [ 0, 1, 0, 2 ] } |  { "title": [ "Mount Panorama Circuit", "2016 Intercontinental GT Challenge", "Bathurst 12 Hour", "2018 Intercontinental GT Challenge", "2016 Liqui Moly Bathurst 12 Hour", "2017 Intercontinental GT Challenge", "2013 Liqui Moly Bathurst 12 Hour", "2015 Liqui Moly Bathurst 12 Hour", "...  
+5abd90545542996e802b47d7 |  Fast Cars, Danger, Fire and Knives includes guest appearances from which hip hop record executive? |  Jaime Meline |  bridge |  medium |  { "title": [ "Fast Cars, Danger, Fire and Knives", "El-P" ], "sent_id": [ 2, 0 ] } |  { "title": [ "Lights Out Paris", "El-P", "Born and Raised (EP)", "Lord Steppington", "Control Freek", "Hip hop", "Fast Cars, Danger, Fire and Knives", "Longterm Mentality", "Experimental hip hop", "Changes (Alyson Avenue album)" ], "sentences": [ [ "Lights Out Par...  
+5aba66c855429939ce03dcdb |  Gunmen from Laredo starred which narrator of "Frontier"? |  Walter Darwin Coy |  bridge |  medium |  { "title": [ "Gunmen from Laredo", "Walter Coy", "Walter Coy" ], "sent_id": [ 0, 0, 1 ] } |  { "title": [ "Louis Stevens (writer)", "The Lone Gunmen", "Hermanos de Pistoleros Latinos", "Piranha (1972 film)", "Gunmen from Laredo", "Seemanto-heera", "Frontier Texas!", "Walter Coy", "Max McLean", "Bruce Harwood" ], "sentences": [ [ "Louis Stevens (December 2...  
+5a7722d655429966f1a36c99 |  Where did the form of music played by Die Rhöner Säuwäntzt originate? |  United States |  bridge |  medium |  { "title": [ "Die Rhöner Säuwäntzt", "Skiffle" ], "sent_id": [ 0, 1 ] } |  { "title": [ "Pantun Sunda", "Bubu music", "Peşrev", "Skiffle", "Cachi Cachi music", "Background music", "Kantrum", "Chillador", "Die Rhöner Säuwäntzt", "Minoru Kojima" ], "sentences": [ [ "Pantun Sunda is a type of Sundanese oral narrative performance intersperse...  
+5ade025e5542997dc790711e |  In which American football game was Malcolm Smith named Most Valuable player? |  Super Bowl XLVIII |  bridge |  easy |  { "title": [ "Malcolm Smith (American football)", "Super Bowl XLVIII" ], "sent_id": [ 3, 0 ] } |  { "title": [ "Winston Lagoon", "Malcolm Smith (American football)", "Super Bowl XLVIII", "2013 NBA Summer League", "Steve Clark (American football)", "1959 Illinois Fighting Illini football team", "103rd Grey Cup", "Richard Smith (rugby union, born 1973)", "Kevin Durant", "Supe...  
+5ab381b155429969a97a816b |  What U.S Highway gives access to Zilpo Road, and is also known as Midland Trail? |  US 60 |  bridge |  hard |  { "title": [ "Zilpo Road", "Morehead, Kentucky" ], "sent_id": [ 1, 0 ] } |  { "title": [ "Zilpo Road", "RISE (sculpture)", "Peterman Hill", "Arkansas Highway 113", "California State Route 266", "Morehead, Kentucky", "Roman bridge of Salamanca", "Hawks Nest, West Virginia", "Hawaii Route 64", "Glen Ferris, West Virginia" ], "sentences": [ [ ...  
+5ae0d91e55429924de1b7198 |  The 1988 American comedy film, The Great Outdoors, starred a four-time Academy Award nominee, who received a star on the Hollywood Walk of Fame in what year? |  2006 |  bridge |  medium |  { "title": [ "The Great Outdoors (film)", "The Great Outdoors (film)", "Annette Bening", "Annette Bening", "Annette Bening" ], "sent_id": [ 0, 1, 0, 3, 4 ] } |  { "title": [ "Shane Stanley", "Robert Cummings", "Beau Bridges", "Annette Bening", "Farrah Fawcett", "List of stars on the Hollywood Walk of Fame", "Kevin Bacon", "Larry R. Williams", "The Great Outdoors (film)", "John Lithgow" ], "sentences": [ [ "Shane Stanley (...  
+5ac2a5d455429921a00ab01b |  What are the names of the current members of American heavy metal band who wrote the music for Hurt Locker The Musical?  |  Hetfield and Ulrich, longtime lead guitarist Kirk Hammett, and bassist Robert Trujillo. |  bridge |  easy |  { "title": [ "Hurt Locker (musical)", "Metallica" ], "sent_id": [ 3, 2 ] } |  { "title": [ "Joey Vera", "Hurt Locker (musical)", "Obús", "Metal Health", "Joey Jordison", "Black 'n Blue", "Machine Head (band)", "Dan Spitz", "Nu metal", "Metallica" ], "sentences": [ [ "Joseph \"Joey\" Vera (born April 24, 1963) is an American heavy metal bass...  
+5adc1309554299438c868d3b |  Human Error" is the season finale of the third season of a tv show that aired on what network? |  Fox |  bridge |  medium |  { "title": [ "Human Error (House)", "House (TV series)" ], "sent_id": [ 0, 0 ] } |  { "title": [ "My Finale", "Desperate Housewives (season 2)", "List of Republic of Doyle episodes", "Human Error (House)", "The Price of Free and Fair Elections", "Robert Chase", "The Voice Portugal", "House (TV series)", "Through the Looking Glass (Lost)", "Mr. Yin Presents..."...  
+5a83168855429966c78a6b2e |  Dua Lipa, an English singer, songwriter and model, the album spawned the number-one single "New Rules" is a song by English singer Dua Lipa from her eponymous debut studio album, released in what year? |  2017 |  bridge |  easy |  { "title": [ "Dua Lipa", "New Rules (song)" ], "sent_id": [ 5, 0 ] } |  { "title": [ "Last Dance (Dua Lipa song)", "Dua Lipa", "Lost in Your Light", "Be the One (Dua Lipa song)", "Hotter than Hell Tour (Dua Lipa)", "Blow Your Mind (Mwah)", "US and Europe Tour", "Dua Lipa (album)", "New Rules (song)", "Hotter than Hell (Dua Lipa song)" ], "sente...  
+5ab698885542995eadef002a |  American politician Joe Heck ran unsuccessfully against Democrat Catherine Cortez Masto, a woman who previously served as the 32nd Attorney General of where? |  Nevada |  bridge |  easy |  { "title": [ "Joe Heck", "Joe Heck", "Catherine Cortez Masto" ], "sent_id": [ 0, 2, 2 ] } |  { "title": [ "Kamala Harris", "Maryland Attorney General election, 2014", "Corey Palumbo", "Catherine Cortez Masto", "Joe Heck", "List of United States Senators from Nevada", "Dennis Heck", "Samuel D. Jackson", "George Henry Williams", "Jeff Harris (politician)" ], "sentenc...  
+5ab345db55429969a97a8122 |  Which state does the drug stores, of which the CEO is Warren Bryant, are located? |  Hawaii |  bridge |  medium |  { "title": [ "Warren Bryant", "Longs Drugs" ], "sent_id": [ 0, 0 ] } |  { "title": [ "USA Drug", "Perry Drug Stores", "Longs Drugs", "Thrifty PayLess", "Leader Drug Stores", "Gray Drug", "Hartig Drug", "Warren Bryant", "Cunningham Drug (U.S.)", "Rexall" ], "sentences": [ [ "USA Drug is a convenience store and pharmacy chain in the Uni...  
+5adf732a5542993a75d264e9 |  Which American politician did Donahue replaced  |  Kelli Ward |  bridge |  easy |  { "title": [ "Sue Donahue", "Kelli Ward" ], "sent_id": [ 2, 0 ] } |  { "title": [ "Mike Dmitrich", "Maurice A. Donahue", "John Hoeven", "Anne Donahue", "Sue Donahue", "Frank J. Donahue", "Charles Harlow", "Kelli Ward", "Dan Donahue", "Warren Furutani" ], "sentences": [ [ "Mike Dmitrich (born 1936) is an American politician and Natu...  
+5ac2a912554299218029dae8 |  Which band was founded first, Hole, the rock band that Courtney Love was a frontwoman of, or The Wolfhounds? |  The Wolfhounds |  comparison |  medium |  { "title": [ "Courtney Love", "Courtney Love", "The Wolfhounds" ], "sent_id": [ 0, 2, 0 ] } |  { "title": [ "Nobody's Daughter", "Courtney Love filmography", "Patty Schemel", "Beautiful Son", "The Wolfhounds", "Live Through This", "Turpentine (song)", "Miss World (song)", "Softer, Softest", "Courtney Love" ], "sentences": [ [ "Nobody's Daughter is the fourt...  
+5a7272eb5542997f827839d7 |  How old is the female main protagonist of Catching Fire? |  16-year-old |  bridge |  medium |  { "title": [ "Catching Fire", "The Hunger Games (novel)" ], "sent_id": [ 0, 1 ] } |  { "title": [ "Catching Fire", "Oil well fire", "H2O: Footprints in the Sand", "To Heart 2", "The Hunger Games (novel)", "Moon (visual novel)", "Dōsei", "The Hunger Games: Catching Fire", "Tenshin Ranman: Lucky or Unlucky!?", "Hello, Good-bye" ], "sentences": [ [ "...  
+5ac2c3545542990b17b1548b |  Chang Ucchin was born in korea during a time that ended with the conclusion of what?  |  World War II |  bridge |  medium |  { "title": [ "Chang Ucchin", "Korea under Japanese rule" ], "sent_id": [ 1, 0 ] } |  { "title": [ "May 16 coup", "Han Myeong-sook", "Chang Dae-hwan", "Chang Won-jun", "Korea under Japanese rule", "Tommy Chang (martial artist)", "United States in the Korean War", "Chang Mi-hee", "Chang Yong-hak", "Chang Ucchin" ], "sentences": [ [ "The May 16 coup ...  
+5ae3b4d05542992f92d82349 |  Who is the director of the 2003 film which has scenes in it filmed at the Quality Cafe in Los Angeles? |  Todd Phillips |  bridge |  hard |  { "title": [ "Quality Cafe (diner)", "Quality Cafe (diner)", "Old School (film)" ], "sent_id": [ 0, 1, 0 ] } |  { "title": [ "Los Angeles County Federation of Labor", "Good Life Cafe", "Austin Young", "Old School (film)", "Stephen Nicholas (actor)", "John Miner", "Quality Cafe", "Quality Cafe (jazz club)", "Filandia, Quindío", "Quality Cafe (diner)" ], "sentences": [ [ "The...  
+5a76a401554299373536012b |  New Faces of 1952 is a musical revue with songs and comedy skits, it helped jump start the career of which young performer, and American actress? |  Carol Lawrence |  bridge |  easy |  { "title": [ "New Faces of 1952", "Carol Lawrence" ], "sent_id": [ 2, 0 ] } |  { "title": [ "Guess Who I Saw Today", "Paul Nassau", "New Faces of 1952", "Carol Lawrence", "Monotonous (song)", "How to Eat Like a Child", "New Faces (film)", "Mary Begoña", "Leonard Sillman", "Leonard Sillman's New Faces of 1968" ], "sentences": [ [ "\"Guess Who...  
+5ae3918b5542994393b9e709 |  Were Pavel Urysohn and Leonid Levin known for the same type of work? |  no |  comparison |  medium |  { "title": [ "Pavel Urysohn", "Leonid Levin" ], "sent_id": [ 0, 0 ] } |  { "title": [ "Leonid Ramzin", "Leftover hash lemma", "Phthinosaurus", "Kate Dillon Levin", "Tony Levin", "Gabriel Levin", "Leonid Levin", "Pavel Urysohn", "Meyer Levin", "Leonid Bunimovich" ], "sentences": [ [ "Leonid Konstantinovich Ramzin (Russian: Леони́д Конст...  
+5a8efd3c55429918e830d179 |  Are both The New Pornographers and Kings of Leon American rock bands? |  no |  comparison |  hard |  { "title": [ "The New Pornographers", "Kings of Leon" ], "sent_id": [ 0, 0 ] } |  { "title": [ "Whiteout Conditions", "A. C. Newman", "Kings of Leon", "Little Scout", "Neko Case", "Good People Rock", "Kathryn Calder", "Kurt Dahle", "Phantom Buffalo", "The New Pornographers" ], "sentences": [ [ "Whiteout Conditions is the seventh studio album by...  
+5a8b63755542997f31a41cfe |  750 7th Avenue and 101 Park Avenue, are located in which city? |  New York City |  comparison |  easy |  { "title": [ "750 7th Avenue", "101 Park Avenue" ], "sent_id": [ 0, 0 ] } |  { "title": [ "655 Park Avenue", "101 Park Avenue", "South Phoenix", "750 7th Avenue", "Berkeley, Denver", "Church of St. Ignatius Loyola (New York City)", "Squire Park, Seattle", "Hounsfield Heights/Briar Hill, Calgary", "Greenwich Avenue", "Tinley Park station" ], "sentenc...  
+  
+End of preview. [Expand in Data Studio](/datasets/hotpotqa/hotpot_qa/viewer/distractor/train)
+
+* * *
+
+  * [ Previous]()
+  * [1](/datasets/hotpotqa/hotpot_qa/viewer/distractor/train?p=0)
+  * [2](/datasets/hotpotqa/hotpot_qa/viewer/distractor/train?p=1)
+  * [3](/datasets/hotpotqa/hotpot_qa/viewer/distractor/train?p=2)
+  * ...
+  * [905](/datasets/hotpotqa/hotpot_qa/viewer/distractor/train?p=904)
+  * [Next ](/datasets/hotpotqa/hotpot_qa/viewer/distractor/train?p=1)
+
+
+
+  * Dataset Structure
+    * Data Instances
+    * Data Fields
+    * Data Splits
+  * Dataset Creation
+    * Curation Rationale
+    * Source Data
+    * Annotations
+    * Personal and Sensitive Information
+  * Considerations for Using the Data
+    * Social Impact of Dataset
+    * Discussion of Biases
+    * Other Known Limitations
+  * Additional Information
+    * Dataset Curators
+    * Licensing Information
+    * Citation Information
+    * Contributions
+
+
+
+#  Dataset Card for "hotpot_qa" 
+
+###  Dataset Summary 
+
+HotpotQA is a new dataset with 113k Wikipedia-based question-answer pairs with four key features: (1) the questions require finding and reasoning over multiple supporting documents to answer; (2) the questions are diverse and not constrained to any pre-existing knowledge bases or knowledge schemas; (3) we provide sentence-level supporting facts required for reasoning, allowingQA systems to reason with strong supervision and explain the predictions; (4) we offer a new type of factoid comparison questions to test QA systems’ ability to extract relevant facts and perform necessary comparison.
+
+###  Supported Tasks and Leaderboards 
+
+[More Information Needed](https://github.com/huggingface/datasets/blob/master/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)
+
+###  Languages 
+
+[More Information Needed](https://github.com/huggingface/datasets/blob/master/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)
+
+##  Dataset Structure 
+
+###  Data Instances 
+
+####  distractor 
+
+  * **Size of downloaded dataset files:** 612.75 MB
+  * **Size of the generated dataset:** 598.66 MB
+  * **Total amount of disk used:** 1.21 GB
+
+
+
+An example of 'validation' looks as follows.
+    
+    
+    {
+        "answer": "This is the answer",
+        "context": {
+            "sentences": [["Sent 1"], ["Sent 21", "Sent 22"]],
+            "title": ["Title1", "Title 2"]
+        },
+        "id": "000001",
+        "level": "medium",
+        "question": "What is the answer?",
+        "supporting_facts": {
+            "sent_id": [0, 1, 3],
+            "title": ["Title of para 1", "Title of para 2", "Title of para 3"]
+        },
+        "type": "comparison"
+    }
+    
+
+####  fullwiki 
+
+  * **Size of downloaded dataset files:** 660.10 MB
+  * **Size of the generated dataset:** 645.80 MB
+  * **Total amount of disk used:** 1.31 GB
+
+
+
+An example of 'train' looks as follows.
+    
+    
+    {
+        "answer": "This is the answer",
+        "context": {
+            "sentences": [["Sent 1"], ["Sent 2"]],
+            "title": ["Title1", "Title 2"]
+        },
+        "id": "000001",
+        "level": "hard",
+        "question": "What is the answer?",
+        "supporting_facts": {
+            "sent_id": [0, 1, 3],
+            "title": ["Title of para 1", "Title of para 2", "Title of para 3"]
+        },
+        "type": "bridge"
+    }
+    
+
+###  Data Fields 
+
+The data fields are the same among all splits.
+
+####  distractor 
+
+  * `id`: a `string` feature.
+  * `question`: a `string` feature.
+  * `answer`: a `string` feature.
+  * `type`: a `string` feature.
+  * `level`: a `string` feature.
+  * `supporting_facts`: a dictionary feature containing:
+    * `title`: a `string` feature.
+    * `sent_id`: a `int32` feature.
+  * `context`: a dictionary feature containing:
+    * `title`: a `string` feature.
+    * `sentences`: a `list` of `string` features.
+
+
+
+####  fullwiki 
+
+  * `id`: a `string` feature.
+  * `question`: a `string` feature.
+  * `answer`: a `string` feature.
+  * `type`: a `string` feature.
+  * `level`: a `string` feature.
+  * `supporting_facts`: a dictionary feature containing:
+    * `title`: a `string` feature.
+    * `sent_id`: a `int32` feature.
+  * `context`: a dictionary feature containing:
+    * `title`: a `string` feature.
+    * `sentences`: a `list` of `string` features.
+
+
+
+###  Data Splits 
+
+####  distractor 
+
+| train | validation  
+---|---|---  
+distractor | 90447 | 7405  
+  
+####  fullwiki 
+
+| train | validation | test  
+---|---|---|---  
+fullwiki | 90447 | 7405 | 7405  
+  
+##  Dataset Creation 
+
+###  Curation Rationale 
+
+[More Information Needed](https://github.com/huggingface/datasets/blob/master/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)
+
+###  Source Data 
+
+####  Initial Data Collection and Normalization 
+
+[More Information Needed](https://github.com/huggingface/datasets/blob/master/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)
+
+####  Who are the source language producers? 
+
+[More Information Needed](https://github.com/huggingface/datasets/blob/master/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)
+
+###  Annotations 
+
+####  Annotation process 
+
+[More Information Needed](https://github.com/huggingface/datasets/blob/master/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)
+
+####  Who are the annotators? 
+
+[More Information Needed](https://github.com/huggingface/datasets/blob/master/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)
+
+###  Personal and Sensitive Information 
+
+[More Information Needed](https://github.com/huggingface/datasets/blob/master/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)
+
+##  Considerations for Using the Data 
+
+###  Social Impact of Dataset 
+
+[More Information Needed](https://github.com/huggingface/datasets/blob/master/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)
+
+###  Discussion of Biases 
+
+[More Information Needed](https://github.com/huggingface/datasets/blob/master/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)
+
+###  Other Known Limitations 
+
+[More Information Needed](https://github.com/huggingface/datasets/blob/master/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)
+
+##  Additional Information 
+
+###  Dataset Curators 
+
+[More Information Needed](https://github.com/huggingface/datasets/blob/master/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)
+
+###  Licensing Information 
+
+HotpotQA is distributed under a [CC BY-SA 4.0 License](http://creativecommons.org/licenses/by-sa/4.0/).
+
+###  Citation Information 
+    
+    
+    @inproceedings{yang2018hotpotqa,
+      title={{HotpotQA}: A Dataset for Diverse, Explainable Multi-hop Question Answering},
+      author={Yang, Zhilin and Qi, Peng and Zhang, Saizheng and Bengio, Yoshua and Cohen, William W. and Salakhutdinov, Ruslan and Manning, Christopher D.},
+      booktitle={Conference on Empirical Methods in Natural Language Processing ({EMNLP})},
+      year={2018}
+    }
+    
+
+###  Contributions 
+
+Thanks to [@albertvillanova](https://github.com/albertvillanova), [@ghomasHudson](https://github.com/ghomasHudson) for adding this dataset.
+
+Copy to bucket new
+
+Use this dataset
+
+Downloads last month
+
+    103,054
+
+[Homepage: hotpotqa.github.io](https://hotpotqa.github.io/)[Repository: github.com](https://github.com/hotpotqa/hotpot)[Paper: HotpotQA: A Dataset for Diverse, Explainable Multi-hop Question Answering](https://arxiv.org/abs/1809.09600)Size of downloaded dataset files: 1.27 GBNumber of rows: 203,109 Total file size: 747 MB
+
+##  Models trained or fine-tuned on hotpotqa/hotpot_qa
+
+#### [saytes/SoT_DistilBERT Text Classification • 67M • Updated Mar 11, 2025 • 3.77k • • 7 ](/saytes/SoT_DistilBERT)
+
+#### [llm-semantic-router/halugate-sentinel Text Classification • 0.1B • Updated Dec 4, 2025 • 759 • 11 ](/llm-semantic-router/halugate-sentinel)
+
+#### [mradermacher/RAG-R1-mq-7b-GGUF 8B • Updated Oct 25, 2025 • 406 • 1 ](/mradermacher/RAG-R1-mq-7b-GGUF)
+
+#### [mradermacher/RAG-R1-sq-7b-GGUF 8B • Updated Oct 25, 2025 • 374 ](/mradermacher/RAG-R1-sq-7b-GGUF)
+
+#### [UKPLab/GritHopper-7B Sentence Similarity • Updated Jun 5 • 116 • 8 ](/UKPLab/GritHopper-7B)
+
+#### [GorankLabs/Rank-Embed-1B Feature Extraction • 1B • Updated Apr 8 • 83 • 3 ](/GorankLabs/Rank-Embed-1B)
+
+[Browse 47 models trained on this dataset](/models?dataset=dataset:hotpotqa/hotpot_qa)
+
+##  Spaces using hotpotqa/hotpot_qa 10
+
+[🚀 tmdeptrai3012/LegalContractAnalyzer ](/spaces/tmdeptrai3012/LegalContractAnalyzer)[🤖 babaralishah/rag-llm-app ](/spaces/babaralishah/rag-llm-app)[🔍 JSCPPProgrammer/gensearcher-firered ](/spaces/JSCPPProgrammer/gensearcher-firered)[🔧 landrew9/ToolOrchestratorEnv ](/spaces/landrew9/ToolOrchestratorEnv)[🧠 minhtudragon/headroom_2 ](/spaces/minhtudragon/headroom_2)[🧠 minhtudragon/headroom_3 ](/spaces/minhtudragon/headroom_3)[📚 Matcry/Rabbook ](/spaces/Matcry/Rabbook)[🧠 minhtudragon/headroom ](/spaces/minhtudragon/headroom) \+ 5 Spaces \+ 2 Spaces
+
+##  Paper for hotpotqa/hotpot_qa
+
+#### [HotpotQA: A Dataset for Diverse, Explainable Multi-hop Question Answering Paper • 1809.09600 • Published Sep 25, 2018 • 5 ](/papers/1809.09600)
+
+System theme
+
+Company
+
+[TOS](/terms-of-service) [Privacy](/privacy) [About](/huggingface) [Careers](https://apply.workable.com/huggingface/) [](/)
+
+Website
+
+[Models](/models) [Datasets](/datasets) [Spaces](/spaces) [Pricing](/pricing) [Docs](/docs)
+

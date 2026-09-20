@@ -1,0 +1,816 @@
+URL: https://arxiv.org/pdf/2410.02707
+Type: PDF
+Length: 115346 chars (truncated)
+
+--- Content ---
+
+Published as a conference paper at ICLR 2025
+LLMS KNOW MORE THAN THEY SHOW: ON THE IN-
+TRINSIC REPRESENTATION OF LLM HALLUCINATIONS
+Hadas Orgad1∗Michael Toker1
+Zorik Gekhman1
+Roi Reichart1
+Idan Szpektor2
+Hadas Kotek3
+Yonatan Belinkov1
+1Technion
+2Google Research
+3Apple
+ABSTRACT
+Large language models (LLMs) often produce errors, including factual inaccura-
+cies, biases, and reasoning failures, collectively referred to as “hallucinations”.
+Recent studies have demonstrated that LLMs’ internal states encode information
+regarding the truthfulness of their outputs, and that this information can be utilized
+to detect errors. In this work, we show that the internal representations of LLMs
+encode much more information about truthfulness than previously recognized. We
+first discover that the truthfulness information is concentrated in specific tokens,
+and leveraging this property significantly enhances error detection performance.
+Yet, we show that such error detectors fail to generalize across datasets, implying
+that—contrary to prior claims—truthfulness encoding is not universal but rather
+multifaceted. Next, we show that internal representations can also be used for pre-
+dicting the types of errors the model is likely to make, facilitating the development
+of tailored mitigation strategies. Lastly, we reveal a discrepancy between LLMs’
+internal encoding and external behavior: they may encode the correct answer, yet
+consistently generate an incorrect one. Taken together, these insights deepen our
+understanding of LLM errors from the model’s internal perspective, which can
+guide future research on enhancing error analysis and mitigation.1
+1
+INTRODUCTION
+The ever-growing popularity of large language models (LLM) across many domains has brought a
+significant limitation to center stage: their tendency to “hallucinate” – which is often used to de-
+scribe the generation of inaccurate information. But what are hallucinations, and what causes them?
+A considerable body of research has sought to define, taxonomize, and understand hallucinations
+through extrinsic, behavioral analysis, primarily examining how users perceive such errors (Bang
+et al., 2023; Ji et al., 2023; Huang et al., 2023a; Rawte et al., 2023). However, this approach does
+not adequately address how these errors are encoded within the LLMs. Alternatively, another line
+of work has explored the internal representations of LLMs, suggesting that LLMs encode signals
+of truthfulness (Kadavath et al., 2022; Li et al., 2024; Chen et al., 2024, inter alia). However,
+these analyses were typically restricted to detecting errors—determining whether a generated output
+contains inaccuracies—without delving deeper into how such signals are represented and could be
+leveraged to understand or mitigate hallucinations.
+In this work, we reveal that the internal representations of LLMs encode much more information
+about truthfulness than previously recognized. Through a series of experiments, we train classifiers
+on these internal representations to predict various features related to the truthfulness of generated
+outputs. Our findings reveal the patterns and types of information encoded in model representations,
+linking this intrinsic data to extrinsic LLM behavior. This enhances our ability to detect errors
+(while understanding the limitations of error detection), and may guide the development of more
+nuanced strategies based on error types and mitigation methods that make use of the model’s internal
+knowledge. Our experiments are designed to be general, covering a broad array of LLM limitations.
+While the term “hallucinations” is widely used, it lacks a universally accepted definition (Venkit
+et al., 2024). Our framework adopts a broad interpretation, considering hallucinations to encompass
+∗Corresponding author; Work partially done during internship at Apple.
+1Our code is available in https://github.com/technion-cs-nlp/LLMsKnow.
+1
+arXiv:2410.02707v4  [cs.CL]  18 May 2025
+
+Published as a conference paper at ICLR 2025
+all errors produced by an LLM, including factual inaccuracies, biases, common-sense reasoning
+failures, and other real-world errors. This approach enables us to draw general conclusions about
+model errors from a broad perspective.
+Our first step is identifying where truthfulness signals are encoded in LLMs. Previous studies have
+suggested methods for detecting errors in LLM outputs using intermediate representations, logits,
+or probabilities, implying that LLMs may encode signals of truthfulness (Kadavath et al., 2022; Li
+et al., 2024; Chen et al., 2024). Focusing on long-form generations, which reflect real-world usage
+of LLMs, our analysis uncovers a key oversight: the choice of token used to extract these signals
+(Section 3). We find that truthfulness information is concentrated in the exact answer tokens –
+e.g., “Hartford” in “The capital of Connecticut is Hartford, an iconic city...”. Recognizing this nu-
+ance significantly improves error detection strategies across the board, revealing that truthfulness
+encoding is stronger than previously observed.
+From this point forward, we concentrate on our most effective strategy: a classifier trained on in-
+termediate LLM representations within the exact answer tokens, referred to as ‘probing classifiers’
+(Belinkov, 2021). This approach helps us explore what these representations reveal about LLMs.
+Our demonstration that a trained probing classifier can predict errors suggests that LLMs encode
+information related to their own truthfulness. However, we find that probing classifiers do not gen-
+eralize across different tasks (Section 4). Generalization occurs only within tasks requiring similar
+skills (e.g., factual retrieval), indicating the truthfulness information is “skill-specific” and varies
+across different tasks. For tasks involving different skills, e.g., sentiment analysis, these classifiers
+are no better–or worse–than logit-based uncertainty predictors, challenging the idea of a “universal
+truthfulness” encoding proposed in previous work (Marks & Tegmark, 2023; Slobodkin et al., 2023).
+Instead, our results indicate that LLMs encode multiple, distinct notions of truth. Thus, deploying
+trainable error detectors in practical applications should be undertaken with caution.
+We next find evidence that LLMs encode not only error detection signals but also more nuanced
+information about error types. Delving deeper into errors within a single task, we taxonomize its
+errors based on responses across repeated samples (Section 5). For example, the same error being
+consistently generated is different from an error that is generated occasionally among many other
+distinct errors. Using a different set of probing classifiers, we find that error types are predictable
+from the LLM representations, drawing a connection between the models’s internal representations
+and its external behavior. This classification offers a more nuanced understanding of errors, enabling
+developers to predict error patterns and implement more targeted mitigation strategies.
+Finally, we find that the truthfulness signals encoded in LLMs can also differentiate between correct
+and incorrect answers for the same question (Section 6). Results highlight a significant misalign-
+ment between LLM’s internal representations and its external behavior in some cases. The model’s
+internal encoding may identify the correct answer–yet it frequently generates an incorrect re-
+sponse. This discrepancy reveals that the LLM’s external behavior may misrepresent its abilities,
+potentially pointing to new strategies for reducing errors by utilizing its existing strengths. Overall,
+our model-centric framework provides a deeper understanding of LLM errors, suggesting potential
+directions for improvements in error analysis and mitigation.
+2
+BACKGROUND
+Defining and characterizing LLM errors.
+The term “hallucinations” is widely used across var-
+ious subfields such as conversational AI (Liu et al., 2022), abstractive summarization (Zhang et al.,
+2019), and machine translation (Wang & Sennrich, 2020), each interpreting the term differently.
+Yet, no consensus exists on defining hallucinations: Venkit et al. (2024) identified 31 distinct frame-
+works for conceptualizing hallucinations, revealing the diversity of perspectives. Research efforts
+aim to define and taxonomize hallucinations, distinguishing them from other error types (Liu et al.,
+2022; Ji et al., 2023; Huang et al., 2023a; Rawte et al., 2023). On the other hand, recent scholarly
+conversations introduce terms like “confabulations” (Millidge, 2023) and “fabrications” (McGowan
+et al., 2023), attributing a possible “intention” to LLMs, although the notions of LLM “intention”
+and other human-like traits are still debated (Salles et al., 2020; Serapio-Garc´ıa et al., 2023; Harnad,
+2024). These categorizations, however, adopt a human-centric view by focusing on the subjec-
+tive interpretations of LLM hallucinations, which does not necessarily reflect how these errors are
+encoded within the models themselves. This gap limits our ability to address the root causes of
+2
+
+Published as a conference paper at ICLR 2025
+hallucinations, or to reason about their nature. For example, it is unclear whether conclusions about
+hallucinations defined in one framework can be applied to another framework. Liang et al. (2024)
+defined hallucinations as inconsistencies with the training data. While this approach engage with
+the possible root causes of hallucinations, our study focuses on insights from the model itself, with-
+out requiring training data access. Instead, we adopt a broad interpretation of hallucinations. Here,
+we define hallucinations as any type of error generated by an LLM, including factual inaccuracies,
+biases, failures in common-sense reasoning, and others.
+Another line of research suggests that LLMs either encode information about their own errors (Ka-
+davath et al., 2022; Azaria & Mitchell, 2023) or exhibit discrepancies between their outputs and
+internal representations (Liu et al., 2023; Gottesman & Geva, 2024), indicating the presence of un-
+derlying mechanisms not reflected in their final outputs. Moreover, Yona et al. (2024) found that
+current LLMs fail to effectively convey their uncertainty through their generated outputs. Hence, we
+propose shifting the focus from human-centric interpretations of hallucinations to a model-centric
+perspective, examining the model’s intermediate activations.
+Error detection in LLMs.
+Error detection is a longstanding task in NLP, crucial for maintaining
+high standards in various practical applications and for constructing more reliable systems that en-
+sure user trust (Bommasani et al., 2021). Over the years, many studies have proposed task-specific
+solutions (see Section A.1). However, the recent shift towards general-purpose LLMs necessitates a
+holistic approach capable of addressing any error type, rather than focusing on specific ones, making
+it suitable for the diverse errors generated by these models.
+A line of work has addressed this challenge by leveraging external knowledge sources (Lewis et al.,
+2020; Gao et al., 2023) or an external LLM judge (Lin et al., 2021; Rawte et al., 2023) to identify
+erroneous outputs. On the other hand, our work focuses on detection methods that rely solely on the
+computations of the LLM—specifically, output logits, probabilities after softmax, and hidden states.
+Error detection in LLMs is also closely linked to uncertainty estimation, where low certainty signals
+potential inaccuracies and possible errors. Popular methods to derive calibrated confidence include
+inspecting the model logit output values (Varshney et al., 2023; Taubenfeld et al., 2025), agree-
+ment across multiple sampled answers (Kuhn et al., 2023; Manakul et al., 2023; Tian et al., 2023a),
+verbalized probability (Tian et al., 2023b), and direct prompting (Kadavath et al., 2022).
+Another line of work trains probing classifiers to discover and utilize truthfulness features. This ap-
+proach has shown some success by probing the final token of an answer–either generated (Kadavath
+et al., 2022; Snyder et al., 2023; Yuksekgonul et al., 2023; Zou et al., 2023; Yin et al., 2024; Chen
+et al., 2024; Simhi et al., 2024; Gekhman et al., 2025) or not (Li et al., 2024; Marks & Tegmark,
+2023; Burns et al., 2022; Azaria & Mitchell, 2023; Rateike et al., 2023). Others probe the final token
+of the prompt before the response is generated (Slobodkin et al., 2023; Snyder et al., 2023; Simhi
+et al., 2024; Gottesman & Geva, 2024). Many previous studies simplify the analysis by generating
+answers in a few-shot setting or limiting generation to a single token. In contrast, we simulate real-
+world usage of LLMs by allowing unrestricted answer generation. By probing exact answer tokens,
+we achieve significant improvements in error detection.
+3
+BETTER ERROR DETECTION
+This section presents our experiments on detecting LLM errors through their own computations,
+focusing on token selection’s impact and introducing a method that outperforms other approaches.
+3.1
+TASK DEFINITION
+Given an LLM M, an input prompt p and the LLM-generated response ˆy, the task is to predict
+whether ˆy is correct or wrong. We assume that there is access to the LLM’s internal states (i.e.,
+white-box setting), but no access to any external resources (e.g., search engine or additional LLMs).
+We use a dataset D = {(qi, yi)}N
+i=1, consisting of N question-label pairs, where {qi}N
+i=1 represents
+a series of questions (e.g., “What is the capital of Connecticut?”) and {yi}N
+i=1 the corresponding
+ground-truth answers (“Hartford”). For each question qi, we prompt the model M to generate a
+response yi, resulting in the set of predicted answers {ˆyi}N
+i=1 (“The capital of Connecticut is Hart-
+3
+
+Published as a conference paper at ICLR 2025
+ford...”). Next, to build our error-detection dataset, we evaluate the correctness of each generated
+response ˆyi by comparing it to the ground-truth label yi. This comparison yields a correctness label
+zi ∈{0, 1} (1 correct, 0 wrong). The comparison can be done either via automatic heuristics or with
+the assistance of an instruct-LLM.2 Our error detection dataset is: {(qi, ˆyi, zi)}N
+i=1. Note that this
+dataset is defined based on the analyzed LLM and its generated answers. Any instances where the
+LLM refuses to answer are excluded, as these can easily be classified as incorrect.
+3.2
+EXPERIMENTAL SETUP
+Datasets and models.
+We perform all experiments on four LLMs: Mistral-7b (Jiang et al.,
+2023), Mistral-7b-instruct-v0.2 (denoted Mistral-7b-instruct), Llama3-8b (Touvron et al., 2023), and
+Llama3-8b-instruct. We consider 10 different datasets spanning various domains and tasks: Triv-
+iaQA (Joshi et al., 2017), HotpotQA with/without context (Yang et al., 2018), Natural Questions
+(Kwiatkowski et al., 2019), Winobias (Zhao et al., 2018), Winogrande (Sakaguchi et al., 2021),
+MNLI (Williams et al., 2018), Math (Sun et al., 2024), IMDB review sentiment analysis (Maas
+et al., 2011), and a dataset of movie roles (movies) that we curate. We allow unrestricted response
+generation to mimic real-world LLM usage, with answers decoded greedily. For more details on the
+datasets and the prompts used to generate answers, refer to Appendix A.3.
+Performance metric.
+We measure the area under the ROC curve to evaluate error detectors, pro-
+viding a single metric that reflects their ability to distinguish between positive and negative cases
+across many thresholds, balancing sensitivity (true positive rate) and specificity (false positive rate).
+Error detection methods. We compare methods from both uncertainty and hallucinations literature.
+• Aggregated probabilities / logits: Previous studies (Guerreiro et al., 2023; Kadavath et al.,
+2022; Varshney et al., 2023; Huang et al., 2023b) aggregate output token probabilities or
+logits to score LLM confidence for error detection. We implement several methods from the
+literature, calculating the minimum, maximum, or mean of these values. The main paper
+reports results for the most common approach, Logits-mean, and the best-performing one,
+Logits-min, with additional baselines in Appendix B.
+• P(True): Kadavath et al. (2022) showed that LLMs are relatively calibrated when asked to
+evaluate the correctness of their generation via prompting. We implement this evaluation
+using the same prompt.
+• Probing: Probing classifiers involve training a small classifier on a model’s intermediate
+activations to predict features of processed text (Belinkov, 2021). Recent studies show
+their effectiveness for error detection in generated text (Kadavath et al., 2022, inter alia).
+An intermediate activation is a vector hl,t from a specific LLM layer l and (either read or
+generated) token t. Thus, each LLM generation produces multiple such activations. Fol-
+lowing prior work, we use a linear probing classifier for error detection (Li et al., 2024, inter
+alia) on static tokens: the last generated token (hl,−1), the one before it (hl,−2), and the final
+prompt token (hl,k). The layer l is selected per token based on validation set performance.
+For further details on the implementation of each method, refer to Appendix A.4.
+Exact Answer Tokens.
+Existing methods often overlook a critical nuance: the token selection for
+error detection, typically focusing on the last generated token or taking a mean. However, since
+LLMs typically generate long-form responses, this practice may miss crucial details (Brunner et al.,
+2020). Other approaches use the last token of the prompt (Slobodkin et al., 2023, inter alia), but
+this is inherently inaccurate due to LLMs’ unidirectional nature, failing to account for the generated
+response and missing cases where different sampled answers from the same model vary in cor-
+rectness. We investigate a previously unexamined token location: the exact answer tokens, which
+represent the most meaningful parts of the generated response. We define exact answer tokens as
+those whose modification alters the answer’s correctness, disregarding subsequent generated con-
+tent.3 Figure 1 illustrates the different token locations. In the following experiments, we implement
+2For most datasets, we use heuristics to predict correctness, except for one case. See Appendix A.2.
+3In practice, we do not use this definition for extracting the exact answer, but rather an instruct model in a
+few-shot setting. Still, the definition is useful to manually verify that automatic extractions work as expected.
+4
+
+Published as a conference paper at ICLR 2025
+Prompt
+Mistral
+last_exact_answer_token
+last_q_token
+first_exact_answer_token
+-1
+-2
+<s> [INST] What is the capital of the U.S. state of Connecticut? [/INST]
+The capital city of the U.S. state of Connecticut is Hartford. It's 
+one of the oldest cities in the United States and was founded in 
+1635. Hartford is located in the central part of the state and is 
+home to several cultural institutions, universities, and 
+businesses.</s> 
+Figure 1: Example for the input and LLM output from the TriviaQA dataset, and the names of the
+tokens that can be probed.
+(a) TriviaQA
+(b) Winobias
+(c) Math
+Figure 2: AUC values of a probe error detector across layers and tokens, Mistral-7b-instruct. Gen-
+eration proceeds from left to right, with detection performance peaking at the exact answer tokens.
+each error detection method with an “exact answer” version, demonstrating that it often improves
+performance, especially in probing. Implementation details for detecting the exact answer token are
+given in Appendix A.2.
+3.3
+RESULTS
+Patterns of truthfulness encoding.
+We first focus on probing classifiers to gain insights into the
+internal representations of LLMs. Specifically, we analyze the effects of layer and token selection
+on the error detection performance of these probing classifiers. By systematically probing all model
+layers, starting from the last question token to the final generated token, we observe consistent
+truthfulness encoding patterns. Figure 2 shows AUC metrics of probes across Mistral-7b-Instruct
+layers and tokens. Middle to later layers often yield the most effective probing results (see Appendix
+B for more datasets and models), aligning with previous studies on truthfulness encoding (Burns
+et al., 2022; CH-Wang et al., 2023) and transformer representations (nostalgebraist, 2020; Meng
+et al., 2022; Geva et al., 2023). Regarding tokens, a strong truthfulness signal appears immediately
+after the prompt, suggesting that this representation encodes information on the model’s general
+ability to answer the question correctly. This signal weakens as text generation progresses but peaks
+again at the exact answer tokens. Towards the end of the generation process, signal strength rises
+again, though it remains weaker than at the exact answer tokens. These patterns are consistent across
+nearly all datasets and models (see Appendix B), suggesting a general mechanism by which LLMs
+encode and process truthfulness during text generation.
+5
+
+Published as a conference paper at ICLR 2025
+Table 1: Comparison of error detection techniques using AUC metric, across different models and
+datasets. The best-performing method is bolded. Using exact answer tokens is useful for many
+cases, especially probing.
+Mistral-7b-Instruct
+Llama 3-8b-Instruct
+TriviaQA
+Winobias
+Math
+TriviaQA
+Winobias
+Math
+Logits-mean
+0.60 ±0.009
+0.56 ±0.017
+0.55 ±0.029
+0.66 ±0.005
+0.60 ±0.026
+0.75 ±0.018
+Logits-mean-exact
+0.68 ±0.007
+0.54 ±0.012
+0.51 ±0.005
+0.71 ±0.006
+0.55 ±0.019
+0.80 ±0.021
+Logits-min
+0.63 ±0.008
+0.59 ±0.012
+0.51 ±0.017
+0.74 ±0.007
+0.61 ±0.024
+0.75 ±0.016
+Logits-min-exact
+0.75 ±0.006
+0.53 ±0.013
+0.71 ±0.009
+0.79 ±0.006
+0.61 ±0.019
+0.89 ±0.018
+p(True)
+0.66 ±0.006
+0.45 ±0.021
+0.48 ±0.022
+0.73 ±0.008
+0.59 ±0.020
+0.62 ±0.017
+p(True)-exact
+0.74 ±0.003
+0.40 ±0.021
+0.60 ±0.025
+0.73 ±0.005
+0.63 ±0.014
+0.59 ±0.018
+Probe @ token
+Last generated [-1]
+0.71 ±0.006
+0.82 ±0.004
+0.74 ±0.008
+0.81 ±0.005
+0.86 ±0.007
+0.82 ±0.016
+Before last generated [-2]
+0.73 ±0.004
+0.85 ±0.004
+0.74 ±0.007
+0.75 ±0.005
+0.88 ±0.005
+0.79 ±0.020
+End of question
+0.76 ±0.008
+0.82 ±0.011
+0.72 ±0.007
+0.77 ±0.007
+0.80 ±0.018
+0.72 ±0.023
+Exact
+0.85 ±0.004
+0.92 ±0.005
+0.92 ±0.008
+0.83 ±0.002
+0.93 ±0.004
+0.95 ±0.027
+Error Detection Results.
+Next, we evaluate various error detection methods by comparing their
+performance with and without the use of exact answer tokens. Table 1 compares the AUC across
+three representative datasets (additional datasets and models in Appendix B, showing consistent pat-
+terns). Here we present results for the last exact answer token, which outperformed both the first
+exact answer token and the one preceding it, while the token following the last performed similarly.
+Incorporating the exact answer token improves the different error detection methods in almost all
+datasets. Notably, our probing technique (bottom line) consistently outperforms all other baselines
+across the board. While we did not compare all existing error detection methods, the primary con-
+clusion is that information about truthfulness is highly localized in specific generated tokens, and
+that focusing on exact answer tokens leads to significant improvements in error detection.
+4
+GENERALIZATION BETWEEN TASKS
+The effectiveness of a probing classifier in detecting errors suggests that LLMs encode information
+about the truthfulness of their outputs. This supports using probing classifiers for error detection
+in production, but their generalizability across tasks remains unclear. While some studies argue
+for a universal mechanism of truthfulness encoding in LLMs (Marks & Tegmark, 2023; Slobod-
+kin et al., 2023), results on probe generalization across datasets are mixed (Kadavath et al., 2022;
+Marks & Tegmark, 2023; CH-Wang et al., 2023; Slobodkin et al., 2023; Levinstein & Herrmann,
+2024)–observing a decline in performance, yet it remains significantly above random chance. Un-
+derstanding this is essential for real-world applications, where the error detector may encounter
+examples that significantly differ from those it was trained on. Therefore, we explore whether a
+probe trained on one dataset can detect errors in others.
+Our generalization experiments are conducted between all of the ten datasets discussed in Section 3,
+covering a broader range of reaslistic task settings than previous work. This breadth of experiments
+has not been previously explored, and is crucial considering the mixed findings in previous work.
+We select the optimal token and layer combination for each dataset, train all probes using this com-
+bination on other datasets, and then test them on the original dataset. We evaluate generalization
+performance using the absolute AUC score, defined as max(auc, 1 −auc), to also account for cases
+where the learned signal in one dataset is reversed in another.
+Results.
+Figure 3a shows the generalization results for Mistral-7b-instruct, with similar patterns
+observed for other LLMs in Appendix C. In this context, values above 0.5 indicate successful gener-
+alization. At first glance, the results appear consistent with previous research: most heatmap values
+exceed 0.5, implying some degree of generalization across tasks. This observation supports the exis-
+tence of a universal mechanism for decoding truthfulness, since the same linear directions—captured
+by the probe—encode truthfulness information across many datasets. However, upon closer inspec-
+tion, it turns out that most of this performance can be achieved by logit-based truthfulness detection,
+6
+
+Published as a conference paper at ICLR 2025
+(a) Raw AUC values. Values above 0.5 indicate some
+generalization.
+(b) Performance (AUC) difference of the probe and
+the logit-based method. Values above 0 indicate gen-
+eralization beyond the logit-based method.
+Figure 3: Generalization between datasets, Mistral-7b-instruct. After subtracting the logit-based
+method’s performance, we observe that most datasets show limited or no meaningful generalization.
+which only observes the output logits. Figure 3b presents the same heatmap after subtracting results
+from our strongest logit-based baseline (Logit-min-exact). This adjusted heatmap reveals the probe’s
+generalization rarely exceeds what can be achieved by examining logits alone. This suggests that the
+observed generalization is not due to a universal internal encoding of truthfulness. Instead, it likely
+arises from information already available through external features, such as logits. Past evidence for
+generalization may therefore have been overstated.
+Nonetheless, we do observe some successful generalization in tasks requiring similar skills, such
+as parametric factual retrieval (TriviaQA, HotpotQA, Movies) and common-sense reasoning (Wino-
+bias, Wingrande, NLI). This suggests that, although the overall pattern of truthfulness signals across
+tokens appeared consistent across tasks (as observed in Section 3.3), LLMs have many “skill-
+specific” truthfulness mechanisms rather than universal ones. However, some patterns remain unex-
+plained, such as the asymmetric generalization from TriviaQA to Math tasks. Overall, our findings
+indicate that models have a multifaceted representation of truthfulness. The internal mechanisms
+responsible for solving distinct problem are implemented as different mechanisms (e.g., circuits)
+within models (Elhage et al., 2021; Olah et al., 2023). Similarly, LLMs do not encode truthfulness
+through a single unified mechanism but rather through multiple mechanisms, each corresponding to
+different notions of truth. Further investigation is required to disentangle these mechanisms.
+5
+INVESTIGATING ERROR TYPES
+Having established the limitations of error detection, we now shift to error analysis. Previously, we
+explored types of LLM limitations across different tasks, noting both commonalities and distinctions
+in their error representations. In this section, we focus on the types of errors LLMs make in a specific
+task—TriviaQA—which represents factual errors, a commonly studied issue in LLMs (Kadavath
+et al., 2022; Snyder et al., 2023; Li et al., 2024; Chen et al., 2024; Simhi et al., 2024).
+5.1
+TAXONOMY OF ERRORS
+Intuitively, not all mistakes are identical. In one case, an LLM may consistently generate an incorrect
+answer, considering it correct, while in another case, it could issue a best guess. To analyze errors
+from the LLM’s perspective, we sample K = 30 responses at a temperature setting of T = 14 for
+each example in the dataset and then analyze the resulting distribution of answers.
+4We chose K = 30 as the overall correctness seemed to plateau around this point; see Appendix D. We
+found that lower temperatures generally produced less truthful answers across repeated trials.
+7
+
+Published as a conference paper at ICLR 2025
+Otis Barton was 
+a pioneer in 
+exploring where?
+Otis co-invented 
+the bathysphere
+Otis co-invented 
+the bathysphere
+Otis co-invented 
+the bathysphere
+Otis Barton was a 
+pioneer in exploring 
+the underwater 
+world …
+93%
+3%
+Model
+... best known for 
+his excavations in 
+the Maya region of 
+Central America
+... Exploring the 
+underground rivers 
+to Tennessee …
+3%
+(a) The LLM mostly answers cor-
+rectly, but sometimes hallucinates.
+Missouri is the 
+only U.S. state….
+Missouri is the 
+only U.S. state….
+Model
+Which 
+American 
+state borders 
+on only one 
+other state?
+Maine is the 
+only state…
+The US state 
+that ... is Maine, 
+which ...
+87%
+13%
+Missouri is the 
+only U.S. state….
+The only state to 
+border ... is 
+Missouri ...
+(b) The LLM mostly answers in-
+correctly, but seems to have some
+knowledge on the correct answer.
+... In 2007, 
+Gabby Logan …
+Jacky
+Who became 
+the first 
+female to 
+deliver 
+football 
+commentary 
+on “match of 
+the day”?
+... In 2007, 
+Gabby Logan …
+Jackie Oatley is 
+the first woman 
+…
+20%
+6%
+The first ... is 
+Clare Balding
+…
+6%
+Model
+(c) The LLM generates many dif-
+ferent answers, one of them is the
+correct one which is generated a
+small fraction of the resamples.
+Figure 4: Different error types in free-form generation, exposed when resampled many times.
+Figure 4 illustrates three representative error types. In one (Figure 4a), the model usually gives the
+correct answer but occasionally make an error, implying correct information is present but sampling
+may lead to mistakes. In another (Figure 4b, the model often responds incorrectly, though it is capa-
+ble of providing the right answer, indicating some retained knowledge despite consistently making
+the same error. In a third type (Figure 4c), the model generates a wide array of mostly incorrect
+answers, reflecting low confidence in any generated answer.
+More generally, we categorize the errors by logging three specific features for each example: (a)
+the number of different answers generated; (b) the frequency of the correct answer; and (c) the
+frequency of the most common incorrect answer. These features reveal the following error patterns:
+• (A) Refuses to answer: The model responds that it cannot answer the question in at least
+half the cases.
+• (B) Consistently correct: Answers correctly in at least half of the cases. This category is
+divided into: (B1) always correct; and (B2) mostly correct with occasional errors.
+• (C) Consistently incorrect: Consistently generates the same incorrect response in at least
+half of the cases. Similarly to type B, we subdivide this type into (C1) correct answer is
+never produced; and (C2) correct answer appears at least once.
+• (D) Two competing: Generates both correct and incorrect responses at similar rates–
+difference in rates is 5 or less, and each response is generated at least 5 times.
+• (E) Many answers: Generates over 10 distinct answers. Like types C and D, Subtypes
+include (E1) correct answer is never generated; and (E2) correct answer is generated at
+least once.
+This taxonomy covers 96% of the errors in TriviaQA for Mistral-7b-instruct. For more qualitative
+examples of each type of error, see Appendix D.3. Although some overlap exists between types,
+our goal is to identify general patterns and explore their connection to the models’s internal repre-
+sentations. For a discussion on the design choices of this taxonomy, refer to Appendix D.1. This
+taxonomy classifies LLM errors based on an extrinsic, behavior-based analysis. Similarly, previous
+work analyzed repeated samples to assess an LLM’s knowledge of the correct answer (Simhi et al.,
+2024; Gekhman et al., 2024). Our approach is distinct because it also examines the nature of errors
+that the LLM makes. Furthermore, as we discuss next, we analyze the connection between these
+behavioral patterns and the model’s internal encoding.
+5.2
+PREDICTING ERROR TYPES
+Our taxonomy offers an external, behavioral analysis of LLMs, which we complement by an intrinsic
+evaluation. We explore whether LLMs encode information on potential error types within their
+intermediate activations, offering a deeper insight into the underlying mechanisms. To investigate
+this, we train a probe in a one-to-many setting, where a single probe identifies a specific error type
+from all others. We use representations extracted from the answers produced via greedy decoding.
+Table 2 presents the results. Our findings show that error types can be predicted from the interme-
+diate representations of the greedy decoding generations, suggesting that they may capture not only
+8
+
+Published as a conference paper at ICLR 2025
+Table 2: AUC scores for error type classification (TriviaQA). Error types are predictable from the
+inner model representations, indicating the encoding of fine-grained information on errors.
+Error type
+Mistral-7b
+Mistral-Instr-7b
+Llama3-8b
+Llama3-Instr-8b
+(A) Refuses to answer
+0.86±0.002
+0.85±0.011
+0.87±0.002
+0.88±0.014
+(B) Consistently correct
+0.88±0.001
+0.82±0.008
+0.86±0.001
+0.81±0.002
+(C) Consistently incorrect
+0.59±0.002
+0.67±0.002
+0.59±0.002
+0.64±0.003
+(D) Two competing
+0.63±0.002
+0.68±0.006
+0.61±0.001
+0.65±0.004
+(E) Many answers
+0.90±0.001
+0.84±0.003
+0.89±0.001
+0.89±0.001
+output correctness but also fine-grained information about potential errors. While detection perfor-
+mance varies between types, the predictability of each type is valuable on its own, as it opens the
+possibility of tailoring targeted interventions for specific error types. Additionally, although perfor-
+mance on error types C and D is lower, it remains well above random, providing meaningful insights.
+These results suggest that internal representations encode more than just binary correctness, reveal-
+ing a nuanced taxonomy of error types and offering deeper insights into how these models process
+and encode knowledge.
+6
+DETECTING THE CORRECT ANSWER
+After identifying that models encode diverse truthfulness-related information, we examine how this
+internal truthfulness aligns with their external behavior during response generation. To this end, we
+use our probe,5 trained on error detection, to select an answer from a pool of 30 generated responses
+to the same question. We then measure the model’s accuracy based on the selected answers. A
+case where this accuracy does not significantly differ from traditional decoding methods (such as
+greedy decoding), suggests that the LLM’s internal representation of truthfulness is consistent with
+its external behavior. In simpler terms, that the model is generating answers that it also internally
+considers as correct. Conversely, a case where using the probe alters performance either way, would
+suggest a misalignment between the LLM’s internal representations and its actual behavior.
+Experimental Setup
+The experiments were conducted on TriviaQA, Winobias, and Math. We
+resample each model answer in the same strategy described in Section 5.1. The final chosen answer
+is the one with the highest correctness probability, as assessed by the probe. We compare to three
+baselines: (1) greedy decoding, (2) random selection from the K = 30 answer candidates; and (3)
+majority vote wherein the most frequently generated answer is chosen.
+Results
+The results for Mistral-7b-instruct are summarized in Figure 5, with additional results for
+other LLMs and datasets as well as qualitative examples provided in Appendix E. We only present
+results on error types that appear 30 times or more in our test dataset. Overall, using the probe
+to select answers enhances the LLMs accuracy across all examined tasks. However, the extent of
+improvement varies by error type. For instance, in the TriviaQA dataset, there is minimal gain in
+the “mostly correct” category (B2). In contrast, substantial gains—ranging from 30 to 40 points in
+some cases—are observed in the “mostly incorrect” (C2), “two competing answers” (D), and “many
+answers” (E1) categories. Interestingly, and perhaps surprisingly, the probe is most effective in cases
+where the LLM lacks any (external) preference for the correct answer during generation. The fact
+that the probe can effectively identify the correct answer in these scenarios, points at a significant
+disconnect between the LLM’s internal encoding and its external behavior. These results suggest
+that even when the model encodes information of which answer is correct, it can still generate an
+incorrect answer in practice.
+While using the probe to select the answer proves effective, it is not proposed here as an error
+mitigation strategy but rather as a diagnostic tool. However, these findings indicate that further
+research in this area could leverage the existing knowledge within LLMs to significantly reduce
+errors. We recommend exploring this direction in future investigations.
+5We choose the best-performing probe for each task, which is trained on the last exact answer token.
+9
+
+Published as a conference paper at ICLR 2025
+(a) TriviaQA
+(b) Math
+Figure 5: Different answer choice strategies, Mistral-7B-Instruct. A notable improvement in ac-
+curacy by using the error-detection probe is observed for error types where the LLM shows no
+preference for the correct answer across repeated generations.
+7
+DISCUSSION AND CONCLUSIONS
+In this study, we analyzed LLM errors through their internal representations. Our approach depends
+on access to internal representations, restricting its use to open-source models. We focus on QA
+tasks with clear gold labels, which are key for benchmarking truthfulness detection and valued by the
+community. To ensure robustness, we tested 10 datasets across 4 model architectures. Open-ended
+tasks are left for future research, with our work laying the groundwork for broader applications. For
+instance, we found that truthfulness-related information is localized in specific tokens within long-
+responses, enabling practical improvements in error detection for production models. This insight
+could extend to tasks like summarization, by probing the most meaningful entities in an answer.
+Truthfulness features showed poor generalization across tasks and datasets, highlighting the need
+for caution when applying trained error detectors in varied settings. Some unexplained patterns
+suggest hidden links between unrelated tasks that warrant further research. Improving generalization
+could involve exploring the effects of layer-token combinations and training on diverse datasets,
+as demonstrated by B¨urger et al. (2024). Deciphering task-specific truthfulness features and their
+overlaps across tasks might also enhance classifier design. Still, task-specific probes could be highly
+valuable in critical fields like medicine and law, where reliability matters. These probes can detect
+errors, predict error types, and guide response selection from resampled outputs, offering significant
+practical benefits. Guidelines for applying these probes are provided in Appendix F.
+Finally, we identified a significant discrepancy between the model’s external behavior and internal
+states, where it repeatedly outputs incorrect responses despite internally encoding the correct an-
+swer. It is possible that mechanisms favoring likelihood override those promoting truthfulness, as
+LLMs are trained to predicting likely tokens, which does not necessarily align with factual accu-
+racy. Our findings imply that these models already encode valuable information that could possibly
+be harnessed to reduce errors. Work by Chuang et al. (2024) shows promising results in this area,
+while a subsequent work by Gekhman et al. (2025) focused exclusively on this “hidden knowledge”
+phenomenon, formally defining it and studying its extent. In conclusion, our findings suggest that
+LLMs’ internal representations provide useful insights into their errors, highlights the complex link
+between the internal processes of models and their external outputs, and hopefully paves the way for
+further improvements in error detection and mitigation.
+10
+
+Published as a conference paper at ICLR 2025
+8
+REPRODUCIBILITY STATEMENT
+To ensure reproducibility of our work, we provide detailed instructions and necessary code. The
+source code, including scripts for generating model answers, probing, resampling, and error type
+analysis, is available in the supplementary material, where we also provide command examples and
+specific seeds used for experiment reproducibility. This repository includes documentation on how
+to set up the environment, download and preprocess datasets, and execute the experiments outlined
+in Sections 3–6 of the paper. Additionally, all datasets, models, and results generation steps are
+described in the Appendix A.
+ACKNOWLEDGMENTS
+This research was supported by the Israel Science Foundation (grant No. 448/20), an Azrieli Foun-
+dation Early Career Faculty Fellowship, an AI Alignment grant from Open Philanthropy, and a
+Google gift. HO is supported by the Apple AIML PhD fellowship. This research was funded by the
+European Union (ERC, Control-LM, 101165402). Views and opinions expressed are however those
+of the author(s) only and do not necessarily reflect those of the European Union or the European
+Research Council Executive Agency. Neither the European Union nor the granting authority can be
+held responsible for them.
+REFERENCES
+Alexandre Allauzen. Error detection in confusion network. In 8th Annual Conference of the In-
+ternational Speech Communication Association, INTERSPEECH 2007, Antwerp, Belgium, Au-
+gust 27-31, 2007, pp. 1749–1752. ISCA, 2007. doi: 10.21437/INTERSPEECH.2007-490. URL
+https://doi.org/10.21437/Interspeech.2007-490.
+Amos Azaria and Tom Mitchell. The internal state of an llm knows when it’s lying. In Findings of
+the Association for Computational Linguistics: EMNLP 2023, pp. 967–976, 2023.
+Yejin Bang, Samuel Cahyawijaya, Nayeon Lee, Wenliang Dai, Dan Su, Bryan Wilie, Holy Lovenia,
+Ziwei Ji, Tiezheng Yu, Willy Chung, et al. A multitask, multilingual, multimodal evaluation of
+chatgpt on reasoning, hallucination, and interactivity. arXiv preprint arXiv:2302.04023, 2023.
+Yonatan Belinkov. Probing classifiers: Promises, shortcomings, and advances, 2021. URL https:
+//arxiv.org/abs/2102.12452.
+Samuel J. Bell, Helen Yannakoudakis, and Marek Rei. Context is key: Grammatical error detection
+with contextual word representations.
+In Helen Yannakoudakis, Ekaterina Kochmar, Claudia
+Leacock, Nitin Madnani, Ildik´o Pil´an, and Torsten Zesch (eds.), Proceedings of the Fourteenth
+Workshop on Innovative Use of NLP for Building Educational Applications, BEA@ACL 2019,
+Florence, Italy, August 2, 2019, pp. 103–115. Association for Computational Linguistics, 2019.
+doi: 10.18653/V1/W19-4410. URL https://doi.org/10.18653/v1/w19-4410.
+Rishi Bommasani, Drew A Hudson, Ehsan Adeli, Russ Altman, Simran Arora, Sydney von Arx,
+Michael S Bernstein, Jeannette Bohg, Antoine Bosselut, Emma Brunskill, et al. On the opportu-
+nities and risks of foundation models. arXiv preprint arXiv:2108.07258, 2021.
+Gino Brunner, Yang Liu, Damian Pascual, Oliver Richter, Massimiliano Ciaramita, and Roger Wat-
+tenhofer. On identifiability in transformers. In 8th International Conference on Learning Repre-
+sentations (ICLR 2020)(virtual). International Conference on Learning Representations, 2020.
+Lennart B¨urger, Fred A Hamprecht, and Boaz Nadler. Truth is universal: Robust detection of lies in
+llms. arXiv preprint arXiv:2407.12831, 2024.
+Collin Burns, Haotian Ye, Dan Klein, and Jacob Steinhardt. Discovering latent knowledge in lan-
+guage models without supervision. arXiv preprint arXiv:2212.03827, 2022.
+Andrew Caines, Christian Bentz, Kate M. Knill, Marek Rei, and Paula Buttery. Grammatical error
+detection in transcriptions of spoken english. In Donia Scott, N´uria Bel, and Chengqing Zong
+(eds.), Proceedings of the 28th International Conference on Computational Linguistics, COLING
+11
+
+Published as a conference paper at ICLR 2025
+2020, Barcelona, Spain (Online), December 8-13, 2020, pp. 2144–2162. International Commit-
+tee on Computational Linguistics, 2020. doi: 10.18653/V1/2020.COLING-MAIN.195. URL
+https://doi.org/10.18653/v1/2020.coling-main.195.
+Sky CH-Wang, Benjamin Van Durme, Jason Eisner, and Chris Kedzie. Do androids know they’re
+only dreaming of electric sheep?, 2023.
+Chao Chen, Kai Liu, Ze Chen, Yi Gu, Yue Wu, Mingyuan Tao, Zhihang Fu, and Jieping Ye. INSIDE:
+LLMs’ internal states retain the power of hallucination detection. In The Twelfth International
+Conference on Learning Representations, 2024. URL https://openreview.net/forum?
+id=Zj12nzlQbz.
+Wei Chen, Sankaranarayanan Ananthakrishnan, Rohit Kumar, Rohit Prasad, and Prem Natarajan.
+ASR error detection in a conversational spoken language translation system. In IEEE Interna-
+tional Conference on Acoustics, Speech and Signal Processing, ICASSP 2013, Vancouver, BC,
+Canada, May 26-31, 2013, pp. 7418–7422. IEEE, 2013. doi: 10.1109/ICASSP.2013.6639104.
+URL https://doi.org/10.1109/ICASSP.2013.6639104.
+Yong Cheng and Mofan Duan. Chinese grammatical error detection based on BERT model. In
+Erhong YANG, Endong XUN, Baolin ZHANG, and Gaoqi RAO (eds.), Proceedings of the 6th
+Workshop on Natural Language Processing Techniques for Educational Applications, pp. 108–
+113, Suzhou, China, December 2020. Association for Computational Linguistics. URL https:
+//aclanthology.org/2020.nlptea-1.15.
+Yung-Sung Chuang, Yujia Xie, Hongyin Luo, Yoon Kim, James R. Glass, and Pengcheng He. Dola:
+Decoding by contrasting layers improves factuality in large language models. In The Twelfth
+International Conference on Learning Representations, 2024. URL https://openreview.
+net/forum?id=Th6NyL07na.
+Nelson Elhage, Neel Nanda, Catherine Olsson, Tom Henighan, Nicholas Joseph, Ben Mann,
+Amanda Askell, Yuntao Bai, Anna Chen, Tom Conerly, et al. A mathematical framework for
+transformer circuits. Transformer Circuits Thread, 1(1):12, 2021.
+Rahhal Errattahi, Asmaa El Hannani, and Hassan Ouahmane. Automatic speech recognition er-
+rors detection and correction: A review. In Mourad Abbas and Ahmed Abdelali (eds.), 1st In-
+ternational Conference on Natural Language and Speech Processing, ICNLSP 2015, Algiers,
+Algeria, October 18-19, 2015, volume 128 of Procedia Computer Science, pp. 32–37. Elsevier,
+2015. doi: 10.1016/J.PROCS.2018.03.005. URL https://doi.org/10.1016/j.procs.
+2018.03.005.
+Dan Flickinger, Michael Wayne Goodman, and Woodley Packard. Uw-stanford system description
+for AESW 2016 shared task on grammatical error detection. In Joel R. Tetreault, Jill Burstein,
+Claudia Leacock, and Helen Yannakoudakis (eds.), Proceedings of the 11th Workshop on Innova-
+tive Use of NLP for Building Educational Applications, BEA@NAACL-HLT 2016, June 16, 2016,
+San Diego, California, USA, pp. 105–111. The Association for Computer Linguistics, 2016. doi:
+10.18653/V1/W16-0511. URL https://doi.org/10.18653/v1/w16-0511.
+Luyu Gao, Zhuyun Dai, Panupong Pasupat, Anthony Chen, Arun Tejasvi Chaganty, Yicheng Fan,
+Vincent Zhao, Ni Lao, Hongrae Lee, Da-Cheng Juan, et al. Rarr: Researching and revising what
+language models say, using language models. In Proceedings of the 61st Annual Meeting of the
+Association for Computational Linguistics (Volume 1: Long Papers), pp. 16477–16508, 2023.
+Zorik Gekhman, Roee Aharoni, Genady Beryozkin, Markus Freitag, and Wolfgang Macherey.
+KoBE: Knowledge-based machine translation evaluation.
+In Trevor Cohn, Yulan He,
+and Yang Liu (eds.), Findings of the Association for Computational Linguistics:
+EMNLP
+2020, pp. 3200–3207, Online, November 2020. Association for Computational Linguistics.
+doi: 10.18653/v1/2020.findings-emnlp.287. URL https://aclanthology.org/2020.
+findings-emnlp.287.
+Zorik Gekhman, Dina Zverinski, Jonathan Mallinson, and Genady Beryozkin. RED-ACE: Robust
+error detection for ASR using confidence embeddings. In Yoav Goldberg, Zornitsa Kozareva,
+12
+
+Published as a conference paper at ICLR 2025
+and Yue Zhang (eds.), Proceedings of the 2022 Conference on Empirical Methods in Natu-
+ral Language Processing, pp. 2800–2808, Abu Dhabi, United Arab Emirates, December 2022.
+Association for Computational Linguistics.
+doi: 10.18653/v1/2022.emnlp-main.180.
+URL
+https://aclanthology.org/2022.emnlp-main.180.
+Zorik Gekhman, Jonathan Herzig, Roee Aharoni, Chen Elkind, and Idan Szpektor. TrueTeacher:
+Learning factual consistency evaluation with large language models. In Houda Bouamor, Juan
+Pino, and Kalika Bali (eds.), Proceedings of the 2023 Conference on Empirical Methods in Natu-
+ral Language Processing, pp. 2053–2070, Singapore, December 2023. Association for Computa-
+tional Linguistics. doi: 10.18653/v1/2023.emnlp-main.127. URL https://aclanthology.
+org/2023.emnlp-main.127.
+Zorik Gekhman, Gal Yona, Roee Aharoni, Matan Eyal, Amir Feder, Roi Reichart, and Jonathan
+Herzig. Does fine-tuning llms on new knowledge encourage hallucinations?, 2024.
+Zorik Gekhman, Eyal Ben David, Hadas Orgad, Eran Ofek, Yonatan Belinkov, Idan Szpector,
+Jonathan Herzig, and Roi Reichart. Inside-out: Hidden factual knowledge in llms. arXiv preprint
+arXiv:2503.15299, 2025.
+Mor Geva, Jasmijn Bastings, Katja Filippova, and Amir Globerson. Dissecting recall of factual
+associations in auto-regressive language 

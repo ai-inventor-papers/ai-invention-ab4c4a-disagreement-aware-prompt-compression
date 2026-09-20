@@ -1,0 +1,885 @@
+URL: https://arxiv.org/pdf/2605.02611
+Type: PDF
+Length: 36439 chars
+
+--- Content ---
+
+Selective Prediction from Agreement: A
+Lipschitz-Consistent Version Space Approach
+Mohamadsadegh Khosravani
+University of Regina
+Abstract. We consider selective classification with abstention in the
+fixed-pool (or transductive) setting, where the unlabeled pool is given
+beforehand and only a subset of points can be queried for labels.
+Our main insight is to view selective prediction through agreement: given
+queried labels and Lipschitz margin constraints in an embedding space,
+the version space of Lipschitz-consistent classification heads is well de-
+fined.
+We obtain upper and lower Lipschitz margin bounds that define, for each
+pool point, a set of certified valid labels containing the prediction of every
+head in the version space. The model therefore predicts only when the
+label is forced (i.e., all consistent heads agree), and abstains otherwise.
+We also propose a monotone submodular geometric proxy for budgeted
+querying, and show that a greedy algorithm retains the standard (1−1/e)
+approximation factor.
+Keywords: Selective prediction · abstention · Lipschitz certification ·
+transductive learning · submodular acquisition.
+1
+Introduction
+Selective classification studies the risk–coverage trade-off: a classifier may ab-
+stain on some inputs to reduce error on the rest [1, 2]. In modern deep learning,
+abstention is often implemented via confidence thresholding or by learning an
+explicit selection function, and evaluated through risk–coverage curves [16, 3].
+In contrast, we treat abstention as lack of forced agreement: we abstain exactly
+when the queried labels and the assumptions we impose are insufficient to de-
+termine a unique label.
+We focus on the fixed-pool (transductive) setting, where the unlabeled pool
+is given in advance, only a subset can be queried for labels [19], and the goal is
+to label (or abstain on) the pool elements [12, 20, 21, 10, 11]. Our aim is therefore
+certification: identify which pool points have labels that are uniquely determined
+under the assumed constraints, and abstain otherwise.
+Agreement-based selective prediction. After observing labels on a subset S, we
+predict at a pool point u only if the label is forced by labeled set S, and con-
+straints, meaning that every hypothesis consistent with the constraints pre-
+dicts the same class at u. Concretely, we work in an embedding space induced
+arXiv:2605.02611v1  [cs.LG]  4 May 2026
+
+2
+M. Khosravani
+by a fixed representation g and consider classification heads whose one-vs-rest
+margin functions are Lipschitz in this space. We take the Lipschitz constants
+used for certification to be computable upper bounds that can be controlled
+during head training (e.g., via norm or spectral constraints [6–8]). Together
+with center-margin constraints at queried points, these assumptions define a
+Lipschitz-consistent version space F(S).
+Our certificate is two-sided: labeled class-c centers propagate a certified lower
+envelope (positive evidence) for the margin Mc, while labeled non-c centers prop-
+agate a certified upper envelope (negative evidence) for Mc. From these envelopes
+we compute, for each pool point u, a certified feasible label set Γ(u) that contains
+the prediction of every head in F(S). We therefore predict only when Γ(u) is a
+singleton; otherwise we abstain. Beyond singleton feasibility, we can also force
+a label by separation: if one class’s certified lower envelope exceeds every other
+class’s certified upper envelope by a gap, the label is uniquely determined.
+Closure and budgeted querying. We prove a closure property: adding forced
+pseudo-labels as anchors does not further shrink the Lipschitz-consistent ver-
+sion space. Under a finite labeling budget, we connect querying to certification
+by introducing a geometric, label-free proxy: subject to a mild margin-floor as-
+sumption, it reduces to a ball-union coverage objective in embedding space. This
+proxy is monotone submodular, so greedy selection achieves the classical (1−1/e)
+approximation factor [4].
+Agreement vs. correctness. Our guarantees certify agreement over F(S) on the
+fixed pool; conditions under which agreement implies correctness are discussed
+in the supplementary material.
+Positioning with prior work. Our work differs from standard selective classifica-
+tion, which typically abstains based on confidence or a learned selection head [1,
+2, 16, 3]: we abstain because the label is not identifiable under explicit constraints.
+The agreement / version-space viewpoint is classical in learning theory and is
+related in spirit to disagreement-based ideas in active learning; we instantiate it
+on a fixed pool via an explicit Lipschitz-consistent class and computable two-
+sided margin envelopes. The resulting feasible label sets Γ(u) are set-valued,
+but unlike conformal prediction [13–15], they encode labels consistent with a
+constraint-defined hypothesis class on a fixed pool rather than distribution-free
+marginal coverage. Finally, while Lipschitz control is often used for robustness
+certification, we use it here to define the certifying hypothesis class and derive
+sound force-or-abstain rules [6–8].
+Contributions. We view selective prediction as agreement over a Lipschitz-consistent
+version space (Definitions 2 and 5). We give a sound force-or-abstain certificate
+using two-sided class-wise margin bounds and forcing rules (Sections 3.3 and 3.4),
+prove a closure property for adding forced pseudo-labels (Section 4), and propose
+a geometric proxy for budgeted querying that is monotone submodular, so greedy
+achieves the standard (1 −1/e) approximation guarantee (Sections 5.2 and 5.3).
+
+Selective Prediction from Agreement
+3
+In experiments on transductive CIFAR-10 and SVHN test pools, we obtain non-
+trivial certified coverage with small label budgets and show that proxy-based
+acquisition can expand the certified region (Section 6). Our guarantees certify
+agreement (identifiability) within the hypothesis class.
+2
+Setting, Notation, and Objectives
+Let D = {xi}N
+i=1 ⊂X be an unlabeled pool with index set [N] := {1, . . . , N}.
+Querying i ∈[N] reveals an oracle label yi ∈{1, . . . , C}. Let S ⊆[N] be the
+queried (labeled) indices and k := |S| the labeling budget.
+We use a representation–head decomposition: a representation g : X →Rm
+and a classification head f : Rm →RC producing logits f(z) = (f1(z), . . . , fC(z)).
+For pool point i, let zi := g(xi) and ˆy(z) := arg maxc fc(z).
+Remark 1 (Certificates depend on the representation). All certificates are in the
+embedding space of the current representation g. If g changes, then the embed-
+dings {zi} and the Lipschitz bounds used for certification must be recomputed.
+2.1
+Selective Prediction Metrics on a Fixed Pool
+We use the standard selective-classification risk–coverage formalism (e.g., [1, 2]).
+Definition 1 (Selective predictor; coverage and selective risk). A selec-
+tive predictor is a mapping π : [N] →{1, . . . , C} ∪{⊥}. Let y⋆(u) denote the
+evaluation-only pool label. Define coverage
+Cov(π) := 1
+N
+X
+u∈[N]
+1{π(u)̸ = ⊥},
+and selective risk (conditional error rate)
+Risk(π) :=
+P
+u∈[N] 1{π(u)̸ = ⊥}1{π(u)̸ = y⋆(u)}
+P
+u∈[N] 1{π(u)̸ = ⊥}
+.
+These quantities follow the standard selective prediction / reject-option setup
+[1, 2]. The metrics above use y⋆(·) only for evaluation.
+Definition 2 (Forced label (agreement over a version space)). Fix a
+labeled set S and a hypothesis class F(S). A class c⋆is forced at pool index u
+if for every ˜f ∈F(S) and every ˆy ˜
+f(u) ∈arg maxc ˜fc(zu) we have ˆy ˜
+f(u) = c⋆.
+Otherwise we abstain.
+
+4
+M. Khosravani
+2.2
+Certified Coverage Objective
+Given a labeled set S, our method outputs a selective predictor πS on the fixed
+pool. The goal is simple: predict on as many pool points as possible, while keep-
+ing the error rate on the predicted points low. We measure this with coverage
+Cov(πS) and selective risk Risk(πS) (Definition 1).
+We consider two tasks: (i) certification, where S is given and we compute
+πS; and (ii) budgeted acquisition, where we choose S under a labeling budget
+to improve the risk–coverage trade-off.
+3
+Certificates for Forced Labels
+3.1
+Margins and the Lipschitz Head Assumption
+In this section, we define one-vs-rest margins of the classification head in em-
+bedding space.
+Definition 3 (One-vs-rest margin). For class c ∈{1, . . . , C}, define
+Mc(z) := fc(z) −max
+k̸=c fk(z).
+Assumption 1 (Lipschitz margins in embedding space) For each class c,
+the margin function Mc : Rm →R is LM,c-Lipschitz with respect to ℓ2:
+Mc(z) −Mc(z′)
+ ≤LM,c ∥z −z′∥
+∀z, z′ ∈Rm.
+One can take a shared constant LM,c ≡LM across classes.
+Remark 2 (Obtaining LM,c). We require that the constants {LM,c} are upper
+bounds on the true Lipschitz constants of the margins. In practice we use com-
+putable bounds from the head parameters: for f(z) = Wz + b, one may take
+LM,c = maxk̸=c ∥wc −wk∥2; for deeper heads we use standard spectral/norm-
+based upper bounds [6–8] (details in Supplementary).
+Next, we define center-margin constraints at queried points and the resulting
+Lipschitz-consistent version space F(S).
+3.2
+Center Margins and Lipschitz-consistent Class
+Fix a queried labeled subset S ⊆[N] with oracle labels {yi}i∈S. To use these
+labels for certification, we associate each labeled point with a certified lower
+bound on the margin of its labeled class.
+Definition 4 (Center margin lower bound). For each labeled index i ∈S
+with label yi, let mi ∈R≥0 satisfy
+mi ≤Myi(zi).
+We call mi the center margin lower bound at i.
+
+Selective Prediction from Agreement
+5
+The next step is to formalize the hypothesis class induced by the margin
+constraints.
+Definition 5 (Lipschitz-consistent head class). Fix S and center margin
+lower bounds {mi}i∈S. Define F(S) as the set of heads ˜f : Rm →RC whose
+induced margins ˜
+Mc satisfy:
+1. (Lipschitz) each ˜
+Mc is LM,c-Lipschitz as in Assumption 1;
+2. (Center constraints) for all i ∈S, ˜
+Myi(zi) ≥mi.
+Remark 3 (Non-emptiness). By construction of {mi} and {LM,c}, the trained
+head belongs to F(S); in particular, F(S)̸ = ∅.
+All guarantees are uniform over F(S): we output a label only when every
+˜f ∈F(S) predicts the same class at u; otherwise we abstain.
+3.3
+Two-Sided Certified Margin Propagation
+In this section, we derive class-wise certified envelopes for the margins at each
+pool point. Concretely, for every class c and pool index u, we construct bounds
+LBc(u) ≤
+˜
+Mc(zu) ≤UBc(u)
+∀˜f ∈F(S).
+Intuitively, LBc propagates certified positive evidence for class c from labeled
+class-c centers, while UBc propagates certified negative evidence against class c
+from labeled non-c centers. We define these envelopes next.
+Definition 6 (Lower envelope). For any pool index u and class c, define
+LBc(u) :=
+sup
+i∈S: yi=c
+
+mi −LM,c∥zu −zi∥
+
+,
+with the convention sup ∅= −∞.
+Theorem 1 (Certified lower bound). For any pool index u and class c, for
+all ˜f ∈F(S),
+˜
+Mc(zu) ≥LBc(u).
+Proof. Fix any i ∈S with yi = c and any ˜f ∈F(S). By Lipschitzness of ˜
+Mc and
+the center constraint at i,
+˜
+Mc(zu) ≥
+˜
+Mc(zi) −LM,c∥zu −zi∥≥mi −LM,c∥zu −zi∥.
+Taking the supremum over all such i yields the claim.
+Building an upper bound for Mc at an arbitrary pool point is slightly more
+delicate. The key observation is that at a labeled center i ∈S, every non-target
+class has a negative margin upper bound: Lemma 1 shows that for any c̸ = yi,
+˜
+Mc(zi) ≤−mi for all ˜f ∈F(S).
+
+6
+M. Khosravani
+Lemma 1 (Non-target margins are upper bounded at labeled centers).
+Fix i ∈S with label yi and lower bound mi. For any ˜f ∈F(S) and any c̸ = yi,
+˜
+Mc(zi) ≤−mi.
+Proof. Fix ˜f ∈F(S). The center constraint gives
+˜fyi(zi) −max
+k̸=yi
+˜fk(zi) ≥mi,
+max
+k̸=yi
+˜fk(zi) ≤˜fyi(zi) −mi.
+Hence for any c̸ = yi, ˜fc(zi) ≤˜fyi(zi) −mi. Also, since yi is among the competi-
+tors in maxk̸=c ˜fk(zi), we have maxk̸=c ˜fk(zi) ≥˜fyi(zi). Combining,
+˜
+Mc(zi) = ˜fc(zi) −max
+k̸=c
+˜fk(zi)
+≤
+  ˜fyi(zi) −mi
+
+−˜fyi(zi) = −mi.
+We therefore define the following upper envelope; Theorem 2 shows it is a
+certified upper bound.
+Definition 7 (Upper envelope). For any pool index u and class c, define
+UBc(u) :=
+inf
+i∈S: yi̸=c
+
+−mi + LM,c∥zu −zi∥
+
+,
+with the convention inf ∅= +∞.
+Theorem 2 (Certified upper bound). For any pool index u and class c, for
+all ˜f ∈F(S),
+˜
+Mc(zu) ≤UBc(u).
+Proof. If there is no i ∈S with yi̸ = c, then UBc(u) = +∞and the claim is
+trivial. Otherwise fix any i ∈S with yi̸ = c and any ˜f ∈F(S). By Lemma 1,
+˜
+Mc(zi) ≤−mi. By Lipschitzness of ˜
+Mc,
+˜
+Mc(zu) ≤
+˜
+Mc(zi) + LM,c∥zu −zi∥≤−mi + LM,c∥zu −zi∥.
+Taking the infimum over all such i yields the claim.
+A direct consequence of Theorem 2 is that a negative upper envelope of a class
+shows that none of the members of the Lipschitz-consistent class predicts that
+class.
+Corollary 1 (Certified class elimination). If UBc(u) < 0, then no ˜f ∈F(S)
+can predict class c at u.
+Proof. If some ˜f ∈F(S) predicts class c at u, then necessarily ˜fc(zu) ≥maxk̸=c ˜fk(zu),
+hence ˜
+Mc(zu) ≥0. But Theorem 2 gives ˜
+Mc(zu) ≤UBc(u) < 0, a contradiction.
+
+Selective Prediction from Agreement
+7
+3.4
+Forcing rules
+In the previous section, we developed the certificate components used to reason
+about labels on the pool, namely the class-wise upper and lower envelopes. In
+this section, we first define a feasible label set using the upper envelopes, which
+identifies the classes that cannot be eliminated at each pool point. We then use
+the lower envelopes, together with control parameters, to define stronger forcing
+rules that can certify labels on a larger portion of the pool.
+Definition 8 (Certified feasible label set). Define the certified feasible label
+set at pool index u as
+Γ(u) :=
+
+c ∈{1, . . . , C} : UBc(u) ≥0
+	
+.
+The following theorem implies Γ(u) contains the prediction of every Lipschitz-
+consistent head.
+Theorem 3 (Predicted label lies in the feasible set). Fix u ∈[N]. For
+any ˜f ∈F(S) and any ˆy ˜
+f(u) ∈arg maxk ˜fk(zu),
+ˆy ˜
+f(u) ∈Γ(u).
+Consequently, if Γ(u) = {c⋆} is a singleton, then every ˜f ∈F(S) predicts c⋆at
+u.
+Proof. Let c⋆∈arg maxk ˜fk(zu). Then ˜
+Mc⋆(zu) ≥0. By Theorem 2, ˜
+Mc⋆(zu) ≤
+UBc⋆(u), hence UBc⋆(u) ≥0 and c⋆∈Γ(u). If Γ(u) is a singleton, the second
+claim follows immediately.
+The feasible set keeps class c at pool point u only when UBc(u) ≥0. This
+is a strict elimination rule: any class with a negative certified upper bound is
+removed. To make the candidate set less aggressive, we introduce a parameter
+τ ≥0 and allow classes with slightly negative upper bounds to remain candi-
+dates. Larger τ means fewer classes are eliminated at this stage.
+Definition 9 (τ-candidate label set). For τ ≥0, define the relaxed candidate
+set
+Γτ(u) :=
+
+c ∈{1, . . . , C} : UBc(u) ≥−τ
+	
+.
+For each class c at pool point u, the envelopes give a certified margin interval
+[LBc(u), UBc(u)] that holds for every head in F(S). To force a label, it is not
+enough that a class could be the winner for some consistent head; it must be the
+winner for all of them. Gap forcing enforces this by comparing the candidate
+class’s lower bound to the other classes’ upper bounds (with slack τ), and by
+requiring a minimum amount of certified positive evidence via κ.
+Definition 10 (Certified forcing with a margin gap). Fix τ ≥0 and a gap
+parameter κ ≥0. We force a label at u if there exists c⋆such that
+LBc⋆(u) ≥κ
+and
+LBc⋆(u) > max
+c̸=c⋆UBc(u) + τ.
+In that case output π(u) = c⋆; otherwise abstain.
+
+8
+M. Khosravani
+Theorem 4 (Soundness of gap forcing). If the condition in Definition 10
+holds, then every ˜f ∈F(S) predicts c⋆at u.
+Proof. Fix any ˜f ∈F(S). By Theorem 1, ˜
+Mc⋆(zu) ≥LBc⋆(u). By Theorem 2,
+for every c̸ = c⋆we have ˜
+Mc(zu) ≤UBc(u). Thus,
+˜
+Mc⋆(zu) ≥LBc⋆(u) > max
+c̸=c⋆UBc(u) + τ ≥max
+c̸=c⋆˜
+Mc(zu).
+Hence c⋆is the unique maximizer of the margins { ˜
+Mc(zu)}C
+c=1.
+Now let ˆy ∈arg maxk ˜fk(zu) be any logit maximizer of ˜f at u. Then ˜
+Mˆy(zu) =
+˜fˆy(zu) −maxk̸=ˆy ˜fk(zu) ≥0, so ˆy is also a maximizer of the margins. Since c⋆is
+the unique margin maximizer, we must have ˆy = c⋆.
+In summary, we can force a label (i.e., certify agreement over F(S)) in two
+ways. (i) Singleton forcing: if the relaxed candidate set Γτ(u) is a singleton,
+then all other classes are eliminated by a negative upper envelope. (ii) Gap
+forcing: even when multiple classes remain, we can force c⋆if it has sufficient
+certified positive evidence and is separated from all competitors:
+LBc⋆(u) ≥κ
+and
+LBc⋆(u) > max
+c̸=c⋆UBc(u) + τ.
+The parameter τ controls how aggressively we eliminate classes via upper bounds,
+while κ enforces a minimum amount of certified positive evidence for the forced
+class.
+4
+Properties of the Forcing Rules
+In this short section, we state a property of forcing rules ( introduced in 3.4):
+adding points with forced label to our initial labeled set does not change the
+Lipschitz-consistent version space. For this, we formally define the set of all
+forced points:
+Definition 11 (Forced pseudo-label set). Fix thresholds (τ, κ) and a labeled
+set S. Let πS,τ,κ be the forcing rule from Section 3.4. Define the forced pseudo-
+label set
+PS,τ,κ := {u ∈[N] : πS,τ,κ(u)̸ = ⊥},
+and the induced pseudo-labels ˆy(u) := πS,τ,κ(u) for u ∈PS,τ,κ.
+Theorem 5 (Version-space closure under forced pseudo-labels). Fix
+(τ, κ) and a labeled set S with bounds {mi}i∈S and Lipschitz constants {LM,c}C
+c=1.
+Let u ∈PS,τ,κ with forced label ˆy(u) = c. Define S′ := S ∪{u} with label yu := c
+and center bound
+mu :=
+(
+0,
+if u is forced via singleton forcing,
+κ,
+if u is forced via gap forcing.
+Then F(S′) = F(S).
+
+Selective Prediction from Agreement
+9
+Proof. By construction, S′ imposes all constraints of S plus one additional center
+constraint at u. Hence F(S′) ⊆F(S). It remains to show F(S) ⊆F(S′).
+Fix any ˜f ∈F(S). We must show ˜
+Mc(zu) ≥mu, where c = ˆy(u).
+Case 1: u is forced via singleton forcing. By the singleton-forcing branch of the
+rule, Γτ(u) = {c}. Equivalently, every competitor c′̸ = c satisfies UBc′(u) <
+−τ ≤0, so by Corollary 1 no ˜f ∈F(S) can predict any c′̸ = c at u. Therefore
+any prediction at u must be c, which implies ˜
+Mc(zu) ≥0 = mu.
+Case 2: u is forced via gap forcing. Gap forcing implies LBc(u) ≥κ = mu. By
+Theorem 1, ˜
+Mc(zu) ≥LBc(u) ≥mu.
+Thus, in both cases ˜f satisfies the added center constraint at u, so ˜f ∈F(S′).
+Therefore, F(S) ⊆F(S′), and F(S′) = F(S).
+In other words, adding forced pseudo-labels as new centers does not strengthen
+the consistency constraints: the version space (and hence the semantics of the
+certificates) remains unchanged. This can be useful for iterative certified label
+expansion / pseudo-labeling.
+5
+Budgeted Querying via a Submodular Proxy
+We now consider budgeted acquisition: given a labeling budget k, which pool
+points should be queried to maximize the portion of the pool that becomes cer-
+tifiably decidable (forced)? Since certified coverage depends on unknown labels
+and on head-dependent quantities learned after querying, we introduce a simple
+label-free geometric proxy motivated by the locality of certificate propagation,
+and optimize it with a greedy algorithm with a standard (1 −1/e) guarantee.
+5.1
+Margin Floor and a Uniform Certified Radius
+This subsection extracts a geometric quantity from the certificate: a uniform
+radius around each labeled center within which the center’s class has certified
+positive evidence (via the lower envelope). This radius does not by itself force a
+label, since elimination of competing classes requires upper-envelope conditions.
+Its purpose is to connect certification to a ball-coverage proxy for budgeted
+querying.
+To derive such a radius, we impose a mild margin-floor assumption on labeled
+centers.
+Assumption 2 (Center margin floor) There exists γ > 0 such that for all
+labeled centers i ∈S, mi ≥γ.
+Let
+Lmax :=
+max
+c∈{1,...,C} LM,c,
+ρcert :=
+γ
+Lmax
+.
+Under this assumption, every labeled center certifies positive evidence inside a
+fixed radius ρcert.
+
+10
+M. Khosravani
+Lemma 2 (Uniform positive-evidence propagation). Under Assumption 2,
+for any labeled center i ∈S and any pool point u ∈[N] with ∥zu −zi∥< ρcert,
+we have LByi(u) > 0.
+Proof. Fix any labeled center i ∈S. By Assumption 2, mi ≥γ. If ∥zu −zi∥<
+ρcert = γ/Lmax, then
+mi −LM,yi∥zu −zi∥≥γ −Lmax∥zu −zi∥> 0.
+Since LByi(u) is the supremum over all class-yi centers (Definition 6), it is at
+least the contribution of center i, hence LByi(u) > 0.
+5.2
+Budgeted Subset Selection Objectives
+When labels are acquired under a finite budget, selecting which pool points
+to query is a one-shot subset selection problem. In our setting, the downstream
+utility of a labeled set S is measured by how much of the pool becomes certifiably
+decidable (forced) under the envelopes derived from S.
+Ideal (label-dependent) objectives Let πS denote the certificate-driven forc-
+ing rule induced by a labeled set S (e.g., the rule in Section 3.4 with fixed (τ, κ)).
+A natural goal is to maximize certified coverage:
+max
+S⊆[N], |S|=k Cov(πS).
+More refined objectives include shrinking ambiguity via candidate-set sizes, e.g.
+max
+S⊆[N], |S|=k −1
+N
+X
+u∈[N]
+|Γ (S)
+τ
+(u)|,
+where Γ (S)
+τ
+(u) emphasizes that candidate sets depend on which indices are la-
+beled.
+These objectives are generally label-dependent: the envelopes depend on the
+labels revealed by querying S and on head-dependent quantities (margins and
+Lipschitz constants) learned from those labels. This makes direct optimization
+of the ideal objective intractable prior to querying.
+Proxy for Geometric Coverage While the above objectives are desirable,
+they involve the labels and number of certificates that are only accessible once
+the oracle is queried and the certification head is fitted. In order to derive a
+pre-query acquisition function, we can use only the part of the certification
+mechanism which is accessible based on the geometry of the unlabeled pool:
+locality of propagation in the embedding space. As an intuition, lower-envelope
+certification spreads evidence from labeled centers to points in their vicinity, with
+a strength that decays with distance. While the labels are not yet accessible,
+
+Selective Prediction from Agreement
+11
+and we cannot yet know which class will propagate or whether upper-envelope
+elimination will eventually enforce a label, we can still prefer query sets whose
+neighborhoods collectively cover large parts of the pool. A natural label-free
+geometric proxy is thus given by unions of radius-ρacq balls centered at the
+acquired points.
+Let us fix some ρacq > 0. Then the covered set is given by, with the objective
+to maximize:
+Cρacq(S) :=
+
+u ∈[N] : ∃i ∈S such that ∥zu −zi∥< ρacq
+	
+,
+Fρacq(S) :=
+Cρacq(S)
+.
+Equivalently, Fρacq(S) counts how many pool points lie within distance ρacq
+of at least one selected point.
+Under the margin-floor assumption (Assumption 2), setting ρacq = ρcert gives
+a natural certificate-based interpretation of geometric coverage. Any pool point
+covered by the proxy lies within distance ρcert of at least one labeled center.
+By Lemma 2, this implies that the point receives certified positive evidence for
+the label of that center (i.e., LByi(u) > 0 for some i ∈S). Thus, Cρcert(S) can
+be interpreted as the portion of the pool where the certificate guarantees local
+positive evidence for at least one class.
+Scope of the proxy. The proxy Fρacq captures only the geometric aspect of cer-
+tification. It does not account for (i) the (currently) unknown class labels of
+queried points, (ii) upper-envelope elimination and competition among classes,
+or (iii) other head-dependent effects. Consequently, Fρacq is generally not equal
+to certified coverage. Its purpose is instead to provide a simple pre-query surro-
+gate that captures the locality structure of propagation and admits optimization
+guarantees. In the next section, we show that Fρacq is a monotone submodular
+function, so greedy optimization achieves the standard (1 −1/e) approximation
+guarantee.
+5.3
+Submodularity and Greedy Approximation
+We now show that the geometric proxy
+Fρacq(S) = |Cρacq(S)|
+admits efficient optimization under a labeling budget. The key observation is
+that Fρacq is a standard coverage objective (the size of a union of neighborhoods),
+which is monotone and submodular. Therefore, under the cardinality constraint
+|S| ≤k, the greedy algorithm achieves the classical (1 −1/e) approximation
+guarantee.
+Algorithm 1 implements exact greedy maximization of Fρacq by repeatedly
+selecting the point with the largest marginal increase in uncovered pool points.
+
+12
+M. Khosravani
+Algorithm 1 Greedy Coverage Subset Selection (budget k)
+1: Input: candidate indices [N], embeddings {zi}N
+i=1, radius ρacq, budget k
+2: S ←∅
+3: Covered ←∅
+4: for t = 1 to k do
+5:
+for all x ∈[N] \ S do
+6:
+Bx ←{u ∈[N] : ∥zu −zx∥< ρacq}
+7:
+∆(x) ←|Bx \ Covered|
+8:
+end for
+9:
+Choose x⋆∈arg maxx∈[N]\S ∆(x)
+10:
+S ←S ∪{x⋆}
+11:
+Covered ←Covered ∪Bx⋆
+12: end for
+13: Return: S
+Theorem 6 (Monotone submodularity and greedy approximation). The
+set function Fρacq is nonnegative, monotone, and submodular. Let S⋆be an op-
+timal size-k set maximizing Fρacq, and let Sk be the set returned by Algorithm 1.
+Then
+Fρacq(Sk) ≥
+
+1 −1
+e
+
+Fρacq(S⋆).
+Proof (Proof sketch). For each candidate center i ∈[N], define its radius-ρacq
+neighborhood
+Bi := {u ∈[N] : ∥zu −zi∥< ρacq}.
+Then
+Fρacq(S) =
+
+[
+i∈S
+Bi
+ ,
+so Fρacq is a standard set-coverage function.
+Monotonicity follows since adding centers can only enlarge the union. Sub-
+modularity follows by diminishing returns: for A ⊆B and x /∈B, the marginal
+gain of adding x is the number of newly covered points in Bx, which can only
+decrease as the covered set grows. The greedy (1 −1/e) guarantee then follows
+from the classical Nemhauser–Wolsey–Fisher result for monotone submodular
+maximization under a cardinality constraint [4]. Full details are provided in the
+supplementary material.
+Our guarantees establish agreement on F(S) over the fixed pool. Under ad-
+ditional assumptions (e.g., class separation/purity in the embedding space), this
+agreement can also imply correctness (formal statements in the supplementary
+material).
+6
+Experiments
+We evaluate whether our certificate mechanism (i) yields meaningful forced cov-
+erage under small label budgets, (ii) improves risk–coverage (RC) tradeoffs on
+
+Selective Prediction from Agreement
+13
+Table 1: Maximum certified coverage covmax
+cert achieved by cert_full across ac-
+quisitions and budgets (test pools). These values define the truncation endpoint
+for truncated AURC comparisons in the corresponding setting.
+Dataset
+Acquisition
+0.5%
+1%
+2%
+5%
+CIFAR-10
+greedy
+0.8042
+0.8250
+0.8079
+0.8527
+random
+0.5145
+0.6922
+0.7490
+0.8534
+kcenter
+0.1385
+0.2130
+0.2968
+0.4213
+SVHN
+greedy
+0.7787
+0.7207
+0.6818
+0.6076
+random
+0.6820
+0.6263
+0.7792
+0.8437
+kcenter
+0.3356
+0.3972
+0.5676
+0.5795
+the certifiable domain, and (iii) benefits from budgeted acquisition via the geo-
+metric proxy (Sections 5.2–5.3).
+Protocol (fixed-pool). We use a transductive setting where the unlabeled pool is
+the test split: CIFAR-10 [9] (N = 10,000) and SVHN [17] (N = 26,032), both
+with C = 10 classes. We embed pool points with a ResNet-18 encoder [18] trained
+on the training split and use ℓ2-normalized penultimate-layer features (d = 512).
+Additional training and preprocessing details are in the supplementary material.
+Budgeted acquisition. For budgets b ∈{0.5%, 1%, 2%, 5%} (i.e., k = ⌈bN⌉), we
+compare three pool-based acquisition strategies: greedy ball coverage (greedy),
+farthest-first k-center (kcenter) [5], and uniform random (random). Radius selec-
+tion and graph-construction details are deferred to the supplementary material.
+Certificates and baselines. Given labeled set S, we compute the envelopes LBc(u), UBc(u)
+(Definitions 6–7) and apply cert_full: singleton forcing from Γτ(u) (Defini-
+tion 9) and, otherwise, gap forcing (Definition 10), with κ = 0 unless stated. We
+compare against post-hoc selective baselines on the same trained head: softmax
+thresholding, margin (top-1/top-2 logit gap) thresholding, APS conformal single-
+tons (conformal_aps), and a lightweight gating model (selectivenet_gate).
+RC curves are obtained by sweeping each method’s control parameter; imple-
+mentation details are in the supplementary material.
+Metrics. We report coverage and selective risk (Definition 1) and summarize RC
+curves via AURC. Because methods can attain different maximum coverages, we
+also report truncated AURC over [0, covmax
+cert ], where covmax
+cert is the maximum cov-
+erage of cert_full in the same (dataset, budget, acquisition) setting. Table 1
+reports these certified coverage ceilings, which define the truncation endpoint for
+matched-coverage comparisons. The values show strong dependence on acquisi-
+tion geometry at low budgets (especially greedy vs. kcenter). We note that
+covmax
+cert need not be monotone in budget in our pipeline, since changing S also
+changes the trained head, margin lower bounds, and Lipschitz constants used by
+the certificate. Additional quantitative results are provided in the supplementary
+material.
+
+14
+M. Khosravani
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+coverage
+0.00
+0.01
+0.02
+0.03
+0.04
+0.05
+0.06
+selective risk
+cifar10 | greedy | budget=0.020
+cert_full
+softmax
+margin
+conformal_aps
+selectivenet_gate
+(a) greedy
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+coverage
+0.00
+0.01
+0.02
+0.03
+0.04
+0.05
+selective risk
+cifar10 | random | budget=0.020
+cert_full
+softmax
+margin
+conformal_aps
+selectivenet_gate
+(b) random
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+coverage
+0.00
+0.01
+0.02
+0.03
+0.04
+0.05
+0.06
+selective risk
+cifar10 | kcenter | budget=0.020
+cert_full
+softmax
+margin
+conformal_aps
+selectivenet_gate
+(c) kcenter
+Fig. 1: CIFAR-10 RC frontiers at budget b = 2% (k = 200). Comparisons are
+most meaningful on the certified domain [0, covmax
+cert ]. Additional plots and quan-
+titative summaries are in the supplementary material.
+Key findings. (1) Competitive RC tradeoffs on the certified domain. On
+both datasets, cert_full is competitive with (and often improves upon) post-
+hoc thresholding baselines when comparisons are restricted to the certifiable do-
+main [0, covmax
+cert ]. (2) Certified coverage is acquisition-sensitive. Greedy ball
+coverage frequently yields substantially larger certified domains than kcenter
+and random at the same budget (Table 1), supporting the geometric proxy mo-
+tivation. (3) Conservative-by-design coverage ceiling. Because our method
+certifies agreement over a Lipschitz-consistent version space, it is intentionally
+conservative: in several settings, cert_full attains low selective risk on the cer-
+tified domain but does not extend to the largest coverages reached by post-hoc
+thresholding methods. We view this as a semantic tradeoff (agreement-based re-
+liability vs. attainable coverage), and Figure 1 together with the supplementary
+results makes this behavior explicit.
+Figure 1 illustrates representative RC frontiers on CIFAR-10 at budget b =
+2% for the three acquisition strategies.
+7
+Conclusion
+We introduced a certification-based view of selective prediction in the fixed-
+pool setting, where abstention is treated as lack of forced agreement rather than
+confidence thresholding. We predict only when observed labels and Lipschitz
+margin constraints force agreement over a Lipschitz-consistent version space of
+heads.
+We derived two-sided Lipschitz margin envelopes leading to certified feasible
+label sets and sound force-or-abstain rules, proved a closure property for reusing
+forced pseudo-labels without changing the version-space semantics, and proposed
+a geometric proxy for budgeted querying with a monotone submodular objective
+and a greedy (1 −1/e) guarantee.
+Experiments show non-trivial certified coverage and that proxy-based acqui-
+sition can substantially expand the certified region under a fixed labeling budget.
+A practical limitation is conservativeness: the method often attains low selective
+
+Selective Prediction from Agreement
+15
+risk on the certified domain but may saturate at lower maximum coverage than
+less constrained post-hoc abstention rules.
+Future work includes weaker and more realistic assumptions linking agree-
+ment to correctness, and relaxed (e.g., sampled) variants of forcing that increase
+coverage while retaining interpretability.
+Generative AI use disclosure
+We used ChatGPT to assist with writing and presentation (grammar/style edits,
+rephrasing, and improving the wording of definitions and theorem statements).
+For Section 5.3, we also used it to obtain a proof hint/outline and to refine the
+exposition. All technical content and claims, including proof correctness, were
+verified by the authors, who take full responsibility for the manuscript and any
+copyright/IP issues.
+References
+1. Chow,
+C.K.:
+On
+Optimum
+Recognition
+Error
+and
+Reject
+Trade-
+off.
+IEEE
+Transactions
+on
+Information
+Theory
+16(1),
+41–46
+(1970).
+https://doi.org/10.1109/TIT.1970.1054406
+2. El-Yaniv, R., Wiener, Y.: On the Foundations of Noise-Free Selective Classification.
+Journal of Machine Learning Research 11, 1605–1641 (2010)
+3. Geifman, Y., El-Yaniv, R.: SelectiveNet: A Deep Neural Network with an Inte-
+grated Reject Option. In: Proceedings of the 36th International Conference on
+Machine Learning. Proceedings of Machine Learning Research, vol. 97, pp. 2151–
+2159. PMLR (2019)
+4. Nemhauser, G.L., Wolsey, L.A., Fisher, M.L.: An Analysis of Approximations
+for Maximizing Submodular Set Functions—I. Mathematical Programming 14(1),
+265–294 (1978). https://doi.org/10.1007/BF01588971
+5. Sener, O., Savarese, S.: Active Learning for Convolutional Neural Networks: A
+Core-Set Approach. In: International Conference on Learning Representations
+(2018). arXiv:1708.00489
+6. Bartlett, P.L., Foster, D.J., Telgarsky, M.: Spectrally-Normalized Margin Bounds
+for Neural Networks. In: Advances in Neural Information Processing Systems 30,
+pp. 6240–6249. Curran Associates, Inc. (2017)
+7. Miyato, T., Kataoka, T., Koyama, M., Yoshida, Y.: Spectral Normalization for
+Generative Adversarial Networks. In: International Conference on Learning Rep-
+resentations (2018). arXiv:1802.05957
+8. Tsuzuku, Y., Sato, I., Sugiyama, M.: Lipschitz-Margin Training: Scalable Certifica-
+tion of Perturbation Invariance for Deep Neural Networks. In: Advances in Neural
+Information Processing Systems (2018). arXiv:1802.04034
+9. Krizhevsky, A.: Learning Multiple Layers of Features from Tiny Images. Technical
+Report, University of Toronto (2009)
+10. Zhu, X., Ghahramani, Z., Lafferty, J.: Semi-supervised Learning Using Gaussian
+Fields and Harmonic Functions. In: Proceedings of the 20th International Confer-
+ence on Machine Learning, pp. 912–919 (2003)
+
+16
+M. Khosravani
+11. Zhou, D., Bousquet, O., Lal, T.N., Weston, J., Schölkopf, B.: Learning with Local
+and Global Consistency. In: Advances in Neural Information Processing Systems
+16, pp. 321–328 (2004)
+12. Chapelle, O., Schölkopf, B., Zien, A. (eds.): Semi-Supervised Learning. MIT Press
+(2006)
+13. Vovk, V., Gammerman, A., Shafer, G.: Algorithmic Learning in a Random World.
+Springer (2005)
+14. Romano, Y., Sesia, M., Candès, E.J.: Classification with Valid and Adaptive Cov-
+erage. In: Advances in Neural Information Processing Systems (2020)
+15. Angelopoulos, A.N., Bates, S., Malik, J., Jordan, M.I.: Uncertainty Sets for Image
+Classifiers using Conformal Prediction. In: International Conference on Learning
+Representations (2021). arXiv:2009.14193
+16. Geifman, Y., El-Yaniv, R.: Selective Classification for Deep Neural Networks. In:
+Advances in Neural Information Processing Systems, vol. 30 (2017)
+17. Netzer, Y., Wang, T., Coates, A., Bissacco, A., Wu, B., Ng, A.Y.: Reading Digits
+in Natural Images with Unsupervised Feature Learning. In: NIPS Workshop on
+Deep Learning and Unsupervised Feature Learning, vol. 2011(2), p. 5 (2011)
+18. He, K., Zhang, X., Ren, S., Sun, J.: Deep Residual Learning for Image Recogni-
+tion. In: Proceedings of the IEEE Conference on Computer Vision and Pattern
+Recognition (CVPR), pp. 770–778 (2016)
+19. Kottke, D., Sandrock, C., Krempl, G., Sick, B.: A Stopping Criterion for Transduc-
+tive Active Learning. In: Machine Learning and Knowledge Discovery in Databases
+(ECML PKDD 2022), pp. 468–484. Springer (2022). https://doi.org/10.1007/978-
+3-031-26412-2_29
+20. Goldwasser, S., Kalai, A.T., Kalai, Y.T., Montasser, O.: Beyond Perturbations:
+Learning Guarantees with Arbitrary Adversarial Test Examples. In: Advances in
+Neural Information Processing Systems (NeurIPS) 33 (2020)
+21. Kalai, A.T., Kanade, V.: Towards Optimally Abstaining from Prediction with OOD
+Test Examples. In: Advances in Neural Information Processing Systems (NeurIPS)
+34, pp. 12774–12785 (2021)
+

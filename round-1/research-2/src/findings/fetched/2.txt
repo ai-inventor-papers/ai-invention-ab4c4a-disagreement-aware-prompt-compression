@@ -1,0 +1,1105 @@
+URL: https://arxiv.org/pdf/2402.17762
+Type: PDF
+Length: 73513 chars (truncated)
+
+--- Content ---
+
+Massive Activations in Large Language Models
+Mingjie Sun1
+Xinlei Chen2
+J. Zico Kolter1,3
+Zhuang Liu2
+1Carnegie Mellon University
+2Meta AI Research
+3Bosch Center for AI
+Summer
+is
+warm
+.
+Winter
+is
+cold
+.
+\n
+1415
+2533
+0
+1k
+2k
+Summer
+is
+warm
+\n
+Winter
+is
+cold
+.
+\n
+1415
+2533
+0
+1k
+2k
+Why
+is
+summer
+warm
+and
+winter
+cold
+?
+1415
+2533
+0
+1k
+2k
+It
+is
+the
+best
+of
+times
+.
+\n
+1415
+2533
+0
+1k
+2k
+Figure 1: Activation Magnitudes (z-axis) in LLaMA2-7B. x and y axes are sequence and feature dimensions.
+For this specific model, we observe that activations with massive magnitudes appear in two fixed feature dimensions
+(1415, 2533), and two types of tokens—the starting token, and the first period (.) or newline token (\n).
+Abstract
+We observe an empirical phenomenon in Large Language Models (LLMs)—very few activations exhibit
+significantly larger values than others (e.g., 100,000 times larger). We call them massive activations. First,
+we demonstrate the widespread existence of massive activations across various LLMs and characterize
+their locations. Second, we find their values largely stay constant regardless of the input, and they
+function as indispensable bias terms in LLMs. Third, these massive activations lead to the concentration
+of attention probabilities to their corresponding tokens, and further, implicit bias terms in the self-
+attention output. Last, we also study massive activations in Vision Transformers. Code is available at
+https://github.com/locuslab/massive-activations.1
+1
+Introduction
+Large Language Models (LLMs) (Brown et al., 2020, OpenAI, 2023) have demonstrated remarkable capabilities.
+The majority of existing studies conducted on these models are focused on their external behaviors, e.g.,
+evaluating their performance on various tasks (Katz et al., 2023, Bubeck et al., 2023), developing prompts
+to elicit accurate responses (Wei et al., 2022, Yang et al., 2023). While these studies are encouraging and
+highlight the potential of these models, it is also important to gain insights into their internal mechanisms,
+especially as they are being increasingly integrated into many real-world applications. However, research on
+the internal workings of these models remains relatively limited.
+In this work, we discover and study a surprising phenomenon in the internal representations of LLMs.
+Examining the hidden states in these models, we find that certain activations exhibit huge magnitudes, e.g.,
+more than 4 orders of magnitude larger than the median, and could take on absolute values larger than
+15,000 in LLaMA2-70B (Touvron et al., 2023), despite the presence of normalization layers. These activations
+are also extremely rare, often numbering fewer than 10 among tens of millions of total activations. Figure 1
+1Published as a conference paper in First Conference on Language Modeling (COLM), 2024.
+1
+arXiv:2402.17762v2  [cs.CL]  14 Aug 2024
+
+illustrates this phenomenon in LLaMA2-7B. As these activations are so much larger in magnitudes compared
+to others, we name them massive activations. We demonstrate their presence in a wide range of LLMs,
+spanning different model sizes and families.
+We explore where massive activations are located in LLMs. Regarding the depth dimension of LLMs, the
+appearance of massive activations is mostly abrupt: they emerge suddenly after a single layer of computation,
+and diminish at the last few layers. Further, we find massive activations occur in a small number of feature
+dimensions that are input agnostic. Many of these activations are found within the starting word token and
+delimiter tokens. Additionally, we show that massive activations are not the same as outlier features (Dettmers
+et al., 2022), a previously known phenomenon in LLMs.
+We show that massive activations act as fixed but crucial bias terms in LLMs. Here by bias terms, we mean
+certain internal states of the models that are independent from the inputs, analogous to the bias term b in a
+linear layer y = Wx + b. First, we show that massive activations play a critical role in LLMs’ capabilities. For
+instance, in LLaMA2-7B, setting merely four massive activations (out of millions of activations) to zero would
+result in catastrophic collapse in model performance. Further, setting them to their mean values does not
+hurt the model, suggesting their role is equivalent to simple constant biases. Our analysis reveals that after
+the initial layers, LLMs repurpose the tokens linked with massive activations to store these important biases.
+Intriguingly, massive activations are closely connected with self-attention. In particular, we show massive
+activations cause attention to be attracted to the tokens associated with them. Our findings extend the
+observations from “attention sinks”
+(Xiao et al., 2023b)—we demonstrate that LLMs allocate excessive
+attention to more than just the first token, and provide an in-depth analysis on how such attention concentration
+patterns arise. Our analysis suggests that LLMs try to learn implicit bias components in self-attention via
+massive activations, during their pretraining phase. We thus experiment with augmenting self-attention with
+additional key and value embeddings that are explicitly designed as biases. Remarkably, we demonstrate that
+training with them eliminates the need for LLMs to learn massive activations.
+Finally, we also observe massive activations in Vision Transformers (ViTs). They appear less frequently than
+those in LLMs but are still in many of the ViTs we have examined. In these ViTs, they tend to appear at
+fixed feature dimensions, but notably at varying patch tokens. Moreover, we find that these activations act
+similarly as fixed biases. Notably, we discuss the connections between massive activations and the recently
+proposed “register tokens” in ViTs (Darcet et al., 2023). We show they both learn values independent of input
+images, functioning as fixed biases. This offers an alternative interpretation for register tokens than that in
+the original work (Darcet et al., 2023), where they were hypothesized to aggregate global image information.
+2
+Massive Activations
+We study autoregressive Transformers, which are built by a stack of L decoding layers. Each layer ℓtakes
+the previous hidden state hℓ−1 ∈RT ×d as input and outputs a hidden state hℓ∈RT ×d. T is the number of
+tokens and d is the number of features. Transformer layers use residual connections (He et al., 2016), and the
+computation can be formulated as:
+hℓ= hℓ−1 + Fℓ(hℓ−1)
+(1)
+where Fℓis the residual transformation. Note that this includes both attention and MLP blocks. An activation
+denotes a specific scalar value in a hidden state. Unless otherwise specified, our study of activations is on the
+hidden state hℓ, i.e., the output of residual summations, not any intermediate states inside Fℓ.
+Existence in LLMs. We start with an illustrative example on LLaMA2-7B. In Figure 1, we visualize the
+intermediate features hℓof interest. We feed this model with short sentences and visualize the activation
+magnitudes (z-axis) of the hidden states at a middle layer. x and y axes correspond to sequence and feature
+dimensions respectively. Each blue row corresponds to the feature embedding of one token. We observe up to
+four activations with significantly large magnitudes. The largest activation (about 2,000) is approximately
+2
+
+LLaMA2-13B
+Figure 2: Massive activations in LLaMA2-13B. In this model, they appear in two fixed feature dimensions
+(2100, 4743), and are limited to the starting token.
+Mixtral-8x7B
+Figure 3: Massive activations in Mixtral-8x7B. In this model, they lie in two feature dimensions (2070,
+3398), and are found within the starting token, delimiter tokens and certain word tokens (“and” and “of”).
+10,000 times larger than the median magnitude (about 0.2). The sheer scale of these activations makes them
+stand out from others. We thus refer to these special activations as massive activations.
+Massive activations are not unique to this specific model LLaMA2-7B, but are widely observed in LLMs.
+In Figure 2 and Figure 3, we demonstrate the existence of massive activations in both LLaMA2-13B and
+Mixtral-8x7B (Jiang et al., 2024). Notably for Mixtral-8x7B, the largest activation magnitude can reach an
+absolute value of 7,000, around 4 orders of magnitude larger than the median feature magnitude (around 0.3).
+We refer the reader to Appendix A for results on more pretrained and fine-tuned LLMs.
+Properties. We summarize two main properties of massive activations. The most notable property is that
+these activations possess massive values and their magnitudes are significantly larger than other activations,
+often several orders of magnitude larger than the median value. Another property is that they are exceptionally
+few in number. For LLaMA2-7B in Figure 1, there are approximately 40,000 total activations in each presented
+hidden state but at most four massive activations can be identified.
+Quantitatively, we present the values of the top activation magnitudes in Table 1. We also provide a loose
+but broad definition: an activation qualifies as a massive activation if its magnitude surpasses 100 and is at
+least or around 1,000 times larger than the median magnitude of its hidden state. We find this criterion to
+effectively identify these activations of interest across various LLMs, which are emphasized in bold in Table 1.
+Model
+Top 1
+Top 2
+Top 3
+Top 4
+Top 5
+Top-10
+Top-100
+Top 1%
+Top 10%
+median
+LLaMA2-7B
+2622.0
+1547.0
+802.0
+477.3
+156.9
+45.7
+10.6
+1.1
+0.6
+0.2
+LLaMA2-13B
+1264.0
+781.0
+51.0
+50.5
+47.1
+43.5
+16.6
+1.9
+1.1
+0.4
+Mixtral-8x7B
+7100.0
+5296.0
+1014.5
+467.8
+302.8
+182.8
+90.8
+3.0
+1.0
+0.3
+Table 1: Five largest, top 1% and 10%, and the median activation magnitudes at a hidden state of three
+LLMs. The activations that are considered as massive activations are highlighted in bold.
+3
+
+1
+8
+16
+24
+32
+Layers
+0
+1k
+2k
+3k
+Magnitudes
+LLaMA2-7B
+1
+10
+20
+30
+40
+Layers
+0
+500
+1k
+LLaMA2-13B
+Top 1
+Top 2
+Top 3
+Median
+1
+8
+16
+24
+32
+Layers
+0
+500
+1k
+Phi-2
+Figure 4: Three largest activation magnitudes and the median magnitude at each layer in LLMs.
+Next, we identify the locations of massive activations within LLMs. For a comprehensive analysis, rather than
+using short sentences as inputs, we collect 100 sequences (each with 4,096 tokens) from RedPajama (Together
+Computer, 2023). We run LLMs on these 100 sequences and collect the hidden states from each layer.
+2.1
+Which Layers?
+We determine the layers whose output hidden states exhibit massive activations. In Figure 4, we visualize the
+three largest activation magnitudes and the median of the hidden state output of each layer, with results
+averaged over 100 sequences. We examine three models: LLaMA2-7B, 13B and Phi-2 (Javaheripi et al., 2023)
+(see Appendix A.4 for more LLMs). In all cases, each of the top three activations comes from the same
+position in the hidden state across most of the middle layers. Generally, we observe the following:
+Massive activations exist and remain as largely constant values throughout most of the intermediate layers.
+They emerge in the initial layers and start to diminish in the last few layers.
+In LLaMA2-7B, massive activations first appear in layer 2 and remain nearly constant values until layer 30.
+Intriguingly, for LLaMA2-7B and 13B, massive activations emerge very rapidly from one layer of computation,
+e.g., layer 2 and layer 4 respectively. This means that they do not emerge as a result of gradual accumulation
+through many layers, and are caused by a rather different mechanism.
+2.2
+Which Feature and Sequence Dimensions?
+We determine the locations of massive activations within hidden states, i.e., their feature and sequence
+dimensions. Since we have shown that their values largely stay constant in middle layers, we take on any
+such layer for this analysis.
+LLaMA2-7B. In this model, massive activations are identified in two feature dimensions (1415 and 2533).
+Regarding sequence dimensions, we find that massive activations appear at: 1. the starting word token, 2.
+the token representing the first period (.) or newline token (\n) in the sequence. Figure 1 illustrates these
+findings for LLaMA2-7B. This is also consistent on long sequences. In cases where the input contains a “.” or
+“\n” token, four massive activations are observed. For the less common scenario where neither “.” nor “\n” is
+present, we can see two massive activations, both of which are associated with the initial token.
+LLaMA2-13B. We find that massive activations in this model consistently appear in two feature dimensions,
+2100 and 4743. These activations are exclusively located within the starting token of the sequence, regardless
+of its semantics. Figure 2 illustrates these behaviors within LLaMA2-13B. For any given input sequence,
+only two massive activations are present, corresponding to features 2100 and 4743 of the first word token.
+Mixtral-8x7B. For this model, massive activations lie in two feature dimensions, i.e., 2070 and 3398. For
+sequence dimensions, we find that they are associated with the starting token, delimiter tokens and also certain
+word tokens, e.g., token “and” and token “of”. These word tokens tend to be conjunctions and prepositions,
+representing relatively few semantics. Figure 3 showcases these patterns in Mixtral-8x7B. Generally, for
+inputs of 4096 tokens in length, these tokens are predominantly located in the early part of sequence.
+4
+
+Summary. We summarize our findings for LLMs beyond the three models discussed above. We also put
+other models into categories based on empirical observations.
+• For feature dimensions, massive activations are consistently present in very few fixed dimensions.
+• For sequence dimensions, we classify LLMs into three categories based on massive activations’ locations:
+a) Starting token only.
+Models include LLaMA2-13B, MPT and GPT-2.
+b) Starting token and the first “strong” delimiter token (i.e., “.” or “\n”)
+Models include LLaMA2-7B and LLaMA2-7B-Chat.
+c) Starting token, delimiter tokens (such as “.”, “\n”, “’” or “,”), and certain word tokens with weak
+semantics (such as “and”, “from”, “of” or “2”2)
+Models include LLaMA2-70B, Mistral-7B, Mixtral-8x7B, Falcon-40B and Phi-2.
+2.3
+Difference from Outlier Features
+With an understanding of the nature and locations of massive activations, we now discuss the differences
+between them and outlier features, a seemingly similar phenomenon in LLMs. Dettmers et al. (2022) have
+identified the existence of outlier features characterized by large magnitudes within LLMs.
+Conceptually, a massive activation is a scalar value, determined jointly by the sequence and feature dimensions;
+in contrast, an outlier feature is a vector, corresponding to activations at all tokens. Further, massive activations
+are present at extremely few tokens, while outlier features expect most activations in them to be large.
+In practice, we find that massive activations do not overlap with outlier feature dimensions. We identify
+outlier features in LLaMA2-7B and 13B using the definition in Dettmers et al. (2022): a feature is deemed
+as an outlier feature if activation magnitudes exceed 6.0 at more than 25% of layers and 6% of tokens, on
+more than 90 out of 100 sequences. We discover 10 and 25 outlier features in these two models respectively.
+However, none of them correspond to the feature dimensions of massive activations.
+3
+Massive Activations Act as Biases in LLMs
+While we have demonstrated the existence of massive activations and identified their locations, their functional
+role within LLMs is not yet clear. Are they important for internal computation? Or are they simply redundant
+activations with no effect? This section will delve deeper into LLMs to answer these questions. Different from
+the previous passive observations, we take a more proactive approach by inspecting how modifying massive
+activations affects the external behavior of LLMs.
+We first measure the variances of massive activations across input sequences. Besides massive activations,
+we choose three other positions based on their average magnitudes, corresponding to the top 1%/10%, and
+the median within the hidden state. In Table 2, we show the mean and standard deviation of the activation
+values at these positions across 100 sequences, for LLaMA2-7B and 13B. We find that the variances of massive
+activations are considerably smaller relative to their mean values when compared to other activations.
+We then modify the inference of LLMs by intervening massive activations at one layer—for a hidden state
+exhibiting massive activations, we manually set these activations to chosen fixed values. Then the altered
+hidden state is fed into the next layer, and the computation afterwards continues as normal. We modify
+massive activations in LLaMA2-7B and 13B. We evaluate the perplexity on WikiText, C4 and PG-19 and the
+mean zero-shot accuracy on BoolQ, PIQA, WinoGrande, Arc-Easy and Arc-Challenge. For each model, we
+2Such numeric tokens exhibit massive activations only in certain contexts, e.g., dates and years. Refer to Figure 17 for an
+illustration on LLaMA2-70B.
+5
+
+Model
+Top 1
+Top 2
+Top 1%
+Top 10%
+Median
+LLaMA2-7B
+2556.8 ± 141.0
+-1507.0 ± 83.0
+-0.14 ± 0.6
+0.0 ± 0.5
+0.2 ± 0.3
+LLaMA2-13B
+-1277.5 ± 14.6
+-787.8 ± 8.0
+0.9 ± 0.7
+-0.3 ± 0.8
+-0.3 ± 0.6
+Table 2: The mean and variance of activation values at several positions, corresponding to the 2 largest, top
+1% and 10%, and the median magnitudes within the hidden state. We find that the variation in massive
+activations is significantly lower in comparison to other activations.
+LLaMA2-7B
+LLaMA2-13B
+Intervention
+WikiText
+C4
+PG-19
+Mean Zero-Shot
+WikiText
+C4
+PG-19
+Mean Zero-Shot
+Original
+5.47
+7.85
+8.57
+68.95%
+4.88
+7.22
+7.16
+71.94%
+Set to zero
+inf
+inf
+inf
+36.75%
+5729
+5526
+4759
+37.50%
+Set to mean
+5.47
+7.86
+8.59
+68.94%
+4.88
+7.22
+7.16
+71.92%
+Table 3: Intervention analysis of massive activations in LLaMA2-7B and 13B. We set massive activations to
+fixed values and evaluate the perplexity (↓) and zero-shot accuracy (%, ↑) of intervened models.
+perform the intervention once on the hidden state where massive activations first appear. This corresponds
+to layer 2 and layer 4 in LLaMA2-7B and 13B respectively.
+Setting massive activations to zero. We evaluate the performance of LLMs without massive activations.
+We set their values to zero in the hidden state when they first appear, i.e., removing massive activations
+from intervened LLMs. The results (denoted by Set to zero) are shown in Table 3. Intriguingly, there is a
+significant degradation in model performance, e.g., exploding perplexity numbers. For comparative analysis,
+an equal number of activations—those with average magnitudes close to the median magnitude—are similarly
+set to zero. We find this leads to no performance drop. These results highlight the crucial role that massive
+activations play in the internal computation of LLMs.
+Setting massive activations to mean values. We remove the small variances in the values of massive
+activations. Specifically, we adjust the values of massive activations to their empirical mean values. The
+means are computed on 100 sequences from RedPajama. The results of this intervention (denoted by Set to
+mean) are shown in Table 3. We find that there are negligible changes in perplexity and zero-shot accuracy.
+This shows that their values are constants and input agnostic, i.e., functioning similarly to bias terms.
+To summarize our findings:
+Massive activations act as fixed but important biases in LLMs.
+Why these layers and tokens?
+The fact that these activations act as biases may explain why LLMs
+store them at certain layers and tokens:
+• The tendency of these activations to appear at the starting token could be attributed to the fact that
+every autoregressive training instance contains an initial token. Since LLMs are based on next word
+prediction, the starting token is the only token used in all forward passes within a sequence.
+• The existence of these activations in delimiter tokens might be due to the relatively low semantic value
+of these tokens, rendering them a low-cost option for storing such biases. Conversely, tokens with rich
+semantics would risk significant loss of input information, if they are repurposed to store biases.
+• The fact that massive activations emerge only after a few initial layers may be because LLMs would
+require some initial layers to process the meaning of the tokens associated with massive activations.
+At these layers, their semantics may be transferred to other token positions via self-attention, and
+preserved moving forward.
+6
+
+4
+Effects on Attention
+In this section, we explore and study the internal mechanism of massive activations in LLMs, particularly in
+relation to self-attention.
+4.1
+Attention is Concentrated on Massive Activations
+We observe a stark contrast in attention patterns when comparing layers before and after the appearance
+of massive activations in LLMs. Figure 5 shows the attention logits (before softmax), averaged over all
+heads per layer in LLaMA2-7B. The input is a prompt from MMLU (Hendrycks et al., 2021): “The following
+are multiple choice questions (with answers) about machine learning.\n\n ...”. Recall that in LLaMA2-7B,
+massive activations first appear in the output of layer 2 (see Figure 4). We find that in layer 3 and deeper
+layers (e.g., layer 31), attention is mostly concentrated on the two tokens associated with massive activations.
+Our observations are also consistent across various LLMs. Figure 6 demonstrates such attention concentration
+patterns in LLaMA2-13B and Phi-2, on the same input. See Appendix B.1 for results on more LLMs.
+We notice that there is a consistent pattern across models on the distribution of attention logit values. In
+Figure 5 and Figure 6, many attention logits tend to be negative following massive activations. They are
+mostly computed by the inner product between query and key states of tokens without massive activations.
+However, when the key states belong to tokens associated with massive activations, the resulting attention
+logits are slightly positive. Thus in the attention softmax (computed along each row), these special attention
+logits will attract most of the attention probability.
+Recently, Xiao et al. (2023b) showed that LLMs attend heavily to the starting token. Our findings on
+LLaMA2-13B in Figure 6a align with their results. Empirically, we find it is true for LLMs where massive
+The
+.
+1415
+2533
+0
+1k
+2k
+LLaMA2-7B, Layer 2
+Key
+Query
+LLaMA2-7B, Layer 2
+1
+0
+1
+2
+Key
+Query
+massive activations
+LLaMA2-7B, Layer 3
+8
+6
+4
+2
+0
+Key
+Query
+massive activations
+LLaMA2-7B, Layer 31
+6
+4
+2
+0
+Figure 5: Attention patterns before and after massive activations appear in LLaMA2-7B. For each layer, we
+visualize average attention logits (unnormalized scores before softmax) over all heads, for an input sequence.
+The
+2100
+4743
+0
+1k
+LLaMA2-13B, Layer 4
+Key
+Query
+The
+LLaMA2-13B, Layer 5
+6
+4
+2
+0
+(a) LLaMA2-13B
+The
+\n
+293
+743
+0
+500
+1k
+Phi-2, Layer 8
+Key
+Query
+The
+\n
+Phi-2, Layer 9
+6
+4
+2
+0
+(b) Phi-2
+Figure 6: Attention patterns after massive activations emerge in LLaMA2-13B (left) and Phi-2 (right).
+7
+
+activations are only found within the starting token. However, our results on LLaMA2-7B and Phi-2 indicate
+that LLMs also allocate substantial attention to other tokens and they are associated with massive activations.
+Furthermore, our results reveal a deeper cause for the emergence of these attention concentration patterns.
+4.2
+Massive Activations Impose Implicit Attention Biases
+In this part, we delve into the computation within the attention block and demonstrate that LLMs use
+massive activations to enforce an implicit bias term in self-attention.
+Attention LayerNorm and QKV projections. We study the impact of massive activations on the query,
+key and value states (Q/K/V) in self-attention. In LLMs, at each layer, input features are processed by layer
+normalization3 (Ba et al., 2016) and then transformed into query, key and value states via linear projections,
+as illustrated in Figure 7a. This design choice is introduced in GPT-2 (Radford et al., 2019) and widely
+adopted in modern LLMs.
+Q
+K
+V
+Linear
+LayerNorm
+Normalize
+Scale
+Output
+Middle
+X
+Input
+(a) Attention LayerNorm and QKV
+linear projections.
+Summer
+is
+warm
+.
+-1k
+0
+1k
+2k
+LayerNorm Input
+Summer
+is
+warm
+.
+25
+0
+25
+50
+LayerNorm Middle
+Summer
+is
+warm
+.
+2.5
+0.0
+2.5
+LayerNorm Output
+Summer
+is
+warm
+.
+5
+0
+5
+Q
+Summer
+is
+warm
+.
+10
+0
+10
+K
+Summer
+is
+warm
+.
+1
+0
+1
+V
+(b) Layer 3, LLaMA2-7B. We highlight the embeddings of the two tokens
+where massive activations appear: the starting token and the period token.
+Figure 7: Activation trajectory starting from input hidden states to query, key and value states.
+Figure 7b visualizes all hidden states computed in this schematic (LLaMA2-7B, layer 3). We find that at
+all stages, features of the two tokens associated with massive activations are drastically different from other
+tokens. Specifically, after the first “normalize” step, the embeddings of these two tokens appear as a sparse
+vector with two distinct non-zero elements. Notably, the subsequent QKV states exhibit considerably smaller
+variations within each embedding. We hypothesize that the attention LayerNorm may play a pivotal role in
+this process (see Appendix B.2 for further discussion).
+Attention output decomposition. Given that attention is also concentrated on the tokens associated
+with massive activations (Section 4.1), we thus isolate these tokens and study their effects on the attention
+output (the layer of attention matrix multiplying value vectors). In Equation 2, we decompose the attention
+output at each token k into two parts: value updates from the tokens C where attention is concentrated; and
+value updates aggregated from other tokens.
+Attention(Q, K, V )k =
+X
+i≤k
+pk
+i vi =
+X
+i∈C
+pk
+i vi +
+X
+i/∈C
+pk
+i vi
+(2)
+3LLaMA2 uses a variant of layer normalization: RMSNorm (Zhang and Sennrich, 2019).
+8
+
+Attention Output
+Value Updates
+Value Updates
+Same across all tokens
+Figure 8: Value updates from tokens associated with massive activations are essentially the same.
+where pk
+i is the attention distribution of query token k to token i, and vi is the value state of token i.
+Figure 8 visualizes the decomposed value updates and the attention output in LLaMA2-7B, with the input
+prompt “Summer is warm. Winter is cold.”. In this case, the set C consists of token Summer and the first
+period token. We can see that the value updates from C are nearly identical across tokens, i.e., they serve
+as additive bias terms, although not explicitly imposed. Furthermore, we note that this pattern of value
+update is strikingly similar across various inputs. We refer the reader to Appendix B.3 for additional analysis.
+Overall, our results indicate that LLMs use massive activations to allocate substantial attention at certain
+tokens. These tokens are then utilized to form a constant bias term when computing the attention output.
+4.3
+Explicit Attention Biases Eliminate Massive Activations
+Given the strong need of LLMs to learn implicit attention biases during pretraining, we thus experiment with
+directly augmenting self-attention with additional bias terms. Intriguingly, we find that models augmented
+with explicit attention biases do not exhibit massive activations.
+Formulation. The idea is to model such attention biases explicitly, except not through repurposing existing
+tokens in the input sequence. Thus we introduce additional learnable parameters k′, v′ ∈Rd for each head.
+Specifically, given input query, key and value matrices Q, K, V ∈RT ×d, the augmented attention with explicit
+attention biases is computed as:
+Attention(Q, K, V ; k′, v′) = softmax
+ 
+Q
+
+KT k′
+√
+d
+!  V
+v′T
+
+(3)
+where k′ and v′ are each concatenated with the key and value matrices K/V. The proposed attention can be
+used as a drop-in replacement of standard attention, without modifying other parts of Transformers, e.g.,
+positional embeddings and MLP blocks.
+Results. We train three GPT-2 models: the standard model, GPT-2 prepended with a sink token (Xiao
+et al., 2023b) and GPT-2 with explicit attention biases. See Appendix B.4 for training setups. We find
+that the three models have the same performance at convergence but differ significantly in the status of
+massive activations, as demonstrated in Figure 9. Notably, in GPT-2 with explicit attention biases, massive
+activations disappear, as compared to the default GPT-2 and one with a sink token.
+Figure 10 shows the three largest activation magnitudes at each layer. Notably, with explicit attention biases,
+top activation magnitudes in GPT-2 are increasing gradually as layers go deeper. These results indicate that
+explicit attention biases negate the necessity for LLMs to develop massive activations during the pretraining
+phase. We leave it as future work to investigate other aspects of our alternative attention formulation, e.g.
+training stability (Wortsman et al., 2023).
+9
+
+Summer
+is
+warm
+.
+Winter
+is
+cold
+.
+0
+1k
+2k
+GPT-2 Default
+SINK
+Summer
+is
+warm
+.
+Winter
+is
+cold
+.
+0
+1k
+2k
+GPT-2 with Sink Token
+Summer
+is
+warm
+.
+Winter
+is
+cold
+.
+0
+1k
+2k
+GPT-2 with Attention Bias
+Figure 9: Massive activations disappear when training GPT-2 with explicit attention bias (Equation 3).
+1
+3
+6
+9
+12
+Layers
+0
+500
+1k
+Magnitudes
+GPT-2 Default
+1
+3
+6
+9
+12
+Layers
+0
+1k
+2k
+GPT-2 with Sink Token
+Top 1
+Top 2
+Top 3
+1
+3
+6
+9
+12
+Layers
+100
+200
+GPT-2 with Attention Bias
+Figure 10: Three largest activation magnitudes in the output feature of each layer for three GPT-2 models.
+To summarize our findings in this section:
+Massive activations are connected to self-attention. LLMs use massive activations to concentrate substantial
+attention on very few tokens, injecting implicit bias terms in the attention computation. Further, massive
+activations can be eliminated by augmenting LLMs with explicit attention biases.
+5
+Massive Activations in Vision Transformers
+In this section, we study if Vision Transformers (ViTs) (Dosovitskiy et al., 2021) exhibit massive activations.
+We note that while ViTs and LLMs are both based on self-attention, ViTs employ global token mixing, which
+contrasts with the autoregressive nature of LLMs.
+Massive activations in ViTs. We explore several model families based on ViTs: CLIP (Radford et al.,
+2021), MAE (He et al., 2021) and DINOv2 (Oquab et al., 2024). We examine the ViT-L models from
+these families. The activation magnitudes in the penultimate layer for an input image are illustrated in
+Figure 11. We find that massive activations exist in CLIP and DINOv2 ViT-L, where we highlight the
+corresponding sequence dimensions. In these two models, there are extremely few activations (fewer than
+four) with significantly larger magnitudes than others. In addition, these activations are located in specific
+feature dimensions and appear in random patch tokens. However, we do not observe massive activations in
+MAE ViT-L. In this model, a feature dimension (927) exhibits uniformly large values across all tokens.
+Massive activations are biases in ViTs. Figure 13 shows the three largest activation magnitudes and the
+median per layer in CLIP and DINOv2 ViT-L, averaged over 1k images. We find that massive activations are
+consistently present across images and their values remain largely the same around the mean values. It is
+worth noting that unlike LLMs, massive activations start to appear only in the later stages of ViTs.
+10
+
+Patch Tokens
+Patch Tokens
+Patch Tokens
+Figure 11: Massive activations are present in ViT-L from CLIP and DINOv2, but not MAE.
+1
+6
+12
+18
+24
+Layers
+0
+100
+200
+Magnitudes
+CLIP ViT-L
+Top 1
+Top 2
+Top 3
+Median
+1
+6
+12
+18
+24
+Layers
+0
+200
+400
+DINOv2 ViT-L
+Figure 13: Three largest activation magnitudes and the median magni-
+tude at each layer in CLIP and DINOv2 ViT-L.
+CLIP ViT-L, layer 13
+Intervention
+ImageNet acc (%)
+Original
+75.5
+Set to zero
+59.8
+Set to mean
+75.5
+Table 4:
+Intervention analysis of
+massive activations in CLIP ViT-L.
+Following our methodology in Section 3, we perform intervention analysis on CLIP ViT-L. We modify the
+two largest massive activations to zero and mean values respectively. The intervention is conducted on layer
+13, where massive activations first appear within this model. Results are shown in Table 4, where we evaluate
+the zero-shot accuracy on ImageNet. We can see that setting massive activations to zero leads to significant
+drop in accuracy while setting to their means results in negligible accuracy drop. These results indicate that
+massive activations function as fixed but crucial biases in ViTs, aligned with our observations in Section 3.
+Patch Tokens
+Figure 14: DINOv2-reg ViT-G.
+Registers are biases in ViTs. Recently Darcet et al. (2023) propose
+to augment standard ViTs with additional learnable tokens, which they
+name as register tokens. They show that training ViTs with register
+tokens leads to smooth attention maps, and the resulting model family,
+namely DINOv2-reg, achieves superior downstream performance over
+DINOv2. Examining the largest ViT-G model in DINOv2-reg, we observe
+the existence of massive activations, as shown in Figure 14. However,
+different from standard ViTs, massive activations do not appear in
+patch tokens but exclusively within a fixed register token, i.e., register 3.
+This suggests that this model uses register 3 to store these activations.
+Figure 16 visualizes the attention distribution of the [CLS] token in the
+last layer. We find that most of the attention is allocated to register 3,
+echoing our previous findings in attention patterns (Section 4.1).
+Further, we conduct intervention analysis to analyze the role of registers. We replace all register features at
+the output of every layer with their means, averaged over 10k ImageNet training images. This intervention
+removes the intended purpose of registers to aggregate global input information (Darcet et al., 2023). Table 5
+shows the results. We find that ViTs with fixed register features achieve accuracy comparable to original
+11
+
+CLS
+Reg 1
+Reg 2
+Reg 3
+Reg 4
+Patch
+0%
+20%
+40%
+60%
+Attention Distribution, DINOv2-reg ViT-G
+Figure 16: Average attention of the [CLS] token.
+DINOv2-reg with 4 registers
+ImageNet acc (%)
+ViT-S
+ViT-B
+ViT-L
+ViT-G
+Original
+81.9
+84.8
+86.3
+87.0
+Fix-Reg-Mean
+81.7
+85.0
+86.2
+87.0
+Table 5: We fix all register features at every layer to
+their means and evaluate the intervened ViTs.
+models, suggesting that registers act as learned biases in ViTs. This leads to constant key and value states at
+register tokens, effectively introducing bias terms to self-attention (extra k′ and v′ in Equation 3). Thus a
+ViT with register tokens function equivalently to a standard ViT augmented with explicit attention biases.
+To summarize our findings:
+Massive activations exist in many but not all ViTs. Similar to those in LLMs, these activations act as
+constant biases. We also show the recently proposed register tokens have a similar function.
+6
+Related Work
+Intriguing properties of autoregressive Transformers. Timkey and Schijndel (2021) observed that in
+GPT-2’s penultimate layer, there are feature dimensions containing activations with magnitudes up to 3,000.
+They found that these few dimensions dominate several standard measures for evaluating representation
+similarity. Heimersheim and Turner (2023) found that the feature norm of the initial token in GPT-2 grows
+much faster than other tokens. Kovaleva et al. (2021) and Zhao et al. (2023) demonstrated the existence of
+outlier weights in the LayerNorm of GPT-2 and LLaMA2-13B and showed that setting them to zero leads to
+catastrophic drop in model performance. Notably, the feature dimension of this weight in LLaMA2-13B (i.e.,
+2100) corresponds to that of a massive activation (Figure 2).
+Outlier features. Various existing works in quantization (Dettmers et al., 2022, Zeng et al., 2022, Xiao
+et al., 2023a, Lin et al., 2023, Ahmadian et al., 2023) have studied the existence of outlier features in
+LLMs. Dettmers et al. (2022) showed that outlier features have large activation values in most of their
+sequence dimensions. While massive activations can be seemingly similar to outlier features, we discussed
+their fundamental differences in Section 2.3. More importantly, we show that massive activations can not be
+attributed to the existence of outlier features.
+Attention concentration patterns. Clark et al. (2019b), Kovaleva et al. (2019) and Bondarenko et al.
+(2021) discovered that attention in BERT (Devlin et al., 2018) tends to focus on the “separate” token [SEP].
+Xiao et al. (2023b) showed that LLMs assign most of the attention to the starting word token. Darcet et al.
+(2023) revealed the existence of attention artifacts in ViTs. Robinson et al. (2023) found sparse activation
+patterns in ViTs that attract attention to certain tokens. Our work provides an in-depth analysis as to why
+these patterns emerge, specifically in relation to massive activations.
+Biases in self-attention. There can be various notion of biases in the self-attention mechanism. First, simple
+additive bias terms can be used in linear layers for computing the query, key and value states (Namazifar
+et al., 2023). Second, position biases can be inserted in self-attention to encode positional information of each
+token (Su et al., 2021, Press et al., 2021). There are also variants of biases with manually designed softmax
+operator (Miller, 2023, Bondarenko et al., 2023, Hu et al., 2024). Our work reveals that LLMs, even with
+standard self-attention formulation, would impose implicit bias components in the attention computation
+through massive activations.
+12
+
+7
+Conclusion and Discussion
+Autoregressive training of large Transformers has brought significant advances in natural language processing.
+This study reveals the widespread existence of massive activations in these Large Language Models (LLMs).
+The values of these activations are input agnostic but crucial for model performance, despite their extremely
+rare quantity. We establish a close connection between massive activations and the self-attention mechanism.
+We show that LLMs use them to implement an implicit form of biases for attention computation. Our findings
+also generalize well to Vision Transformers (ViTs). We hope the new results presented in this work contribute
+to a deeper understanding of today’s large-scale foundation models.
+We discuss some practical implications and future directions of this work. First, the presence of activations
+with large magnitudes has been widely known as a major challenge in effectively quantizing LLMs (Dettmers
+et al., 2022, Xiao et al., 2023a). This paper identifies a new type of outlier activations in LLMs, and we hope
+our findings will be of value to research on LLM compression. Second, attention maps that allocate excessive
+attention probabilities to a few fixed tokens may be undesirable for mechanistic interpretability (Olsson
+et al., 2022). Our proposed attention formulation could make the resulting attention maps in LLMs more
+interpretable, and potentially benefit downstream applications (Darcet et al., 2023). Finally, our investigation
+of the new attention formulation is focused on its effects on massive activations, and our experiments were
+limited to a small GPT-2 model due to computational resource constraints. It would be interesting to see
+how our results generalize to models at larger scales, and how our attention formulation could affect the
+training stability (Wortsman et al., 2023) of modern LLMs.
+Acknowledgments
+We thank Sachin Goyal, Jeremy Cohen, Timothée Darcet, Koustuv Sinha and Mike Rabbat for valuable
+discussions. Mingjie Sun was supported by funding from the Bosch Center for Artificial Intelligence.
+References
+Arash Ahmadian, Saurabh Dash, Hongyu Chen, Bharat Venkitesh, Stephen Gou, Phil Blunsom, Ahmet
+Üstün, and Sara Hooker. Intriguing properties of quantization at scale. In NeurIPS, 2023.
+Ebtesam Almazrouei, Hamza Alobeidli, Abdulaziz Alshamsi, Alessandro Cappelli, and et al. The falcon
+series of open language models. arXiv preprint arXiv:2311.16867, 2023.
+Jimmy Lei Ba, Jamie Ryan Kiros, and Geoffrey E. Hinton.
+Layer normalization.
+arXiv preprint
+arXiv:1607.06450, 2016.
+Yonatan Bisk, Rowan Zellers, Ronan Le Bras, Jianfeng Gao, and Yejin Choi. Piqa: Reasoning about physical
+commonsense in natural language. arXiv preprint arXiv:1911.11641, 2019.
+Yelysei Bondarenko, Markus Nagel, and Tijmen Blankevoort. Understanding and overcoming the challenges
+of efficient transformer quantization. arXiv:2109.12948, 2021.
+Yelysei Bondarenko, Markus Nagel, and Tijmen Blankevoort. Quantizable transformers: Removing outliers
+by helping attention heads do nothing. arXiv preprint arXiv:2306.12929, 2023.
+Tom B Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared Kaplan, Prafulla Dhariwal, Arvind
+Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell, et al. Language models are few-shot learners.
+arXiv preprint arXiv:2005.14165, 2020.
+Sébastien Bubeck, Varun Chandrasekaran, Ronen Eldan, Johannes Gehrke, Eric Horvitz, Ece Kamar,
+Peter Lee, Yin Tat Lee, Yuanzhi Li, Scott Lundberg, Harsha Nori, Hamid Palangi, Marco Tulio Ribeiro,
+and Yi Zhang. Sparks of artificial general intelligence: Early experiments with gpt-4. arXiv preprint
+arXiv:2303.12712, 2023.
+13
+
+Christopher Clark, Kenton Lee, Ming-Wei Chang, Tom Kwiatkowski, Michael Collins, and Kristina Toutanova.
+BoolQ: Exploring the surprising difficulty of natural yes/no questions. arXiv preprint arXiv:1905.10044,
+2019a.
+Kevin Clark, Urvashi Khandelwal, Omer Levy, and Christopher D. Manning. What does bert look at? an
+analysis of bert’s attention. arXiv preprint arXiv:1906.04341, 2019b.
+Peter Clark, Isaac Cowhey, Oren Etzioni, Tushar Khot, Ashish Sabharwal, Carissa Schoenick, and Oyvind
+Tafjord. Think you have solved question answering? try arc, the ai2 reasoning challenge. arXiv preprint
+arXiv:1803.05457, 2018.
+Timothée Darcet, Maxime Oquab, Julien Mairal, and Piotr Bojanowski. Vision transformers need registers.
+arXiv:2309.16588, 2023.
+Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei. ImageNet: A large-scale hierarchical
+image database. In CVPR, 2009.
+Tim Dettmers, Mike Lewis, Younes Belkada, and Luke Zettlemoyer. LLM.int8(): 8-bit matrix multiplication
+for transformers at scale. In NeurIPS, 2022.
+Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanove. Bert: Pre-training of deep bidirectional
+transformers for language understanding. arXiv preprint arXiv:1810.04805, 2018.
+Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner,
+Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, Jakob Uszkoreit, and Neil Houlsby.
+An image is worth 16x16 words: Transformers for image recognition at scale. In ICLR, 2021.
+Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey, Abhishek Kadian, Ahmad Al-Dahle, et al. The llama
+3 herd of models. arXiv preprint arXiv:2407.21783, 2024.
+Leo Gao, Stella Biderman, Sid Black, Laurence Golding, Travis Hoppe, Charles Foster, Jason Phang, Horace
+He, Anish Thite, Noa Nabeshima, Shawn Presser, and Connor Leahy. The pile: An 800gb dataset of
+diverse text for language modeling. arXiv preprint arXiv:2101.00027, 2021.
+Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun. Deep residual learning for image recognition. In
+CVPR, 2016.
+Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr Dollár, and Ross Girshick. Masked autoencoders
+are scalable vision learners. arXiv:2111.06377, 2021.
+Stefan
+Heimersheim
+and
+Alex
+Turner.
+Residual
+stream
+norms
+grow
+exponentially
+over
+the
+forward
+pass,
+2023.
+URL
+https://www.alignmentforum.org/posts/8mizBCm3dyc432nK8/
+residual-stream-norms-grow-exponentially-over-the-forward.
+Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt.
+Measuring massive multitask language understanding. In ICLR, 2021.
+Jerry Yao-Chieh Hu, Pei-Hsuan Chang, Robin Luo, Hong-Yu Chen, Weijian Li, Wei-Po Wang, and Han Liu.
+Outlier-efficient hopfield layers for large transformer-based models. arXiv preprint arXiv:2404.03828, 2024.
+Mojan
+Javaheripi,
+Sébastien
+Bubeck,
+and
+et
+al.
+Phi-2:
+The
+surprising
+power
+of
+small
+language
+models,
+2023.
+URL
+https://www.microsoft.com/en-us/research/blog/
+phi-2-the-surprising-power-of-small-language-models/.
+Albert Q. Jiang, Alexandre Sablayrolles, Arthur Mensch, Chris Bamford, et al. Mistral 7b. arXiv preprint
+arXiv:2310.06825, 2023.
+14
+
+Albert Q. Jiang, Alexandre Sablayrolles, Arthur Mensch, Chris Bamford, et al. Mixtral of experts. arXiv
+preprint arXiv:2401.04088, 2024.
+Andrej Karpathy. Nanogpt, 2023. URL https://github.com/karpathy/nanoGPT.
+Daniel Martin Katz, Michael James Bommarito, Shang Gao, and Pablo Arredondo. Gpt-4 passes the bar
+exam. SSRN, 2023.
+Olga Kovaleva, Alexey Romanov, Anna Rogers, and Anna Rumshisky. Revealing the dark secrets of bert.
+arXiv preprint arXiv:1908.08593, 2019.
+Olga Kovaleva, Saurabh Kulshreshtha, Anna Rogers, and Anna Rumshisky. Bert busters: Outlier dimensions
+that disrupt transformers. In ACL Findings, 2021.
+Ji Lin, Jiaming Tang, Haotian Tang, Shang Yang, Xingyu Dang, Chuang Gan, and Song Han. Awq: Activation-
+aware weight quantization for llm compression and acceleration. arXiv preprint arXiv:2306.00978, 2023.
+Stephen Merity, Caiming Xiong, James Bradbury, and Richard Socher. Pointer sentinel mixture models.
+arXiv preprint arXiv:1609.07843, 2016.
+Evan Miller. Attention is off by one, 2023. URL https://www.evanmiller.org/attention-is-off-by-one.
+html.
+MosaicML. Introducing mpt-7b: A new standard for open-source, commercially usable llms, 2023. URL
+www.mosaicml.com/blog/mpt-7b.
+Mahdi Namazifar, Devamanyu Hazarika, and Dilek Hakkani-Tur. Role of bias terms in dot-product attention.
+arXiv preprint arXiv:2302.08626, 2023.
+Catherine Olsson, Nelson Elhage, Neel Nanda, Nicholas Joseph, Nova DasSarma, Tom Henighan, Ben Mann,
+Amanda Askell, Yuntao Bai, Anna Chen, Tom Conerly, Dawn Drain, Deep Ganguli, Zac Hatfield-Dodds,
+Danny Hernandez, Scott Johnston, Andy Jones, Jackson Kernion, Liane Lovitt, Kamal Ndousse, Dario
+Amodei, Tom Brown, Jack Clark, Jared Kaplan, Sam McCandlish, and Chris Olah. In-context learning
+and induction heads. Transformer Circuits Thread, 2022.
+OpenAI. Gpt-4 technical report. arXiv preprint arXiv:2303.08774, 2023.
+Maxime Oquab, Timothée Darcet, Théo Moutakanni, Huy Vo, and Marc Szafraniec. Dinov2: Learning robust
+visual features without supervision. arXiv:2304.07193, 2024.
+Long Ouyang, Jeff Wu, Xu Jiang, Diogo Almeida, Carroll L. Wainwright, and et al. Training language models
+to follow instructions with human feedback. arXiv preprint arXiv:2203.02155, 2022.
+Ofir Press, Noah A. Smith, and Mike Lewis. Train short, test long: Attention with linear biases enables input
+length extrapolation. arXiv preprint arXiv:2108.12409, 2021.
+Alec Radford, Jeff Wu, Rewon Child, David Luan, Dario Amodei, and Ilya Sutskever. Language models are
+unsupervised multitask learners. Technical Report, 2019.
+Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, et al. Learning transferable visual models
+from natural language supervision. arXiv preprint arXiv:2103.00020, 2021.
+Jack W Rae, Anna Potapenko, Siddhant M Jayakumar, Chloe Hillier, and Timothy P Lillicrap. Compressive
+transformers for long-range sequence modelling. arXiv preprint, 2019. URL https://arxiv.org/abs/
+1911.05507.
+Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou,
+Wei Li, and Peter J. Liu. Exploring the limits of transfer learning with a unified text-to-text transformer.
+Journal of Machine Learning Research, 2020.
+15
+
+Brian S. Robinson, Nathan Drenkow, Colin Conwell, and Michael F. Bonner. A sparse null code emerges in
+deep neural networks. In NeurIPS UniReps Workshop, 2023.
+Keisuke Sakaguchi, Ronan Le Bras, Chandra Bhagavatula, and Yejin Choi. Winogrande: An adversarial
+winograd schema challenge at scale. arXiv preprint arXiv:1907.10641, 2019.
+Jianlin Su, Yu Lu, Shengfeng Pan, Ahmed Murtadha, Bo Wen, and Yunfeng Liu. Roformer: Enhanced
+transformer with rotary position embedding. arXiv preprint arXiv:2104.09864, 2021.
+William Timkey and Marten van Schijndel. All bark and no bite: Rogue dimensions in transformer language
+models obscure representational quality. arXiv:2109.04404, 2021.
+Together Computer. Redpajama: an open dataset for training large language models, October 2023. URL
+https://github.com/togethercomputer/RedPajama-Data.
+Hugo Touvron, Louis Martin, Kevin Stone, Peter Albert, Amjad Almahairi, et al. Llama 2: Open foundation
+and fine-tuned chat models. arXiv preprint arXiv:2307.09288, 2023.
+Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Brian Ichter, Fei Xia, Ed Chi, Quoc Le, and
+Denny Zhou. Chain-of-thought prompting elicits reasoning in large language models. In Advances in Neural
+Information Processing Systems, 2022.
+Mitchell Wortsman, Peter J. Liu, Lechao Xiao, Katie Everett, and et al. Small-scale proxies for large-scale
+transformer training instabilities. arXiv preprint arXiv:2309.14322, 2023.
+Guangxuan Xiao, Ji Lin, Mickael Seznec, Hao Wu, Julien Demouth, and Song Han. Smoothquant: Accurate
+and efficient post-training quantization for large language models. In ICML, 2023a.
+Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song Han, and Mike Lewis. Efficient streaming language
+models with attention sinks. arXiv:2309.17453, 2023b.
+Chengrun Yang, Xuezhi Wang, Yifeng Lu, Hanxiao Liu, Quoc V. Le, Denny Zhou, and Xinyun Chen. Large
+language models as optimizers. arXiv preprint arXiv:2309.03409, 2023.
+Aohan Zeng, Xiao Liu, Zhengxiao Du, Zihan Wang, and et al. Glm-130b: An open bilingual pre-trained
+model. arXiv preprint arXiv:2210.02414, 2022.
+Biao Zhang and Rico Sennrich. Root mean square layer normalization. In NeurIPS, 2019.
+Jun Zhao, Zhihao Zhang, Yide Ma, Qi Zhang, Tao Gui, Luhui Gao, and Xuanjing Huang. Unveiling a core
+linguistic region in large language models. arXiv:2310.14928, 2023.
+16
+
+Appendix
+A
+Additional Resul

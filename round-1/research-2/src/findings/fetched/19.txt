@@ -1,0 +1,1688 @@
+URL: https://arxiv.org/pdf/2403.12968
+Type: PDF
+Length: 71939 chars (truncated)
+
+--- Content ---
+
+LLMLingua-2: Data Distillation for Efficient and Faithful
+Task-Agnostic Prompt Compression
+Zhuoshi Pan1†, Qianhui Wu2‡, Huiqiang Jiang2, Menglin Xia2, Xufang Luo2, Jue Zhang2,
+Qingwei Lin2, Victor Rühle2, Yuqing Yang2, Chin-Yew Lin2,
+H. Vicky Zhao1, Lili Qiu2, Dongmei Zhang2
+1 Tsinghua University, 2 Microsoft Corporation
+{qianhuiwu, hjiang, xufang.luo}@microsoft.com
+Abstract
+This paper focuses on task-agnostic prompt
+compression for better generalizability and ef-
+ficiency. Considering the redundancy in nat-
+ural language, existing approaches compress
+prompts by removing tokens or lexical units ac-
+cording to their information entropy obtained
+from a causal language model such as LLaMa-
+7B. The challenge is that information entropy
+may be a suboptimal compression metric: (i) it
+only leverages unidirectional context and may
+fail to capture all essential information needed
+for prompt compression; (ii) it is not aligned
+with the prompt compression objective.
+To address these issues, we propose a data dis-
+tillation procedure to derive knowledge from
+an LLM to compress prompts without losing
+crucial information, and meantime, introduce
+an extractive text compression dataset. We for-
+mulate prompt compression as a token classifi-
+cation problem to guarantee the faithfulness of
+the compressed prompt to the original one, and
+use a Transformer encoder as the base archi-
+tecture to capture all essential information for
+prompt compression from the full bidirectional
+context. Our approach leads to lower latency by
+explicitly learning the compression objective
+with smaller models such as XLM-RoBERTa-
+large and mBERT.
+We evaluate our method on both in-domain
+and out-of-domain datasets, including Meeting-
+Bank, LongBench, ZeroScrolls, GSM8K, and
+BBH. Despite its small size, our model shows
+significant performance gains over strong base-
+lines and demonstrates robust generalization
+ability across different LLMs. Additionally,
+our model is 3x-6x faster than existing prompt
+compression methods, while accelerating the
+end-to-end latency by 1.6x-2.9x with compres-
+sion ratios of 2x-5x.1
+†Work during internship at Microsoft.
+‡Corresponding author.
+1Code: https://aka.ms/LLMLingua-2
+1
+Introduction
+Recent years have witnessed the emergence of var-
+ious prompting techniques for large language mod-
+els (LLMs), such as Chain-of-Thought (COT) (Wei
+et al., 2022), In-context Learning (ICL) (Dong
+et al., 2023), and Retrieval Augmented Generation
+(RAG) (Lewis et al., 2020). These techniques em-
+power LLMs to handle complex and varied tasks
+through rich and informative prompts that may ex-
+ceed tens of thousands of tokens. However, the
+benefits of such lengthy prompts come at a cost of
+increased computational and financial overhead, as
+well as the degraded information perception ability
+of LLMs. Prompt compression is a straightforward
+solution to address these issues, which attempts to
+shorten the original prompts without losing essen-
+tial information.
+Several methods have been proposed to com-
+press prompts in a task-aware manner (Jiang et al.,
+2023b; Xu et al., 2024; Jung and Kim, 2023; Huang
+et al., 2023). These techniques aim to generate
+compressed prompts tailored to the specific task or
+query, typically resulting in enhanced performance
+on downstream tasks, particularly in question an-
+swering. However, the dependency on task-specific
+features presents challenges in terms of efficiency
+and generalizability when deploying these methods.
+For example, in RAG-style applications, it may be-
+come necessary to compress the same documents
+multiple times depending on the associated queries
+with task-aware prompt compression. More details
+are discussed in Sec. 2.
+Some works have explored task-agnostic prompt
+compression methods for better generalizability
+and efficiency (Jiang et al., 2023a; Li et al., 2023).
+The underlying assumption is that natural language
+contains redundancy (Shannon, 1951) that may be
+useful for human understanding but might not be
+necessary for LLMs. Therefore, they propose to
+compress prompts by removing tokens (Jiang et al.,
+arXiv:2403.12968v2  [cs.CL]  12 Aug 2024
+
+2023a) or lexical units (Li et al., 2023) accord-
+ing to their information entropy obtained from a
+causal small language model (SLM), regardless
+of the downstream task or question information.
+However, these task-agnostic methods face two
+challenges: (i) Information entropy is an empirical
+metric for prompt compression. Relying on it for
+prompt trimming may be suboptimal, as it is not
+aligned with the prompt compression objective. (ii)
+Causal LMs only leverage unidirectional context,
+which may fail to capture all essential information
+needed for prompt compression within the context.
+The challenges lead to the following research
+questions:
+Q1.
+How can we identify or build a suitable
+dataset to align the SLM towards effective prompt
+compression?
+Q2.
+How can we design a compression algorithm
+that effectively leverages the full bidirectional con-
+text for better performance?
+For Q1, most text compression datasets are ab-
+stractive (Toutanova et al., 2016; Koupaee and
+Wang, 2018; Kim et al., 2019), meaning that they
+treat prompt compression as a generative task
+where the original prompts are rephrased into con-
+densed ones. However, this autoregressive gener-
+ation process is slow and it may produce halluci-
+nated content (Zhao et al., 2020). On the other
+hand, extractive compression datasets such as Sent-
+Comp (Filippova and Altun, 2013) and DebateSum
+(Roush and Balaji, 2020) are usually created for the
+summarization task and often lack detailed informa-
+tion. In the case of prompt compression, this will
+hurt the performance of LLM inference in down-
+stream applications such as QA (see Appendix G
+for some examples). Therefore, it is necessary to
+construct an extractive text compression dataset
+that retains essential information.
+Contributions.
+We present this paper to address
+the above challenges for task-agnostic prompt com-
+pression. We make the following contributions.
+• We propose a data distillation procedure to
+derive knowledge from an LLM (GPT-4) to
+compress the prompts without losing crucial
+information. We introduce an extractive text
+compression dataset, containing pairs of origi-
+nal texts from MeetingBank (Hu et al., 2023)
+and their compressed versions. We publicly
+release the dataset.
+• We approach prompt compression as a token
+classification task (i.e., preserve or discard),
+and take the predicted probability of each to-
+ken being labeled as preserve as the com-
+pression metric. The benefits are three folds:
+(1) It can capture all essential information
+needed for prompt compression from the full
+bidirectional context by using a Transformer
+encoder for feature extraction. (2) It can lead
+to lower latency, due to the use of smaller
+models to explicitly learn the compression ob-
+jective. (3) It guarantees faithfulness of the
+compressed prompt to the original content.
+• We conduct extensive experiments and anal-
+ysis on both in-domain (i.e., MeetingBank)
+and out-of-domain datasets (i.e., LongBench,
+ZeroScrolls, GSM8K, and Big Bench Hard).
+Despite small in size, our model shows signif-
+icant performance gains over strong baselines
+and demonstrates robust generalization ability
+from GPT-3.5-Turbo to Mistral-7B. Addition-
+ally, our model is 3x-6x faster than existing
+prompt compression methods, while acceler-
+ating the end-to-end latency by 1.6x-2.9x with
+compression ratios of 2x-5x.
+2
+Related Works
+Depending on whether task information is used
+for compression, prompt compression methods can
+be categorized into task-aware and task-agnostic
+compression approaches.
+Task-aware compression compresses the context
+based on the downstream task or the current query.
+For example, LongLLMLingua (Jiang et al., 2023b)
+applies a question-aware coarse-to-fine compres-
+sion approach to estimate the information entropy
+of the tokens and adapts the estimation accord-
+ing to the question. Reinforcement Learning (RL)
+based methods (Jung and Kim, 2023; Huang et al.,
+2023) usually train a model for prompt compres-
+sion with reward signals from downstream tasks.
+Soft prompt tuning methods (Wingate et al., 2022;
+Mu et al., 2023) typically require fine-tuning for the
+specific task. Xu et al. (2024) trains a summariza-
+tion model to compress the context depending on
+the question. Task-aware compression approaches
+are usually tailored for specific tasks and compres-
+sion ratios, which may limit their generalizability
+in real-world applications.
+Task-agnostic methods compress the prompt
+without considering the specific task, making it
+
+Original Text: Item 15, report from City Manager Recommendation to adopt three
+resolutions. First, to
+join the
+Victory
+Pace
+program. Second, to
+join the
+California
+first
+program. And number three,
+consenting to to
+inclusion of 
+certain properties within the jurisdiction in the California Hero program. It 
+was emotion, motion, a second and public comment. CNN. Please cast your vote. 
+Oh. Was your public comment? Yeah. Please come forward. I thank you, Mr. Mayor. 
+Thank you. Members of the council. My name is Alex Mitchell. I represent the
+hero program. Just wanted to let you know that the hero program. Has been in
+California for the last three and a half years.
+LLM
+Step 1:
+Data Distillation
+Compressed Text: Item 15, City Manager Recommendation adopt three resolutions. 
+Join Victory Pace program. Join California first program. Consent inclusion 
+properties jurisdiction California Hero program. Emotion, motion, second, public 
+comment. Cast vote. Public comment? Come forward. Alex Mitchell, represent Hero 
+program. Hero program in California three half years
+Step 2:
+Data Annotation
+Step 3:
+Quality Control 
+& Filtering
+…
+…
+Original Prompt
+Token Classifier as Compressor
+Step 4:
+Train Compressor
+Step 5:
+Prompt Compression
+based on 𝑝preserve
+…
+𝑝preserve
+Compressed Prompt
+Response
+𝑝discard
+LLM
+Figure 1: Overview of LLMLingua-2.
+more adaptable to a range of applications and black-
+box LLMs. However, producing compressed text
+that can generalize well to different tasks is not
+trivial. Typical methods involve using information
+entropy-based metrics to remove redundant infor-
+mation in the prompt (Li et al., 2023; Jiang et al.,
+2023a). They employ a small language model to
+estimate token importance from the information
+metrics. Despite being training-free, these methods
+may not effectively capture the token importance
+distribution optimized for specific LLMs and often
+entail high computation overhead. Summarization-
+based methods are also leveraged for task-agnostic
+compression (Chen et al., 2023; Packer et al., 2023).
+However, they often omit crucial details and do
+not generalize well. An alternative approach is
+to compress or trim the context hidden or KV
+caches (Chevalier et al., 2023; Ge et al., 2024;
+Zhang et al., 2023; Liu et al., 2023; Xiao et al.,
+2024). However, this is orthogonal to our work and
+cannot be easily applied to black-box LLMs.
+3
+Dataset Construction
+In this section, we outline the process of dataset
+construction for prompt compression. We first in-
+troduce our data distillation procedure, which in-
+volves extracting knowledge from an LLM (GPT-4
+) to compress texts without losing crucial informa-
+tion or introducing hallucinated content (Sec. 3.1).
+Leveraging the distilled knowledge from the LLM,
+we explain our data annotation algorithm, which
+assigns labels to each word in the original text to
+indicate whether it should be preserved after com-
+pression (Sec. 3.2). To ensure the dataset’s quality,
+we propose two quality control metrics for filtering
+low-quality samples (Sec. 3.3).
+3.1
+Data Distillation
+To extract knowledge from the LLM for effective
+prompt compression, our goal is to prompt GPT-
+4 to generate compressed texts from original texts
+that meet the following criteria: (i) Token reduction:
+Compressed prompts should be short in length to
+reduce cost and speed up inference. (ii) Informa-
+tiveness: Essential information should be retained.
+(iii) Faithfulness: Compressed prompts should re-
+main faithful and avoid introducing hallucinated
+content to ensure accuracy when prompting LLMs
+in downstream tasks.
+However, distilling such data from GPT-4 is chal-
+lenging, as it does not consistently follow the in-
+structions. For instance, Jiang et al. (2023a) ex-
+perimented with different prompts for compression
+and found that GPT-4 struggles to retain essential
+information from original texts. In our preliminary
+experiments, we have also observed that GPT-4
+tends to modify expressions used in the original
+texts and sometimes generates hallucinated content.
+To address this challenge, we propose the following
+dataset distillation procedure.
+Instruction Design
+A well-crafted instruction is
+the key to unveiling the compression capabilities
+of GPT-4. To ensure that the generated texts stay
+faithful to the original, we explicitly instruct GPT-
+4 to compress the text by discarding unimportant
+words in the original texts only and not adding any
+new words during generation.
+To ensure token reduction and informativeness,
+previous studies (Jiang et al., 2023a; Huang et al.,
+2023) have specified either a compression ratio or
+a target number of compressed tokens in the in-
+structions. However, GPT-4 often fails to adhere
+to these restrictions. Additionally, the information
+
+Our Instruction for Compression:
+Compress the given text to short expressions, and such
+that you (GPT-4) can reconstruct it as close as possible
+to the original. Unlike the usual text compression, I need
+you to comply with the 5 conditions below:
+1. You can ONLY remove unimportant words.
+2. Do not reorder the original words.
+3. Do not change the original words.
+4. Do not use abbreviations or emojis.
+5. Do not add new words or symbols.
+Compress the origin aggressively by removing words only.
+Compress the origin as short as you can, while retain-
+ing as much information as possible. If you understand,
+please compress the following text: {text to compress}
+The compressed text is:
+Figure 2: Our instruction used for data distillation.
+1
+2
+3
+4
+5
+6
+7
+8
+9 10 11 12 13 14 15 16 17 18 19
+20
+Compression Ratio
+0.00
+0.05
+0.10
+0.15
+0.20
+0.25
+0.30
+Ratio of sentence
+Figure 3: Distribution of compression ratio after chunk-
+wise compression on MeetingBank.
+density of text can vary significantly depending
+on its genre, style, etc. For instance, news arti-
+cles typically contain denser information compared
+to meeting transcripts. Furthermore, even within
+the domain of meeting transcripts, the information
+density from different speakers may vary. These
+factors suggest that a fixed compression ratio may
+not be optimal. Therefore, we remove the com-
+pression ratio restriction from our instructions and
+instead prompt GPT-4 to compress the origin text
+as short as possible while retaining as much infor-
+mation as possible. As shown in Fig. 3, GPT-4
+assigns varying compression ratios to different sen-
+tences and discards some sentences entirely. For a
+comparison between our instruction and those of
+Jiang et al. (2023a), please refer to Table 7.
+Chunk-Wise Compression
+Empirically,
+we
+have found that the length of the original text has a
+notable influence on the compression performance.
+As shown in Fig. 4, GPT-4 tends to apply a high
+compression ratio when processing very long con-
+text, which might be due to GPT-4’s limited ability
+to handle long context. This aggressive compres-
+0
+10000
+20000
+30000
+40000
+Context Length
+0
+20
+40
+60
+80
+100
+Compression Ratio
+Figure 4: Illustration of compression ratio w.r.t. original
+context length on MeetingBank. We use GPT-4-32k
+with the output token limit setting to 4096.
+sion leads to substantial information loss, signifi-
+cantly impacting the performance of downstream
+tasks. To mitigate this issue, we first segment each
+long context into multiple chunks, each containing
+no more than 512 tokens and ending with a period.
+We then instruct GPT-4 to compress each chunk
+individually.
+3.2
+Data Annotation
+Having obtained pairs of original texts and
+their compressed versions from data distillation
+(Sec. 3.1), the goal of data annotation is to assign a
+binary label to each token in the original texts to de-
+termine if it should be preserved or discarded after
+compression. Fig. 5 describes the three primary ob-
+stacles encountered here, which arise from GPT-4’s
+inability to precisely comply with the instruction
+in Fig. 9. Alg. 1 outlines the overall procedure of
+the proposed annotation algorithm designed to deal
+with these obstacles. For more detailed informa-
+tion, please refer to Appendix B.
+3.3
+Quality Control
+We introduce two quality control metrics to assess
+the quality of the compressed texts generated by
+GPT-4 distillation, as well as the quality of the
+automatically annotated labels. We then filter the
+examples by their scores.
+Variation Rate
+As GPT-4 may fail to follow the
+instructions, we introduce the metric Variation Rate
+(VR) to evaluate the quality of the compressed texts
+generated from data distillation. VR measures the
+proportion of words in the compressed text that are
+
+Original Texts
+Item 15, report from City Manager Recommendation to
+adopt three resolutions. First, to join the Victory Pace
+program. Second, to join the California first program.
+And number three, consenting to to inclusion of certain
+properties within the jurisdiction in the California Hero
+program.
+Compressed Texts
+City Manager Recommendation adopt three resolutions.
+Join California first program. Consent properties inclusion
+jurisdiction California Hero program.
+Figure 5: Challenges in data annotation.
+(i) Ambiguity: a word in the compressed texts may
+appear multiple times in the original content.
+(ii) Variation: GPT-4 may modify the original words in
+tense, plural form, etc. during compression.
+(iii) Reordering: The order of words may be changed
+after compression.
+Algorithm 1: Data Annotation
+Input
+:original string Sori, compressed
+string Scomp, window size s.
+Split original string Sori to word list Sori.
+Split compressed Scomp to word list Scomp.
+Initialize labels of original words to False.
+Initialize previous match index prev to 0.
+for w ∈Scomp do
+for i = 1, 2, ..., s
+2 do
+right = min(|Sori|, prev + i)
+if fuzzy_match(w, Sori[right]) then
+L[right] = True.
+prev = right.
+Break.
+end
+left = max(0, prev −i)
+if fuzzy_match(w, Sori[left]) then
+L[left] = True.
+Break.
+end
+end
+end
+Output :labels of original words L(Sori).
+absent in the original text. Specifically, let Scomp
+be the set of words in the compressed text and Sori
+be that of the original text. VR is defined as:
+VR =
+1
+|Scomp|
+X
+w∈Scomp
+I(w /∈Sori),
+(1)
+where | · | is the cardinality of a set. A higher varia-
+tion rate implies a higher likelihood of encounter-
+ing hallucinated content. Therefore, we exclude the
+examples with the top 5% highest variation rates.
+Alignment Gap
+We propose Alignment Gap
+(AG) to evaluate the quality of the automatically
+annotated labels. Let l(·) represent the annotation
+function, where l(w) = True signifies that word
+w ∈Sori corresponds to a word in Scomp. We
+firstly define the matching rate (MR) as:
+MR =
+1
+|Sori|
+X
+w∈Sori
+I(l(w) = True).
+(2)
+Since there exists a many-to-one word mapping
+from Sori to Scomp (i.e., the "Ambiguity" challenge
+presented in Sec. 3.2), we further present a hitting
+rate (HR) as a regularization term to measure the
+proportion of words in Scomp that are found in Sori.
+HR is defined as:
+HR =
+1
+|Sori|
+X
+w∈Scomp
+I(w ∈Sori).
+(3)
+Finally, the Alignment Gap (AG) is defined as:
+AG = HR −MR.
+(4)
+The alignment gap of a perfect annotation should
+be 0. A large AG indicates a high hitting rate with
+a poor matching rate, implying low-quality anno-
+tation for this example. Therefore, we discard ex-
+amples of the highest 10% alignment gap to ensure
+quality control of the dataset.
+4
+Compressor
+We formulate prompt compression as a binary to-
+ken classification problem (i.e., preserve or discard)
+to guarantee the faithfulness of the compressed
+prompt to the original content, and meantime en-
+sure the low latency of the compression model it-
+self. For the token classification model, we employ
+a Transformer encoder as the feature extractor to
+leverage information from the bidirectional con-
+texts of each token. We train the classification
+model on the dataset constructed in Sec. 3 from
+MeetingBank (Hu et al., 2023). During inference,
+we determine whether to preserve or discard each
+token in the original prompt based on its probability
+calculated by our classification model.
+4.1
+Token Classification Model
+Architecture
+We utilize a Transformer encoder
+(Devlin et al., 2019) as the feature encoder fθ and
+add a linear classification layer on top.
+Given
+
+Methods
+QA
+Summary
+Length
+EM
+BLEU
+Rouge1
+Rouge2
+RougeL
+BERTScore
+Tokens
+1/τ
+Selective-Context
+66.28
+10.83
+39.21
+18.73
+27.67
+84.48
+1,222
+2.5x
+LLMLingua
+67.52
+8.94
+37.98
+14.08
+26.58
+86.42
+1,176
+2.5x
+LLMLingua-2-small
+85.82
+17.41
+48.33
+23.07
+34.36
+88.77
+984
+3.0x
+LLMLingua-2
+86.92
+17.37
+48.64
+22.96
+34.24
+88.27
+970
+3.1x
+Original
+87.75
+22.34
+47.28
+26.66
+35.15
+88.96
+3,003
+1.0x
+Table 1: In-domain evaluation of different methods on MeetingBank.
+an original prompt consisting of N words x =
+{xi}N
+i=1, this can be formulated as:
+h = fθ(x),
+(5)
+p(xi, Θ) = softmax(Whi + b),
+(6)
+where h = {hi}N
+i=1 denotes feature vectors for
+all words, p(xi, Θ) ∈R2 denotes the probability
+distribution of labels {preserve, discard} for
+the i-th word xi, and Θ = {θ, W, b} represent all
+the trainable parameters.
+Training
+Let y = {yi}N
+i=1 denote the corre-
+sponding labels for all words in x, then we em-
+ploy cross entropy loss to train the model. The loss
+function L w.r.t. x is:
+L(Θ) = 1
+N
+N
+X
+i=1
+CrossEntropy(yi, p(xi, Θ)). (7)
+4.2
+Compression Strategy
+Our approach to compressing the original prompt
+x = {xi}N
+i=1 with a target compression ratio 1/τ
+involves a three-step process, where τ is defined
+as the quotient of the number of words in the com-
+pressed prompt and the number of words in the
+original prompt x. First, we derive the target num-
+ber of tokens to be preserved in the compressed
+prompt ˜x: ˜N = τN. Next, we use the token classi-
+fication model to predict the probability pi of each
+word xi being labeled as preserve2. Finally, we
+retain the top ˜N words in the original prompt x
+with the highest pi and maintain their original order
+to form the compressed prompt ˜x.
+It’s worth noting that our approach can be readily
+integrated into the coarse-to-fine framework pro-
+posed in LLMLingua (Jiang et al., 2023a), allowing
+2To address tokenization-related challenges that arise when
+applying our approach across various LLMs and SLMs, we
+preserve the integrity of multi-token words and represent the
+probability of a word by averaging over the predicted proba-
+bilities of all subword tokens.
+for a higher compression ratio of ∼15x for tasks
+involving multiple demonstrations or documents.
+Particularly, we can replace the perplexity-based
+iterative token compression module in LLMLin-
+gua with our token-classification-based compres-
+sor, while keeping the budget controller unchanged.
+Detailed information can be found in Appendix K.
+5
+Experiment
+Implementation Details
+We construct our ex-
+tractive text compression dataset using training
+examples from MeetingBank (Hu et al., 2023)
+with implementation details in Appendix A. Our
+approach is implemented using Huggingface’s
+Transformers and PyTorch 2.0.1 with CUDA-11.7.
+We use xlm-roberta-large (Conneau et al.,
+2020) and multilingual-BERT (Devlin et al.,
+2019) for the feature encoder fθ in our compres-
+sor, which we refer to as LLMLingua-2 and
+LLMLingua-2-small, respectively. We fine-
+tune both models for 10 epochs, using the Adam
+optimizer (Kingma and Ba, 2015) with a learning
+rate of 1e-5 and a batch size of 10. Unless spec-
+ified otherwise, all reported metrics use GPT-3.5-
+Turbo-06133 as the target LLM for downstream
+tasks, with greedy decoding at a temperature of 0
+for enhanced stability across experiments.
+Datasets & Evaluation Metrics
+We conduct five
+groups of experiments to evaluate the compressed
+prompts on two groups of datasets.
+(i) In-Domain: As we train our compressor us-
+ing the dataset built with training examples from
+MeetingBank (Hu et al., 2023), we use the Meet-
+ingBank test examples for in-domain evaluation.
+In addition to the summarization task, we further
+introduce a QA task by prompting GPT-4 to gener-
+ate 3 question-answer pairs for each example dis-
+tributed across the whole context (see Appendix F
+3https://platform.openai.com/
+
+Methods
+LongBench
+ZeroSCROLLS
+SingleDoc MultiDoc Summ. FewShot Synth. Code AVG Tokens 1/τ AVG Tokens 1/τ
+2,000-token constraint
+Task(Question)-Aware Compression
+SBERT†
+33.8
+35.9
+25.9
+23.5
+18.0
+17.8
+25.8
+1,947
+5x
+20.5
+1,773
+6x
+OpenAI†
+34.3
+36.3
+24.7
+32.4
+26.3
+24.8
+29.8
+1,991
+5x
+20.6
+1,784
+5x
+LongLLMLingua†
+39.0
+42.2
+27.4
+69.3
+53.8
+56.6
+48.0
+1,809
+6x
+32.5
+1,753
+6x
+Task(Question)-Agnostic Compression
+Selective-Context†
+16.2
+34.8
+24.4
+15.7
+8.4
+49.2
+24.8
+1,925
+5x
+19.4
+1,865
+5x
+LLMLingua†
+22.4
+32.1
+24.5
+61.2
+10.4
+56.8
+34.6
+1,950
+5x
+27.2
+1,862
+5x
+LLMLingua-2-small
+29.5
+32.0
+24.5
+64.8
+22.3
+56.2
+38.2
+1,891
+5x
+33.3
+1,862
+5x
+LLMLingua-2
+29.8
+33.1
+25.3
+66.4
+21.3
+58.9
+39.1
+1,954
+5x
+33.4
+1,898
+5x
+3,000-tokens constraint
+Task(Question)-Aware Compression
+SBERT†
+35.3
+37.4
+26.7
+63.4
+51.0
+34.5
+41.4
+3,399
+3x
+24.0
+3,340
+3x
+OpenAI†
+34.5
+38.6
+26.8
+63.4
+49.6
+37.6
+41.7
+3,421
+3x
+22.4
+3,362
+3x
+LongLLMLingua†
+40.7
+46.2
+27.2
+70.6
+53.0
+55.2
+48.8
+3,283
+3x
+32.8
+3,412
+3x
+Task(Question)-Agnostic Compression
+Selective-Context†
+23.3
+39.2
+25.0
+23.8
+27.5
+53.1
+32.0
+3,328
+3x
+20.7
+3,460
+3x
+LLMLingua†
+31.8
+37.5
+26.2
+67.2
+8.3
+53.2
+37.4
+3,421
+3x
+30.7
+3,366
+3x
+LLMLingua-2-small
+35.5
+38.1
+26.2
+67.5
+23.9
+60.0
+41.9
+3,278
+3x
+33.4
+3,089
+3x
+LLMLingua-2
+35.5
+38.7
+26.3
+69.6
+21.4
+62.8
+42.4
+3,392
+3x
+33.5
+3,206
+3x
+Original Prompt
+39.7
+38.7
+26.5
+67.0
+37.8
+54.2
+44.0 10,295
+-
+34.7
+9,788
+-
+Zero-Shot
+15.6
+31.3
+15.6
+40.7
+1.6
+36.2
+23.5
+214
+48x 10.8
+32
+306x
+Table 2: Out-of-domain evaluation on general long-context scenarios. †: numbers reported in Jiang et al. (2023b).
+Methods
+GSM8K
+BBH
+1-shot constraint
+half-shot constraint
+1-shot constraint
+half-shot constraint
+EM
+Tokens
+1/τ
+EM
+Tokens
+1/τ
+EM
+Tokens
+1/τ
+EM
+Tokens
+1/τ
+Selective-Context†
+53.98
+452
+5x
+52.99
+218
+11x
+54.27
+276
+3x
+54.02
+155
+5x
+LLMLingua†
+79.08
+446
+5x
+77.41
+171
+14x
+70.11
+288
+3x
+61.60
+171
+5x
+LLMLingua-2-small
+78.92
+437
+5x
+77.48
+161
+14x
+69.54
+263
+3x
+60.35
+172
+5x
+LLMLingua-2
+79.08
+457
+5x
+77.79
+178
+14x
+70.02
+269
+3x
+61.94
+176
+5x
+Full-Shot
+78.85
+2,366
+-
+78.85
+2,366
+-
+70.07
+774
+-
+70.07
+774
+-
+Zero-Shot
+48.75
+11
+215x
+48.75
+11
+215x
+32.32
+16
+48x
+32.32
+16
+48x
+Table 3: Out-of-domain evaluation on reasoning and in-context learning. †: numbers reported in Jiang et al. (2023b).
+for more details). For the summarization task, we
+use the same evaluation metric as in LLMLingua
+(Jiang et al., 2023a). For QA task, we utilize the
+Exact Match as the evaluation metric.
+(ii) Out-of-Domain: For long-context scenarios,
+we use LongBench (Bai et al., 2023) and Zero-
+SCROLLS (Shaham et al., 2023), and we employ
+the same evaluation metric as in LongLLMLingua
+(Jiang et al., 2023b). For reasoning and in-context
+learning, we use GSM8K (Cobbe et al., 2021) and
+Big Bench Hard (BBH) (bench authors, 2023),
+with evaluation metrics consistent with LLMLin-
+gua (Jiang et al., 2023a).
+Baselines
+We take two state-of-the-art prompt
+compression methods as primary baselines for com-
+parison: Selective-Context (Li et al., 2023) and
+LLMLingua (Jiang et al., 2023a), both are based
+on LLaMA-2-7B. Additionally, we compare our
+approach with some task-aware prompt compres-
+sion methods, such as retrieval-based methods and
+LongLLMLingua (Jiang et al., 2023b).
+Results on In-Domain Benchmark
+In Table 1,
+we first present the results of our proposed method
+
+Methods
+MeetingBank
+LongBench-SingleDoc
+QA
+Summ. Tokens 1/τ 2,000-token cons. Tokens 1/τ 3,000-token cons. Tokens 1/τ
+Selective-Context
+58.13
+26.84
+1,222
+2.5x
+22.0
+2,038
+7.1x
+26.0
+3,075
+4.7x
+LLMLingua
+50.45
+23.63
+1,176
+2.5x
+19.5
+2,054
+7.1x
+20.8
+3,076
+4.7x
+LLMLingua-2-small 75.97
+29.93
+984
+3.0x
+25.3
+1,949
+7.4x
+27.9
+2,888
+5.0x
+LLMLingua-2
+76.22
+30.18
+970
+3.0x
+26.8
+1,967
+7.4x
+27.3
+2,853
+5.1x
+Original Prompt
+66.95
+26.26
+3,003
+-
+24.5
+14,511
+-
+24.5
+14,511
+-
+Table 4: Evaluation with Mistral-7B as the Target LLM on MeetingBank and LongBench single doc QA task. We
+report Rouge1(Lin, 2004) for summary.
+compared to the strong baselines on MeetingBank.
+Despite the fact that our compressors are much
+smaller than the LLaMa-2-7B used in the baselines,
+our approach achieves significantly better perfor-
+mance on both the QA and Summary tasks, and
+comes close to matching the performance of the
+original prompt. This demonstrates the effective-
+ness of our constructed dataset, and highlights the
+importance and benefit of optimizing the compres-
+sion model using prompt compression knowledge.
+Results on Out-of-Domain Benchmarks
+As our
+model is trained on meeting transcripts data from
+MeetingBank, here we explore its generalization
+ability across various benchmarks of long-context
+scenarios, reasoning, and in-context learning. Ta-
+ble 2 and 3 show the results on LongBench, Ze-
+roSCROLLS, GSM8K, and BBH: Our model has
+demonstrated superior performance compared to
+other task-agnostic baselines. Even our smaller
+model, which is of BERT-base size, has been
+able to achieve comparable, and in some cases,
+even slightly higher performance than the original
+prompt. While our approach has shown promising
+results, it falls short when compared to other task-
+aware compression methods like LongLLMlingua
+(Jiang et al., 2023a) on Longbench. We attribute
+this performance gap to the additional information
+that they leverage from the question. However, the
+task-agnostic characteristics of our model make it
+an efficient option with good generalizability when
+deployed across different scenarios.
+Mistral-7B as the Target LLM
+Table 4 presents
+the results of different methods using Mistral-7B-
+v0.14 as the target LLM. Our method demonstrates
+significant performance gain over other baselines,
+showcasing its good generalization ability across
+target LLMs. Notably, LLMLingua-2 yields even
+better performance than the original prompt. We
+4https://mistral.ai/
+speculate that Mistral-7B might be less adept at
+managing long contexts than GPT-3.5-Turbo. Our
+method, by offering shorter prompts with higher
+information density, effectively improves Mistral-
+7B’s final inference performance.
+Latency Evaluation
+Table 5 shows the latency of
+different systems on a V100-32G GPU with differ-
+ent compression ratios. It shows that LLMLingua-
+2 has a much smaller computation overhead than
+other compression methods, and can achieve an
+end-to-end speedup ranging from 1.6x to 2.9x. Ad-
+ditionally, our method can reduce GPU memory
+costs by 8x, lowering the demand for hardware
+resources. For details, see the Appendix I.
+1/τ
+1x
+2x
+3x
+5x
+End2End w/o Compression
+14.9
+End2End w/ LLMLingua-2 - 9.4 (1.6x) 7.5 (2.1x) 5.2 (2.9x)
+Selective-Context
+-
+15.9
+15.6
+15.5
+LLMLingua
+-
+2.9
+2.1
+1.5
+LLMLingua-2
+-
+0.5
+0.4
+0.4
+Table 5: Latency (s) comparison on MeetingBank.
+Observation on Context Awareness
+We have
+observed that LLMLingua-2 can effectively main-
+tain the most informative words with respect to the
+full context as the compression ratio increases. We
+owe this to the adoption of the bidirectional context-
+aware feature extractor, as well as the strategy of
+explicitly optimizing toward the prompt compres-
+sion objective. See Figure 6 for more details.
+Prompt Reconstruction
+We have conducted
+experiments of prompting GPT-4 to reconstruct
+the original prompt from the LLMLingua-2 com-
+pressed prompt. The results show that GPT-4 can
+effectively reconstruct the original prompt, suggest-
+ing that there is no essential information loss during
+the compression process of LLMLingua-2. Figure
+7 and 8 in Appendix E present some examples.
+
+Methods
+LongBench
+ZeroSCROLLS
+SingleDoc MultiDoc Summ. FewShot Synth. Code AVG Tokens 1/τ AVG Tokens 1/τ
+LLMLingua-2-small
+29.5
+32.0
+24.5
+64.8
+22.3
+56.2
+38.2
+1,891
+5x
+33.3
+1,862
+5x
+LLMLingua-2
+29.8
+33.1
+25.3
+66.4
+21.3
+58.9
+39.1
+1,954
+5x
+33.4
+1,898
+5x
+LLMLingua-2‡
+30.7
+33.9
+25.4
+66.6
+22.6
+58.1
+39.5
+1,853
+5x
+33.4
+1,897
+5x
+Original Prompt
+39.7
+38.7
+26.5
+67.0
+37.8
+54.2
+44.0 10,295
+-
+34.7
+9,788
+-
+Zero-Shot
+15.6
+31.3
+15.6
+40.7
+1.6
+36.2
+23.5
+214
+48x 10.8
+32
+306x
+Table 6:
+Out-of-domain evaluation on general long-context benchmarks with the 2,000-token constraint.
+LLMLingua-2‡: We expand the constructed text compression dataset using 50k examples from TriviaQA-wiki.
+Then train an LLMLingua-2 compressor with the expanded dataset.
+Instruction
+1/τ
+VR ↓
+QA F1 ↑
+Instruction1
+123x
+13.7
+19.1
+Instruction2
+27x
+7.8
+26.1
+Instruction3
+78x
+9.6
+23.7
+Instruction4
+49x
+9.4
+24.9
+LLMLingua-2 w/o Chunk
+21x
+6.0
+27.9
+LLMLingua-2
+2.6x
+2.2
+36.7
+Table 7: Ablation Study on Chunk-Wise Compression
+and Instruction Design. We report the compression
+ratio, variation rate, and QA performance on LongBench
+Single Document QA. See Fig. 10 in Appendix for more
+details of Instruction1 - Instruction4 here.
+Ablation Study on Chunk-Wise Compression
+and Instruction Design
+Table 7 shows that both
+the designed instruction and the chunk-wise com-
+pression strategy proposed in this paper signifi-
+cantly contribute to the success of LLMLingua-2.
+6
+Conclusion
+This paper targets task-agnostic prompt compres-
+sion for better generalizability and efficiency. In
+this paper, we identify the challenges encountered
+in existing methods and address them accordingly.
+We conduct extensive experiments and analysis on
+five benchmarks across different tasks and domains.
+Our model shows superiority over strong baselines
+in terms of performance and compression latency.
+We publicly release the dataset of text compression
+with no essential information loss in this paper.
+Limitations
+Our text compression dataset was constructed us-
+ing only training examples from MeetingBank, a
+dataset of summarization over meeting transcripts.
+This raises concerns about the generalization ability
+of our compressor. Here we discuss this question
+from two perspectives.
+Firstly, we have conducted extensive out-of-
+domain evaluation on four benchmarks in the pa-
+per, including LongBench (Bai et al., 2023), Zero-
+SCROLLS (Shaham et al., 2023), GSM8K (Cobbe
+et al., 2021), and Big Bench Hard (BBH) (bench au-
+thors, 2023), which cover multiple tasks from doc-
+ument QA to math problems and in-context learn-
+ing. The experimental results show that even our
+LLMLingua-2-small model that is of BERT-base
+size achieves superior performance than the two
+LLaMA-2-7B based baselines Selective-Context
+(Li et al., 2023) and LLMLingua (Jiang et al.,
+2023a). This demonstrates that our learned prompt
+compression model has good generalization ability
+to data from different domains.
+Secondly, we expand the constructed text
+compression dataset using 50k examples from
+TriviaQA-wiki. Then train an LLMLingua-2 com-
+pressor with the expanded dataset to see whether
+there would be further performance gain. Table
+6 shows the results under the 2,000-token con-
+straint. We can see that training the compressor
+with more data does bring further performance
+gain (LLMLingua-2‡). However, the improvement
+seems not that significant. We conjecture that this
+is because although the semantics of texts from
+different domains may vary a lot, their redundancy
+pattern might be similar. Such pattern or knowl-
+edge may be learned during in-domain training,
+and then act as an anchor that can transfer across
+different domains. We leave this for future work.
+References
+Yushi Bai, Xin Lv, Jiajie Zhang, Hongchang Lyu,
+Jiankai Tang, Zhidian Huang, Zhengxiao Du, Xiao
+Liu, Aohan Zeng, Lei Hou, et al. 2023. Longbench:
+A bilingual, multitask benchmark for long context
+understanding. ArXiv preprint, abs/2308.14508.
+
+BIG bench authors. 2023. Beyond the imitation game:
+Quantifying and extrapolating the capabilities of lan-
+guage models. Transactions on Machine Learning
+Research.
+Howard Chen, Ramakanth Pasunuru, Jason Weston, and
+Asli Celikyilmaz. 2023. Walking down the mem-
+ory maze: Beyond context limit through interactive
+reading. ArXiv preprint, abs/2310.05029.
+Alexis Chevalier, Alexander Wettig, Anirudh Ajith, and
+Danqi Chen. 2023. Adapting language models to
+compress contexts. ArXiv preprint, abs/2305.14788.
+Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian,
+Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias
+Plappert, Jerry Tworek, Jacob Hilton, Reiichiro
+Nakano, et al. 2021. Training verifiers to solve math
+word problems. ArXiv preprint, abs/2110.14168.
+Alexis Conneau, Kartikay Khandelwal, Naman Goyal,
+Vishrav Chaudhary, Guillaume Wenzek, Francisco
+Guzmán, Edouard Grave, Myle Ott, Luke Zettle-
+moyer, and Veselin Stoyanov. 2020. Unsupervised
+cross-lingual representation learning at scale. In Pro-
+ceedings of the 58th Annual Meeting of the Asso-
+ciation for Computational Linguistics, pages 8440–
+8451, Online. Association for Computational Lin-
+guistics.
+Jacob Devlin, Ming-Wei Chang, Kenton Lee, and
+Kristina Toutanova. 2019. BERT: Pre-training of
+deep bidirectional transformers for language under-
+standing. In Proceedings of the 2019 Conference of
+the North American Chapter of the Association for
+Computational Linguistics: Human Language Tech-
+nologies, Volume 1 (Long and Short Papers), pages
+4171–4186, Minneapolis, Minnesota. Association for
+Computational Linguistics.
+Qingxiu Dong, Lei Li, Damai Dai, Ce Zheng, Zhiy-
+ong Wu, Baobao Chang, Xu Sun, Jingjing Xu, and
+Zhifang Sui. 2023. A survey for in-context learning.
+ArXiv preprint, abs/2301.00234.
+Katja Filippova and Yasemin Altun. 2013. Overcom-
+ing the lack of parallel data in sentence compression.
+In Proceedings of the 2013 Conference on Empiri-
+cal Methods in Natural Language Processing, pages
+1481–1491, Seattle, Washington, USA. Association
+for Computational Linguistics.
+Tao Ge, Hu Jing, Lei Wang, Xun Wang, Si-Qing Chen,
+and Furu Wei. 2024. In-context autoencoder for con-
+text compression in a large language model. In The
+Twelfth International Conference on Learning Repre-
+sentations.
+Yebowen Hu, Tim Ganter, Hanieh Deilamsalehy, Franck
+Dernoncourt, Hassan Foroosh, and Fei Liu. 2023.
+Meetingbank: A benchmark dataset for meeting sum-
+marization. ArXiv preprint, abs/2305.17529.
+Xijie Huang, Li Lyna Zhang, Kwang-Ting Cheng, and
+Mao Yang. 2023. Boosting llm reasoning: Push the
+limits of few-shot learning with reinforced in-context
+pruning. ArXiv preprint, abs/2312.08901.
+Huiqiang Jiang, Qianhui Wu, Chin-Yew Lin, Yuqing
+Yang, and Lili Qiu. 2023a. LLMLingua: Compress-
+ing prompts for accelerated inference of large lan-
+guage models. In Proceedings of the 2023 Confer-
+ence on Empirical Methods in Natural Language Pro-
+cessing, pages 13358–13376, Singapore. Association
+for Computational Linguistics.
+Huiqiang Jiang, Qianhui Wu, Xufang Luo, Dongsheng
+Li, Chin-Yew Lin, Yuqing Yang, and Lili Qiu. 2023b.
+Longllmlingua: Accelerating and enhancing llms
+in long context scenarios via prompt compression.
+ArXiv preprint, abs/2310.06839.
+Hoyoun Jung and Kyung-Joong Kim. 2023. Discrete
+prompt compression with reinforcement learning.
+ArXiv preprint, abs/2308.08758.
+Byeongchang Kim, Hyunwoo Kim, and Gunhee Kim.
+2019. Abstractive summarization of Reddit posts
+with multi-level memory networks. In Proceedings
+of the 2019 Conference of the North American Chap-
+ter of the Association for Computational Linguistics:
+Human Language Technologies, Volume 1 (Long and
+Short Papers), pages 2519–2531, Minneapolis, Min-
+nesota. Association for Computational Linguistics.
+Diederik P. Kingma and Jimmy Ba. 2015. Adam: A
+method for stochastic optimization.
+In 3rd Inter-
+national Conference on Learning Representations,
+ICLR 2015, San Diego, CA, USA, May 7-9, 2015,
+Conference Track Proceedings.
+Mahnaz Koupaee and William Yang Wang. 2018. Wiki-
+how: A large scale text summarization dataset. ArXiv
+preprint, abs/1810.09305.
+Patrick S. H. Lewis, Ethan Perez, Aleksandra Pik-
+tus, Fabio Petroni, Vladimir Karpukhin, Naman
+Goyal, Heinrich Küttler, Mike Lewis, Wen-tau Yih,
+Tim Rocktäschel, Sebastian Riedel, and Douwe
+Kiela. 2020.
+Retrieval-augmented generation for
+knowledge-intensive NLP tasks. In Advances in Neu-
+ral Information Processing Systems 33: Annual Con-
+ference on Neural Information Processing Systems
+2020, NeurIPS 2020, December 6-12, 2020, virtual.
+Yucheng Li, Bo Dong, Frank Guerin, and Chenghua Lin.
+2023. Compressing context to enhance inference ef-
+ficiency of large language models. In Proceedings of
+the 2023 Conference on Empirical Methods in Natu-
+ral Language Processing, pages 6342–6353, Singa-
+pore. Association for Computational Linguistics.
+Chin-Yew Lin. 2004. ROUGE: A package for auto-
+matic evaluation of summaries. In Text Summariza-
+tion Branches Out, pages 74–81, Barcelona, Spain.
+Association for Computational Linguistics.
+Nelson F. Liu, Kevin Lin, John Hewitt, Ashwin Paran-
+jape, Michele Bevilacqua, Fabio Petroni, and Percy
+Liang. 2024. Lost in the Middle: How Language
+Models Use Long Contexts. Transactions of the Asso-
+ciation for Computational Linguistics, 12:157–173.
+
+Zichang Liu, Aditya Desai, Fangshuo Liao, Weitao
+Wang, Victor Xie, Zhaozhuo Xu, Anastasios Kyril-
+lidis, and Anshumali Shrivastava. 2023.
+Scis-
+sorhands: Exploiting the persistence of importance
+hypothesis for LLM KV cache compression at test
+time. In Thirty-seventh Conference on Neural Infor-
+mation Processing Systems.
+Jesse Mu, Xiang Lisa Li, and Noah Goodman. 2023.
+Learning to compress prompts with gist tokens. In
+Thirty-seventh Conference on Neural Information
+Processing Systems.
+Charles Packer, Vivian Fang, Shishir G Patil, Kevin
+Lin, Sarah Wooders, and Joseph E Gonzalez. 2023.
+Memgpt: Towards llms as operating systems. ArXiv
+preprint, abs/2310.08560.
+Allen Roush and Arvind Balaji. 2020.
+DebateSum:
+A large-scale argument mining and summarization
+dataset. In Proceedings of the 7th Workshop on Ar-
+gument Mining, pages 1–7, Online. Association for
+Computational Linguistics.
+Uri Shaham, Maor Ivgi, Avia Efrat, Jonathan Berant,
+and Omer Levy. 2023. ZeroSCROLLS: A zero-shot
+benchmark for long text understanding.
+In Find-
+ings of the Association for Computational Linguis-
+tics: EMNLP 2023, pages 7977–7989, Singapore.
+Association for Computational Linguistics.
+Claude E Shannon. 1951.
+Prediction and entropy
+of printed english. Bell system technical journal,
+30(1):50–64.
+Kristina Toutanova, Chris Brockett, Ke M. Tran, and
+Saleema Amershi. 2016. A dataset and evaluation
+metrics for abstractive compression of sentences and
+short paragraphs. In Proceedings of the 2016 Con-
+ference on Empirical Methods in Natural Language
+Processing, pages 340–350, Austin, Texas. Associa-
+tion for Computational Linguistics.
+Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten
+Bosma, brian ichter, Fei Xia, Ed H. Chi, Quoc V Le,
+and Denny Zhou. 2022. Chain of thought prompt-
+ing elicits reasoning in large language models. In
+Advances in Neural Information Processing Systems.
+David Wingate, Mohammad Shoeybi, and Taylor
+Sorensen. 2022. Prompt compression and contrastive
+conditioning for controllability and toxicity reduction
+in language models. In Findings of the Association
+for Computational Linguistics: EMNLP 2022, pages
+5621–5634, Abu Dhabi, United Arab Emirates. As-
+sociation for Computational Linguistics.
+Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song
+Han, and Mike Lewis. 2024. Efficient streaming lan-
+guage models with attention sinks. In The Twelfth
+International Conference on Learning Representa-
+tions.
+Fangyuan Xu, Weijia Shi, and Eunsol Choi. 2024. RE-
+COMP: Improving retrieval-augmented LMs with
+context compression and selective augmentation. In
+The Twelfth International Conference on Learning
+Representations.
+Zhenyu Zhang, Ying Sheng, Tianyi Zhou, Tianlong
+Chen, Lianmin Zheng, Ruisi Cai, Zhao Song, Yuan-
+dong Tian, Christopher Re, Clark Barrett, Zhangyang
+Wang, and Beidi Chen. 2023. H2o: Heavy-hitter ora-
+cle for efficient generative inference of large language
+models. In Thirty-seventh Conference on Neural In-
+formation Processing Systems.
+Zheng Zhao, Shay B. Cohen, and Bonnie Webber. 2020.
+Reducing quantity hallucinations in abstractive sum-
+marization. In Findings of the Association for Com-
+putational Linguistics: EMNLP 2020, pages 2237–
+2249, Online. Association for Computational Lin-
+guistics.
+A
+Details of Data Distillation
+To construct the extractive compression dataset, we
+use GPT-4-32k to compress the original meeting
+transcript. Each transcript is divided into chunks
+first, with each chunk terminating at the end of a
+complete sentence and not exceeding 512 tokens.
+We employ the default parameter settings with a
+temperature of 0.3 and a top_p of 1.0. The max-
+imum number of generated tokens is set to 4096.
+Transcripts exceeding 28K tokens are truncated,
+allowing a 4K token budget for generation. Fig. 9
+presents the full instruction used in GPT-4 com-
+pression. Tab. 8 shows the statistics of our Meet-
+ingBank compression dataset.
+Data Part
+Data Size Chunk Sentence (Avg) Token (Avg) 1/τ
+Original
+5,169
+41,746
+232
+3,635
+-
+Compressed
+5,169
+41,746
+132
+1,415
+2.57x
+Table 8: Statistics of MeetingBank compression dataset.
+B
+Details of Data Annotation
+Based on the compressed prompt, we design a word
+annotation algorithm to automatically assign each
+word a label indicating whether the word in the
+original prompt should be retained. Initially, all la-
+bels of the original words are set to False. Then, for
+every word in the compressed prompt, we search
+for its corresponding word in the original prompt,
+which is then assigned a True label.
+Sliding Window:
+To assign labels to the ap-
+propriate words in the original prompt, we uti-
+lize a sliding window approach, constraining the
+search scope within a local window centered on the
+previously matched word in the original prompt.
+
+Prompt Compression Details:
+Example 1:
+Item 15, report from City Manager Recommendation to adopt three resolutions. First, to join the Victory Pace program.
+Second, to join the California first program. And number three, consenting to to inclusion of certain properties within the
+jurisdiction in the California Hero program. It was emotion, motion, a second and public comment. CNN. Please cast your
+vote. Oh. Was your public comment? Yeah. Please come forward. I thank you, Mr. Mayor. Thank you. Members of the
+council. My name is Alex Mitchell. I represent the hero program. Just wanted to let you know that the hero program. Has
+been in California for the last three and a half years. We’re in. Over 20. We’re in 28 counties, and we’ve completed over
+29,000 energy efficient projects to make homes. Greener and more energy efficient. And this includes anything. From solar
+to water. Efficiency. We’ve done. Almost. $550 million in home improvements.
+Example 2:
+John: So, um, I’ve been thinking about the project, you know, and I believe we need to, uh, make some changes. I mean, we
+want the project to succeed, right? So, like, I think we should consider maybe revising the timeline.
+Sarah: I totally agree, John. I mean, we have to be realistic, you know. The timeline is, like, too tight. You know what I
+mean? We should definitely extend it .
+Figure 6: LLMLingua-2 performs context awareness compression. The dark red highlights the words which
+are preserved at a 5x compression ratio, medium red denotes 3x compression ratio, and light red represents 2x
+compression ratio. Gray indicates discarded words during compression.
+The search initiates from the last matching posi-
+tion. The True label is then assigned to the first
+matched word in the original prompt.
+Further-
+more, the search is bidirectional to prevent mis-
+matches caused by GPT-4’s reordering, as shown
+in Fig. 5. Moreover, if GPT-4 introduces new words
+during compression, the sliding window restricts
+the search scope, preventing mismatches between
+the newly added words in the compressed prompt
+and words in the original prompt.
+Fuzzy Matching:
+Another challenge arises from
+the “variation" misbehavior of GPT-4, as illustrated
+in Fig 5. GPT-4 may alter the original words in
+tense, voice, and singular/plural forms during com-
+pression, even when we request GPT-4 to compress
+by discarding words only. To address this issue, we
+first apply lemmatization to reduce words to their
+base form using Spacy5, and then perform word
+matching using the sliding window approach.
+C
+Context Aware Compression
+Fig. 6 presents some compression results of our
+LLMLingua-2 under different compression ratios.
+Our method effectively maintains the most mean-
+ingful words as the compression ratio increases.
+D
+Comparison with Baselines
+In Fig. 11 and Fig. 12, we qualitatively compare the
+compressed prompts of our methods with those of
+baseline method on GSM8K and BBH datasets.
+Note our LLMLingua-2 here is only trained on
+5https://spacy.io/api/lemmatizer
+MeetingBank, but also yields more reasonable com-
+pressed prompt than baseline methods on the trans-
+ferred domain data.
+E
+Prompt Reconstruction
+Fig. 7 and Fig. 8 show two reconstructed prompts
+from the compressed prompts using GPT-4. Specif-
+ically, we prepend a simple reconstruction instruc-
+tion: "I have asked you to compress a meeting
+transcript by dropping word only. Now, reconstruct
+the original meeting transcript based on the fol-
+lowing compressed transcript." to the compressed
+prompt. With the key information preserved in
+the compressed prompt, the reconstructed prompt
+closely resembles the original prompt.
+F
+Details of MeetingBank QA and
+MeetingBank Summary
+The MeetingBank QA dataset consists of 862 meet-
+ing transcripts from the MeetingBank test set. Ini-
+tially, we generate 10 question-answer pairs for
+each meeting transcript using GPT-4-32K. The in-
+struction used in generating QA pairs is: "Create
+10 questions/answer pairs from the given meeting
+transcript. The answer should be short and con-
+cise. The question should start with Q: and answser
+should sta

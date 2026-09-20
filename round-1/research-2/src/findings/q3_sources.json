@@ -1,0 +1,201 @@
+[
+  {
+    "url": "https://arxiv.org/pdf/2207.05221",
+    "title": "Language Models (Mostly) Know What They Know",
+    "summary": "Introduces P(True) and P(IK) as ways for LLMs to self-evaluate the correctness/knowability of their own answers.",
+    "authors": ["Saurav Kadavath", "Tom Conerly", "Amanda Askell", "et al."],
+    "year": 2022,
+    "supporting_passages": [
+      {"quote": "we investigate whether models can be trained to predict \"P(IK)\", the probability that \"I know\" the answer to a question, without reference to any particular proposed answer. Models perform well at predicting P(IK) and partially generalize across tasks, though they struggle with calibration of P(IK) on new tasks.", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2305.14975",
+    "title": "Just Ask for Calibration: Strategies for Eliciting Calibrated Confidence Scores from Language Models",
+    "summary": "Shows verbalized confidence scores from RLHF-LMs are often better calibrated than raw conditional token probabilities.",
+    "authors": ["Katherine Tian", "Eric Mitchell", "et al."],
+    "year": 2023,
+    "supporting_passages": [
+      {"quote": "we find that, verbalized confidences emitted as output tokens are typically better-calibrated than the model's conditional probabilities on the TriviaQA, SciQ, and TruthfulQA benchmarks, often reducing the expected calibration error by a relative 50%.", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2306.13063",
+    "title": "Can LLMs Express Their Uncertainty? An Empirical Evaluation of Confidence Elicitation in LLMs",
+    "summary": "Systematic black-box framework for eliciting verbalized confidence, showing LLMs are overconfident when verbalizing.",
+    "authors": ["Miao Xiong", "Zhiyuan Hu", "et al."],
+    "year": 2024,
+    "supporting_passages": [
+      {"quote": "LLMs, when verbalizing their confidence, tend to be overconfident, potentially imitating human patterns of expressing confidence.", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2410.02707",
+    "title": "LLMs Know More Than They Show: On the Intrinsic Representation of LLM Hallucinations",
+    "summary": "Shows LLM internal representations encode truthfulness info beyond what is used in generation, including cases where the model internally encodes the right answer but outputs the wrong one.",
+    "authors": ["Hadas Orgad", "Michael Toker", "Zorik Gekhman", "Roi Reichart", "Idan Szpektor", "Hadas Kotek", "Yonatan Belinkov"],
+    "year": 2024,
+    "supporting_passages": [
+      {"quote": "we reveal a discrepancy between LLMs' internal encoding and external behavior: they may encode the correct answer, yet consistently generate an incorrect one.", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2304.13734",
+    "title": "The Internal State of an LLM Knows When It's Lying",
+    "summary": "Trains a classifier (SAPLMA) on LLM hidden-layer activations to detect statement truthfulness.",
+    "authors": ["Amos Azaria", "Tom Mitchell"],
+    "year": 2023,
+    "supporting_passages": [
+      {"quote": "our trained classifier achieves an average of 71% to 83% accuracy labeling which sentences are true versus false, depending on the LLM base model.", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2406.15927",
+    "title": "Semantic Entropy Probes: Robust and Cheap Hallucination Detection in LLMs",
+    "summary": "Proposes cheap linear probes on hidden states that approximate expensive semantic-entropy-based hallucination detection.",
+    "authors": ["Jannik Kossen", "Jiatong Han", "Muhammed Razzak", "Lisa Schut", "Shreshth Malik", "Yarin Gal"],
+    "year": 2024,
+    "supporting_passages": [
+      {"quote": "We propose Semantic Entropy Probes (SEPs), a cheap and reliable method for uncertainty quantification in Large Language Models (LLMs).", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2603.25052",
+    "title": "Closing the Confidence-Faithfulness Gap in Large Language Models",
+    "summary": "Shows the geometric relationship between internal accuracy signal and verbalized confidence, and closes the gap by steering verbalized output to match an internal accuracy estimate (adaptive steering vs SteerConf).",
+    "authors": ["Miranda Muqing Miao", "Lyle Ungar"],
+    "year": 2026,
+    "supporting_passages": [
+      {"quote": "by reading the model's internal estimate of its own competence and steering its verbalized output to match, we are able to close much of the faithfulness gap of verbalized confidence.", "locator": "Section 3 results discussion, near Table with ECE/Brier/MAE"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2512.11998",
+    "title": "Direct Confidence Alignment: Aligning Verbalized Confidence with Internal Confidence In Large Language Models",
+    "summary": "Uses Direct Preference Optimization (DCA) to align an LLM's verbalized confidence with its internal (token-probability-derived) confidence rather than ground-truth accuracy.",
+    "authors": ["Glenn Zhang", "Treasure Mayowa", "Jason Fan", "Yicheng Fu", "Aaron Sandoval", "Sean O'Brien", "Kevin Zhu"],
+    "year": 2026,
+    "supporting_passages": [
+      {"quote": "it has been observed that the internal confidence of a model, derived from token probabilities, is not well aligned with its verbalized confidence, leading to misleading results with different calibration methods.", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2606.01148",
+    "title": "Not All Explanations Simulate Equally: Comparing Verbalized Feature Attributions and Self-Generated Rationales",
+    "summary": "Compares sentence-level and token-level feature-attribution explanations against self-generated rationales via simulatability; sentence-level attributions give stronger simulatability gains than token-level.",
+    "authors": null,
+    "year": 2026,
+    "supporting_passages": [
+      {"quote": "Sentence-level attributions provide stronger simulatability gains than token-level attributions, LLM rewriting does not necessarily improve usefulness despite greater fluency, and CoT rationales provide the strongest simulation signal among the studied types.", "locator": "Contributions list, Introduction"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2202.01602",
+    "title": "The Disagreement Problem in Explainable Machine Learning: A Practitioner's Perspective",
+    "summary": "Formalizes and empirically studies disagreement among post-hoc explanation methods (SHAP, LIME, etc.) across 6 explainers and 4 datasets; interviews 25 practitioners on how they resolve disagreement qualitatively. Does not propose disagreement as an automated downstream risk score.",
+    "authors": ["Satyapriya Krishna", "Tessa Han", "Alex Gu", "Steven Wu", "et al."],
+    "year": 2024,
+    "supporting_passages": [
+      {"quote": "we formalize and investigate the disagreement problem in explainable ML, a novel area of research that examines conflicts among post hoc explanation methods.", "locator": "Introduction"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2605.02611",
+    "title": "Selective Prediction from Agreement: A Lipschitz-Consistent Version Space Approach",
+    "summary": "Selective classification method that abstains unless all Lipschitz-consistent classification heads (a version space) agree on the label; disagreement among an ensemble of consistent heads triggers abstention. Image classification (CIFAR-10/SVHN), not LLM/explanation disagreement.",
+    "authors": ["Mohamadsadegh Khosravani"],
+    "year": 2026,
+    "supporting_passages": [
+      {"quote": "The model therefore predicts only when the label is forced (i.e., all consistent heads agree), and abstains otherwise.", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://dl.acm.org/doi/pdf/10.1145/130385.130417",
+    "title": "Query by Committee",
+    "summary": "Foundational query-by-committee active-learning paper: disagreement among a committee of learners estimates the information value of a query, giving exponential generalization-error decay.",
+    "authors": ["H. S. Seung", "M. Opper", "H. Sompolinsky"],
+    "year": 1992,
+    "supporting_passages": [
+      {"quote": "We propose an algorithm called query by committee, in which a committee of students is trained on the same data set. The next query is chosen according to the principle of maximal disagreement.", "locator": "Abstract"},
+      {"quote": "the degree of disagreement among a committee of learners can serve as an estimate of this information value.", "locator": "Introduction"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2311.00288",
+    "title": "Active Instruction Tuning: Improving Cross-Task Generalization by Training on Prompt Sensitive Tasks",
+    "summary": "Defines 'Prompt Uncertainty' as the disagreement of a single model's predictions across the original vs. perturbed task instructions, motivated by BALD (Bayesian Active Learning by Disagreement); used for task-level selection in instruction tuning, not sentence-level content salience.",
+    "authors": ["Po-Nien Kung", "Fan Yin", "Di Wu", "Kai-Wei Chang", "Nanyun Peng"],
+    "year": 2023,
+    "supporting_passages": [
+      {"quote": "We represent the informativeness of new tasks with the disagreement of the current model outputs over perturbed prompts.", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2608.31066",
+    "title": "Every Token Leaves a Ripple in the Stream of Thought: Eliciting Model-Internal Token Saliency for Chain-of-Thought Compression (MIST)",
+    "summary": "Proposes MIST, combining two model-internal saliency axes (necessity: residual-stream ablation effect; sufficiency: residual-stream patching effect) into one fused importance score for pruning CoT reasoning tokens. Both signals are internal; no verbalized signal; fusion not disagreement.",
+    "authors": ["Tianyi Zhao", "Yinhan He", "Wendy Zheng", "Chen Chen"],
+    "year": 2026,
+    "supporting_passages": [
+      {"quote": "MIST (Model-Internal Saliency for Token-level CoT compression), which defines token importance along two complementary axes: necessity, the drop in answer likelihood when a token's internal contribution is removed, and sufficiency, the gain in answer likelihood when that contribution alone is provided. Combining the two yields a unified importance score for pruning.", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2608.04569",
+    "title": "Relevant but Incomplete: Referential Dangling as a Paradigm-Level Failure Mode in Hard Prompt Compression",
+    "summary": "Identifies 'referential dangling': independent per-unit importance scoring in hard prompt compressors splits dependent evidence pairs, leaving retained spans uninterpretable; measured up to 60% dangling rate on HotpotQA bridge questions across 6 compressors, with 29-34pp accuracy recovery from fixing it.",
+    "authors": ["Zhengpei Hu", "Kai Li", "Dapeng Fu", "Xuechao Zou", "Yuanhao Tang", "Yue Li", "Tengfei Cao", "Jianqiang Huang"],
+    "year": 2026,
+    "supporting_passages": [
+      {"quote": "independent selection can split dependent evidence pairs, retaining one member while deleting the other. When the retained text span contains an answer but the deleted span defines the entity needed to interpret it, we call the result referential dangling.", "locator": "Abstract/Introduction"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2504.16574",
+    "title": "PIS: Linking Importance Sampling and Attention Mechanisms for Efficient Prompt Compression",
+    "summary": "Treats attention scores as importance-sampling weights for prompt compression but notes relying solely on attention can drop important tokens; addresses this via attention-score variance across layers rather than a second, independent (e.g. verbalized) signal.",
+    "authors": null,
+    "year": 2025,
+    "supporting_passages": [
+      {"quote": "relying solely on attention scores may lead to the removal of important tokens with high attention scores", "locator": "WebSearch snippet (not independently fetch_grepped this session)"}
+    ],
+    "verified": false
+  },
+  {
+    "url": "https://arxiv.org/abs/2310.11207",
+    "title": "Can Large Language Models Explain Themselves? A Study of LLM-Generated Self-Explanations",
+    "summary": "Compares LLM self-generated feature-attribution explanations against occlusion/LIME-style attributions, finding they differ substantially by agreement metrics despite similar faithfulness scores.",
+    "authors": null,
+    "year": 2023,
+    "supporting_passages": [
+      {"quote": "id/title confirmed via search results; exact text not fetch_grepped this session", "locator": "N/A"}
+    ],
+    "verified": false
+  },
+  {
+    "url": "https://arxiv.org/pdf/2512.12411",
+    "title": "Detecting the Disturbance: A Nuanced View of Introspective Abilities in LLMs",
+    "summary": "Reports that LLM self-report of internal activation changes / introspection is partial and inconsistent across methods (accuracy figures cited only in WebSearch snippets, not confirmed by direct fetch).",
+    "authors": null,
+    "year": 2026,
+    "supporting_passages": [
+      {"quote": "accuracy of self-awareness hovered around 20% ... some research achieved up to 88% accuracy versus 10% chance for early-layer injections", "locator": "WebSearch snippet, not independently fetch_grepped this session"}
+    ],
+    "verified": false
+  }
+]

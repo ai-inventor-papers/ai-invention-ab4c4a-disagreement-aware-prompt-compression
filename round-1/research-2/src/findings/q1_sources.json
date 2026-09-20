@@ -1,0 +1,311 @@
+[
+  {
+    "url": "https://arxiv.org/abs/2309.17453",
+    "title": "Efficient Streaming Language Models with Attention Sinks",
+    "summary": "Introduces StreamingLLM; shows initial tokens act as 'attention sinks' absorbing a large, content-independent share of attention mass.",
+    "authors": ["Guangxuan Xiao", "Yuandong Tian", "Beidi Chen", "Song Han", "Mike Lewis"],
+    "year": 2023,
+    "supporting_passages": [
+      {
+        "quote": "the attention scores for the first token are significantly high, often exceeding half of the total attention, except for the two bottom layers.",
+        "locator": "arxiv.org/pdf/2309.17453, body text near Figure 2 discussion"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2402.17762",
+    "title": "Massive Activations in Large Language Models",
+    "summary": "Identifies a small set of massive-magnitude activations at specific tokens (often BOS/delimiters) that act as fixed bias terms and pull attention toward themselves.",
+    "authors": ["Mingjie Sun", "Xinlei Chen", "J. Zico Kolter", "Zhuang Liu"],
+    "year": 2024,
+    "supporting_passages": [
+      {
+        "quote": "these massive activations lead to the concentration of attention probabilities to their corresponding tokens, and further, implicit bias terms in the self-attention output.",
+        "locator": "arxiv.org/pdf/2402.17762, Abstract"
+      },
+      {
+        "quote": "massive activations are closely connected with self-attention. In particular, we show massive activations cause attention to be attracted to the tokens associated with them.",
+        "locator": "arxiv.org/pdf/2402.17762, Introduction"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2406.12335",
+    "title": "Unveiling and Harnessing Hidden Attention Sinks: Enhancing Large Language Models without Training through Attention Calibration (VATP: Value-Aware Token Pruning)",
+    "summary": "Shows attention-sink tokens have near-zero value-vector norm despite large attention scores, and proposes weighting attention by value-vector norm (VATP) for token pruning.",
+    "authors": null,
+    "year": 2024,
+    "supporting_passages": [
+      {
+        "quote": "We find, in contrast to the attention scores, the value vector norms of the attention sink tokens are much smaller than other tokens.",
+        "locator": "arxiv.org/pdf/2406.12335, section on Observations"
+      },
+      {
+        "quote": "VATP uses the product of value vector norm and attention score to evaluate the importance of each token's KV cache.",
+        "locator": "arxiv.org/pdf/2406.12335, Figure 2 caption / methods"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2410.10781",
+    "title": "When Attention Sink Emerges in Language Models: An Empirical View",
+    "summary": "Studies when/why attention sinks emerge during pretraining; argues sinks act like key biases storing extra, non-informative attention mass, tied to softmax normalization.",
+    "authors": ["Xiangming Gu", "Tianyu Pang", "Chao Du", "Qian Liu", "Fengzhuo Zhang", "Cunxiao Du", "Ye Wang", "Min Lin"],
+    "year": 2024,
+    "supporting_passages": [
+      {
+        "quote": "attention sink acts more like key biases, storing extra attention scores, which could be non-informative and not contribute to the value computation.",
+        "locator": "arxiv.org/pdf/2410.10781, Abstract"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2307.03172",
+    "title": "Lost in the Middle: How Language Models Use Long Contexts",
+    "summary": "Demonstrates a U-shaped performance curve: LMs use information best at the start/end of context and worst in the middle.",
+    "authors": ["Nelson F. Liu", "Kevin Lin", "John Hewitt", "Ashwin Paranjape", "Michele Bevilacqua", "Fabio Petroni", "Percy Liang"],
+    "year": 2023,
+    "supporting_passages": [
+      {
+        "quote": "we observe a distinctive U-shaped performance curve (Figure 1); language model performance is highest when relevant information occurs at the very beginning (primacy bias) or end of its input context (recency bias), and performance significantly degrades when models must access and use information in the middle of their input context.",
+        "locator": "arxiv.org/pdf/2307.03172, Introduction"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2505.23277",
+    "title": "Sentinel: Decoding Context Utilization via Attention Probing for Efficient LLM Context Compression",
+    "summary": "Sentence-level attention-probing compressor: uses last-prompt-position query attention, sum-over-sentence-tokens numerator normalized by context-only denominator; beats raw attention baseline on LongBench.",
+    "authors": null,
+    "year": 2025,
+    "supporting_passages": [
+      {
+        "quote": "the attention tensor is denoted as A ∈ R^{L×H×T}, where T is the input length, and A_{l,h,t} represents the attention weight assigned from the final prompt position to token t at layer l and head h.",
+        "locator": "arxiv.org/pdf/2505.23277, section 2.2.2"
+      },
+      {
+        "quote": "T_C denotes the set of tokens originating from the retrieved context C, excluding prompt and query tokens. This normalization improves comparability across sentences by restricting attention mass to retrieved-context tokens.",
+        "locator": "arxiv.org/pdf/2505.23277, section 2.2.2, Eq. 1"
+      },
+      {
+        "quote": "Sentinel (Qwen2.5-0.5B) ... En-AVG 37.8",
+        "locator": "arxiv.org/pdf/2505.23277, Table 1"
+      },
+      {
+        "quote": "Raw Attention (Qwen2.5-0.5B) 34.92 38.96 21.32 31.74",
+        "locator": "arxiv.org/pdf/2505.23277, Table 2"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2503.10720",
+    "title": "AttentionRAG: Attention-Guided Context Pruning in Retrieval-Augmented Generation",
+    "summary": "Reformulates the query as a next-token-prediction 'answer hint prefix' so a single anchor token carries query semantics for efficient query-context attention; selects sentences by top-k attended tokens.",
+    "authors": ["Yixiong Fang", "Tianran Sun", "Yuling Shi", "Xiaodong Gu"],
+    "year": 2025,
+    "supporting_passages": [
+      {
+        "quote": "The core idea of ATTENTIONRAG lies in its attention focus mechanism, which reformulates RAG queries into a next-token prediction paradigm. This mechanism isolates the query's semantic focus to a single token, enabling precise and efficient attention calculation between queries and retrieved contexts.",
+        "locator": "arxiv.org/pdf/2503.10720, Abstract"
+      },
+      {
+        "quote": "producing a compressed context by selecting sentences from the original context with the top-k attended tokens.",
+        "locator": "arxiv.org/pdf/2503.10720, Introduction"
+      },
+      {
+        "quote": "achieves up to 6.3x context compression while outperforming LLM-Lingua methods by around 10% in key metrics.",
+        "locator": "arxiv.org/pdf/2503.10720, Abstract"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2408.00274",
+    "title": "QUITO: Accelerating Long-Context Reasoning through Query-Guided Context Compression",
+    "summary": "Uses a single 'trigger token' to compute the attention distribution of the context relative to the question, then filters context by that distribution.",
+    "authors": ["Wenshan Wang", "Yihang Wang", "Yixing Fan", "Huaming Liao", "Jiafeng Guo"],
+    "year": 2024,
+    "supporting_passages": [
+      {
+        "quote": "we take a trigger token to calculate the attention distribution of the context in response to the question. Based on the distribution, we propose three different filtering methods to satisfy the budget constraints of the context length.",
+        "locator": "arxiv.org/pdf/2408.00274, Abstract"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2509.17486",
+    "title": "AttnComp: Attention-Guided Adaptive Context Compression for Retrieval-Augmented Generation",
+    "summary": "Uses cross-attention from query to context documents plus a Top-P compression rule to retain the minimal document set whose cumulative attention exceeds a threshold; also yields a confidence score.",
+    "authors": ["Lvzhou Luo", "Yixuan Cao", "Ping Luo"],
+    "year": 2025,
+    "supporting_passages": [
+      {
+        "quote": "AttnComp employs a Top-P compression algorithm to retain the minimal set of documents whose cumulative attention weights exceeds a predefined threshold.",
+        "locator": "arxiv.org/pdf/2509.17486, Abstract"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2501.12959",
+    "title": "Efficient Prompt Compression with Evaluator Heads for Long-Context Transformer Inference (EHPC)",
+    "summary": "Identifies a small per-model set of early-layer 'evaluator heads' via a needle-in-a-haystack pilot, uses their cumulative/pooled attention scores to select important tokens, and applies this training-free to prompt compression.",
+    "authors": ["Weizhi Fei", "Xueyan Niu", "Guoqing Xie", "Yingqing Liu", "Bo Bai", "Wei Han"],
+    "year": 2025,
+    "supporting_passages": [
+      {
+        "quote": "For Llama-3.1-8B-Instruct, which has 32 layers and 32 heads, the selected layer is 13, and the chosen heads are [18, 13, 21, 8, 11, 1, 4, 3].",
+        "locator": "arxiv.org/pdf/2501.12959, Appendix, 'Detected evaluator heads'"
+      },
+      {
+        "quote": "we select four heads with the highest scores as evaluator heads from the layer with the highest cumulative score",
+        "locator": "arxiv.org/pdf/2501.12959, 'Practicality' section"
+      },
+      {
+        "quote": "In all experiments, we used the average pooling operation, as the difference between average pooling and maximum pooling was negligible experimentally.",
+        "locator": "arxiv.org/pdf/2501.12959, Appendix hyper-parameters"
+      },
+      {
+        "quote": "LLMLingua-2 39.1 1.27 ... EHPC (ours) 49.6 0.88",
+        "locator": "arxiv.org/pdf/2501.12959, Table (performance/latency comparison, 2048-token constraint)"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2005.00928",
+    "title": "Quantifying Attention Flow in Transformers",
+    "summary": "Proposes attention rollout and attention flow as post-hoc corrections to raw attention; shows both correlate better with ablation/gradient-based importance than raw attention, in an encoder-style classification setting.",
+    "authors": ["Samira Abnar", "Willem Zuidema"],
+    "year": 2020,
+    "supporting_passages": [
+      {
+        "quote": "compared to raw attention, both yield higher correlations with importance scores of input tokens obtained using an ablation method and input gradients.",
+        "locator": "arxiv.org/pdf/2005.00928, Abstract"
+      },
+      {
+        "quote": "Raw 0.69±0.27 0.10±0.43 -0.11±0.49 -0.09±0.52 0.20±0.45 0.29±0.39 / Rollout 0.32±0.26 0.38±0.27 0.51±0.26 0.62±0.26 0.70±0.25 0.71±0.24 / Flow 0.32±0.26 0.44±0.29 0.70±0.25 0.70±0.22 0.71±0.22 0.70±0.22",
+        "locator": "arxiv.org/pdf/2005.00928, Table 1"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/1902.10186",
+    "title": "Attention is not Explanation",
+    "summary": "Shows adversarial or randomly permuted attention distributions can leave BiLSTM model predictions almost unchanged, questioning attention as a faithful explanation.",
+    "authors": ["Sarthak Jain", "Byron C. Wallace"],
+    "year": 2019,
+    "supporting_passages": [
+      {
+        "quote": "it is very often possible to construct adversarial attention distributions that yield effectively equivalent predictions as when using the originally induced attention weights, despite attending to entirely different input features. Even more strikingly, randomly permuting attention weights often induces only minimal changes in output.",
+        "locator": "arxiv.org/pdf/1902.10186, Introduction"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/1908.04626",
+    "title": "Attention is not not Explanation",
+    "summary": "Responds to Jain & Wallace; argues attention can serve as a plausible (though not necessarily faithful) explanation under the right diagnostic tests.",
+    "authors": ["Sarah Wiegreffe", "Yuval Pinter"],
+    "year": 2019,
+    "supporting_passages": [
+      {
+        "quote": "If we accept the Rudin and Riedl definitions of explainability as providing a plausible, but not necessarily faithful rationale for model prediction, then the argument against attention mechanisms because they are not exclusive as claimed by Jain and Wallace is invalid.",
+        "locator": "arxiv.org/pdf/1908.04626, section 6"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/abs/2409.00729",
+    "title": "ContextCite: Attributing Model Generation to Context",
+    "summary": "Proposes a linear-surrogate context-attribution method; benchmarks it against an attention-sum baseline, finding attention's reliability for context attribution is model-dependent (works reasonably for Llama-3-8B, poorly for Phi-3-mini).",
+    "authors": null,
+    "year": 2024,
+    "supporting_passages": [
+      {
+        "quote": "Attention: A line of work on explaining language models leverages attention weights... We use a simple but effective baseline that computes an attribution score for each source by summing the average attention weight of individual tokens in the source across all heads in all layers.",
+        "locator": "arxiv.org/pdf/2409.00729, Baselines section"
+      },
+      {
+        "quote": "While the attention baseline approaches the performance of CONTEXTCITE with Llama-3-8B, it fares quite poorly with Phi-3-mini suggesting that attention is not consistently reliable for context attribution.",
+        "locator": "arxiv.org/pdf/2409.00729, Results section"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://github.com/huggingface/transformers/blob/main/src/transformers/integrations/sdpa_attention.py",
+    "title": "transformers integrations/sdpa_attention.py (source)",
+    "summary": "Runtime warning in the SDPA attention backend confirming that output_attentions=True is unsupported under SDPA and requires attn_implementation='eager'.",
+    "authors": null,
+    "year": null,
+    "supporting_passages": [
+      {
+        "quote": "`sdpa` attention does not support `output_attentions=True`. Please set your attention to `eager` if you want any of these features.",
+        "locator": "sdpa_attention.py, function sdpa_attention_forward"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://huggingface.co/docs/transformers/en/model_doc/llama",
+    "title": "Llama - HuggingFace Transformers docs",
+    "summary": "Documents the 'attentions' output field, returned only when output_attentions=True is passed, shape (batch_size, num_heads, sequence_length, sequence_length).",
+    "authors": null,
+    "year": null,
+    "supporting_passages": [
+      {
+        "quote": "attentions (tuple(torch.FloatTensor), optional, returned when output_attentions=True is passed or when config.output_attentions=True) — Tuple of torch.FloatTensor (one for each layer) of shape (batch_size, num_heads, sequence_length, sequence_length).",
+        "locator": "huggingface.co/docs/transformers/en/model_doc/llama, LlamaModel output docs"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/raw/main/config.json",
+    "title": "Qwen2.5-1.5B-Instruct config.json",
+    "summary": "Model config confirming 28 layers, 12 attention heads, 2 key-value heads (GQA) for Qwen2.5-1.5B-Instruct.",
+    "authors": null,
+    "year": null,
+    "supporting_passages": [
+      {
+        "quote": "\"num_hidden_layers\": 28, \"num_attention_heads\": 12, \"num_key_value_heads\": 2",
+        "locator": "config.json, root object"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://huggingface.co/unsloth/Llama-3.2-3B-Instruct/raw/main/config.json",
+    "title": "Llama-3.2-3B-Instruct config.json (unsloth mirror; meta-llama/Llama-3.2-3B-Instruct is gated, returned HTTP 401)",
+    "summary": "Model config confirming 28 layers, 24 attention heads, 8 key-value heads (GQA), head_dim 128 for Llama-3.2-3B-Instruct, fetched from the unsloth mirror because the canonical meta-llama repo is gated.",
+    "authors": null,
+    "year": null,
+    "supporting_passages": [
+      {
+        "quote": "\"num_hidden_layers\": 28, \"num_attention_heads\": 24, \"num_key_value_heads\": 8, \"head_dim\": 128",
+        "locator": "config.json, root object"
+      }
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://www.emergentmind.com/topics/gradient-attention-rollout",
+    "title": "Secondary discussion of rollout/over-squashing limitations in decoder-only LLMs (search-result summary, not primary-source verified)",
+    "summary": "Search-engine summary referencing Barbero et al. 2024/2025 on over-squashing and over-mixing/representational collapse as reasons full-layer attention rollout produces diffuse attributions in deep decoder-only transformers; and an EMNLP-2025-findings paper proposing a cross-layer consistency alternative.",
+    "authors": null,
+    "year": null,
+    "supporting_passages": [],
+    "verified": false
+  }
+]

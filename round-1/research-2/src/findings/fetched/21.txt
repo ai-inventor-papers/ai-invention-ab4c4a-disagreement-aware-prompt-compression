@@ -1,0 +1,1194 @@
+URL: https://arxiv.org/pdf/2310.04408
+Type: PDF
+Length: 80224 chars (truncated)
+
+--- Content ---
+
+RECOMP: IMPROVING RETRIEVAL-AUGMENTED LMS
+WITH COMPRESSION AND SELECTIVE AUGMENTATION
+Fangyuan Xu1, Weijia Shi2, Eunsol Choi1
+Department of Computer Science
+1The University of Texas at Austin
+2University of Washington
+{fangyuan,eunsol}@utexas.edu , swj0419@cs.washington.edu
+ABSTRACT
+Retrieving documents and prepending them in-context at inference time improves
+performance of language model (LMs) on a wide range of tasks. However, these
+documents, often spanning hundreds of words, make inference substantially more
+expensive. We propose compressing the retrieved documents into textual sum-
+maries prior to in-context integration. This not only reduces the computational
+costs but also relieves the burden of LMs to identify relevant information in long re-
+trieved documents. We present two compressors – an extractive compressor which
+selects useful sentences from retrieved documents and an abstractive compressor
+which generates summaries by synthesizing information from multiple documents.
+Both compressors are trained to improve LMs’ performance on end tasks when the
+generated summaries are prepended to the LMs’ input, while keeping the summary
+concise. If the retrieved documents are irrelevant to the input or offer no additional
+information to LM, our compressor can return an empty string, implementing
+selective augmentation. We evaluate our approach on language modeling task and
+open domain question answering task. We achieve a compression rate of as low as
+6% with minimal loss in performance for both tasks, significantly outperforming
+the off-the-shelf summarization models. We show that our compressors trained
+for one LM can transfer to other LMs on the language modeling task and provide
+summaries largely faithful to the retrieved documents.1
+1
+INTRODUCTION
+Retrieval-augmented language models (RALMs) (Khandelwal et al., 2019; Izacard et al., 2022; Lewis
+et al., 2020; Borgeaud et al., 2022) have shown impressive performance on knowledge-intensive tasks
+(Kwiatkowski et al., 2019; Petroni et al., 2021). Simply prepending retrieved documents to the input
+without updating the language models (LMs) (Shi et al., 2023b; Ram et al., 2023; Si et al., 2022)
+allows retrieval augmentation even for black-box LMs, but such approach comes with limitations.
+First, it increases computational costs as LMs now encode substantially more tokens. Second, even if
+we manage to adapt LMs to efficiently incorporate longer context (Beltagy et al., 2020; Zaheer et al.,
+2020), these models struggle to use all information in the context, frequently missing information
+placed in the middle (Liu et al., 2023). Third, prepending a large number of documents in-context
+can further confuse LMs with irrelevant information, degrading model performances (Mallen et al.,
+2022; Shi et al., 2023a).
+To overcome such limitations, we propose RECOMP (Retrieve, Compress, Prepend), an inter-
+mediate step for RALMs which compresses retrieved documents into a textual summary prior to
+in-context augmentation. Figure 1 illustrates our approach. The generated summary should be concise
+to maximize efficiency, be faithful to the retrieved evidence documents, and guide RALM to generate
+desired outputs when prepended to the input. To satisfy both efficiency and effectiveness constraints,
+our compressor strategically performs selective augmentation by generating an empty summary when
+the retrieved documents are irrelevant or unhelpful for target task.
+1Our code is available at https://github.com/carriex/recomp.
+1
+arXiv:2310.04408v1  [cs.CL]  6 Oct 2023
+
+RECOMP during inference
+moved from Smyrna, Tennessee, to 
+Nissan's facility in Canton, Mississippi. 
+Early US models include X, S and 
+PRO-4X, with a choice of 6-speed 
+manual or 5-speed automatic 
+transmissions, a choice of [...]
+moved from Smyrna, Tennessee, to 
+Nissan's facility in Canton, Mississippi. 
+Early US models include X, S and 
+PRO-4X, with a choice of 6-speed 
+manual or 5-speed automatic 
+transmissions, a choice of [...]
+moved from Smyrna, Tennessee, to 
+Nissan's facility in Canton, Mississippi. 
+Early US models include X, S and 
+PRO-4X, with a choice of 6-speed 
+manual or 5-speed automatic 
+transmissions, a choice of [...]
+moved from Smyrna, Tennessee, to 
+Nissan's facility in Canton, Mississippi. 
+Early US models include X, S and 
+PRO-4X, with a choice of 6-speed 
+manual or 5-speed automatic 
+transmissions, a choice of [...]
+moved from Smyrna, Tennessee, 
+to Nissan's facility in Canton, 
+Mississippi. Early US models 
+include X, S and PRO-4X, with a 
+choice of 6-speed manual…
+Retrieved documents D
+RECOMP 
+(58 tokens)
+Retrieve
+Compress
+Prepend
+No retrieval  (0 tokens)
+RALM  (749 tokens)
+2010 ❌
+✅
+2015
+Summary
+Input query x
+when did they 
+stop making the 
+nissan xterra?
+Blackbox 
+LM M 
+2015
+✅
+Compressor 
+The Nissan Xterra is a 
+front-engine, 2-wheel or 4-
+wheel drive, five-door …
+Figure 1: An illustration of RECOMP, which compresses retrieved documents into a texual summary
+before prepending it as input to a language model at inference time. The compressed summary guides
+the LM to generate the correct answer, while significantly reducing the computation costs required to
+encode the documents.
+We propose compressors: (1) Extractive compressor which selects relevant sentences from retrieved
+document set; (2) Abstractive compressor which generates a summary synthesizing information
+from multiple retrieved documents. Both compressors implement multi-document query-focused
+summarization (Xu & Lapata, 2020), where we summarize retrieved evidence document set with
+respect to the input query. As we aim to enable RALM to generate correct output when summary is
+prepended to the input query, we design training schemes to optimize the end task performance. Our
+extractive compressor is trained with a contrastive learning objective to identify sentences that lead to
+target outputs, and our abstractive compressor is distilled (West et al., 2022) from an extreme-scale
+LM (e.g. GPT-3), which achieves impressive summarization performance.
+Our experiments show that RECOMP can improve performance of frozen LMs on language model-
+ing (Merity et al., 2016) and three question answering datasets (Natural Questions (Kwiatkowski et al.,
+2019), TriviaQA (Joshi et al., 2017) and HotpotQA (Yang et al., 2018)), while prepending significantly
+fewer tokens compared to RALM without compression. We present two oracle compression methods
+– an extractive oracle which selects a sentence in evidence documents that leads to the best task
+performance and an abstractive oracle which chooses between a summary generated by extreme-scale
+LLM (e.g. GPT-3) and no retrieval augmentation that leads to the best task performance. Both oracle
+methods achieve a compression rate as low as 6% and significantly outperforms prepending full
+documents. Our trained compressors also show promising results. For language modelling, both
+trained compressors achieve a compression ratio of 25% with minimal performance drop. When
+applied to QA datasets, our best model compresses the documents to 5 - 10% of the original tokens
+with at most less than 10% relative performance drop. We conclude with careful analyses of our
+approach that reveal both its strength and weaknesses, thereby building foundation for future work.
+2
+PROBLEM FORMULATION: RECOMP
+Given an input sequence x, a target output sequence y and a set of N retrieved documents D
+([d1, d2, ...dN]),2 RECOMP compresses retrieved documents D with respect to x into a summary
+s which captures core information in D relevant to x with significantly fewer tokens than D. Our
+architecture consists of two modules: compressor cθ and LM M. In this work, we assume a blackbox
+LM and train the compressor. Given the set of retrieved N documents ([d1, d2, ...dN]) and the input
+sequence x, a compressor returns a token sequence s. We design our compressor to be substantially
+smaller than LM M, as we aim to reduce computational costs of encoding a set of retrieved documents.
+The output from compressor, s, should be: (1) Concise: The summary should be as short as possible
+to optimize efficiency. If the retrieved documents do not contain relevant information or retrieval
+augmentation is not necessary, s can be an empty sequence. (2) Effecive: when s is prepended to
+input sequence x and provided to LM M as a prompt, LM should generate the target output sequence
+y. (3) Faithful: s should be a faithful and interpretable summary of the input document set (i.e.,
+s must be entailed by the input document set ([d1, d2, ...dN])). We focus on training compressors
+for conciseness and effectiveness. We summarize the key ideas for our two compressors, extractive
+compressors and abstractive compressor here, and discuss their training schemes formally in Section 3.
+2Improving retriever is not the focus of this work, so we assume a set of retrieved documents are provided.
+2
+
+Extractive Compressor
+Given n sentences [s1, s2...sn] in the input document set ([d1, d2, ...dN]),
+we train a dual encoder model encθ which embeds sentence si and the input sequence x into fixed-
+dimensional embeddings respectively. Their inner product represents how helpful it would be for the
+LM M to prepend si to the input x to generate y. The final summary s from the compressor will be a
+concatenation of top N sentences ranked by their inner product with the input. As this approach is
+extractive, we assume the faithfulness criteria is mostly satisfied.3
+Abstractive Compressor
+We train an encoder-decoder model encdecθ to serve as an abstractive
+compressor, which takes the input sequence x and a concatenation of retrieved document set D
+[d1; d2; ...dN]) and output a summary s. Although we do not have human annotations to train this
+model, prior work (Goyal et al., 2022; Chen et al., 2023; Potluri et al., 2023) suggests that the extreme-
+scale LMs can generate good query-focused summaries when prompted carefully. Yet, using an
+extreme-scale model as the compressor is not desirable as we want the compressor to be substantially
+smaller than the LMs. Thus, we perform distillation (Hinton et al., 2015) of extreme-scale LMs to
+build a lightweight abstractive compressor encdecθ. We do not train specifically for faithfulness, but
+later manually evaluate the faithfulness in Section 6.
+3
+LEARNING THE COMPRESSORS
+Our compressor resembles text summarization models in the output should be faithful to the original
+input, yet the main goal is different. Instead of capturing salient information for humans readers,
+compressors aim to produce a concise text that are useful for a LM on an end task. In this section,
+we describe how to train the extractive compressor (§3.1) and the abstractive compressor (§3.2)
+leveraging end task signals. Further training details can be found in the Appendix A.2.
+3.1
+EXTRACTIVE COMPRESSION
+As we formulate extractive compression as a ranking problem, training extractive compressor re-
+sembles training a reranker for the retrieved documents4 with two differences. First, our compressor
+considers a different granularity of input (sentence) compared to the initial retrieval unit (paragraph).
+Second, the sentence is evaluated based on whether it is useful as input for the LM M on the
+downstream task (Shi et al., 2023b; Ram et al., 2023).
+Input: Base LM M, Compressor encθ, Training data
+{xi, Si, yi}T
+1 where xi is input, Si = {sj}n
+1 is a set of
+candidate sentences from the retrieved documents for xi,
+yi is the target answer, and score threshold ϵ.
+Output: An updated extractive compressor encoder
+encθ
+1: T ←∅
+2: for i ∈{1, . . . , T} do
+3:
+pi ←argMaxsj∈{Si}Score(M, yi, [sj; xi])
+4:
+for j ∈{1, . . . , n} do
+5:
+L ←∅
+6:
+if
+Score(M, yi, [sj; xi])
++
+ϵ
+<
+Score(M, yi, [pi; xi]) then
+7:
+L ←L ∪si
+8:
+if |L| > 0 then
+9:
+Ni ←argTop5sj∈L(⟨encθ(sj), encθ(xi)⟩)
+10:
+T ←T ∪{(xi, pi, Ni)}
+11: encθ = Finetune(encθ, T )
+Figure 2: Learning an extractive compressor for lan-
+guage modeling task.
+Model
+We train a dual-encoder model
+encθ which encodes the input context x
+and the candidate sentence si separately.
+We obtain an embedding of x and si by
+taking the representation of the [CLS]
+token respectively, and compute their sim-
+ilarity by calculating the inner product of
+the two.
+We initialize our model with
+the contriever checkpoint (Izacard et al.,
+2021). This model consists of 110M pa-
+rameters, satisfying the efficiency desider-
+atum of compressor.
+Training
+Figure 2 presents pseudocode
+for training an extractive compressor with
+contrastive loss for the language modeling
+task. For each input query xi, we iden-
+tify positive and negative sentences from
+retrieved documents.
+For each pair of input sequence xi
+and candidate sentences sj, we measure
+3Recent work (Zhang et al., 2022) shows that extractive approach does not always preserve faithfulness, but
+such cases are still rare compared to abstractive approaches which can easily hallucinate.
+4Ram et al. (2023) proposes a document reranker based on a cross-encoder model, which is a similar set-up
+to our sentence selector, but less compute efficient.
+3
+
+Score(M, yi, [sj; xi]) = logpM(y| [sj; xi]), log likelihood assigned to target output according to LM
+M when candidate sentence is prepended to the input. We consider the sentence with the highest
+log likelihood as a positive example pi (line 3). To construct negative examples Ni = {nk}5
+k=1,
+we choose up to five sentences with top contriever score that has the log likelihood lower than the
+positive sentence for a threshold(line 6).
+Training a compressor for QA task works similarly, but scoring will evaluate whether the LM will
+generate the correct answer with summary prepended (change in line 6). Pseudo code for the QA tasks
+is in Figure 6 the Appendix. We train our encoder with a contrastive loss (Karpukhin et al., 2020a),
+maximizing the similarity between positive pairs (xi, pi) and minimize negative pairs (xi, Ni). The
+training objective is to minimize −log
+esim(xi,pi)
+esim(xi,pi)+P
+nj ∈Ni esim(xi,nj ) .
+Data
+For the language modeling task, we generate training data using the training split of the
+Wikitext-103 dataset, selecting the top 20 sentences from the top 5 BM25 retrieved documents for
+each input context x. For the QA tasks, we generate training data using the training split and consider
+the top 20 sentences from the top 5 contriever-ms-marco 5 retrieved documents. We report detailed
+statistics for the training data in Table 5 in the appendix. For each sentence from the retrieved
+documents, we prepend the Wikipedia page title to it to for decontextualization.
+3.2
+ABSTRACTIVE COMPRESSION
+To train an abstractive compressor, we distill the query-focused summarization ability of extreme-
+scale LM by generating training dataset from it, filter the generated data, and train an encodedr
+decoder model from the filtered dataset (West et al., 2022). In contrast to prior work (Jung et al.,
+2023) which use intrinsic summarization metric for filtering, we use the LM’s performance on the
+end task with the generated summaries prepended for filtering. Fig. 3 presents pseudo algorithm for
+training the abstractive compressor.
+3.2.1
+CREATING TRAINING DATASET FOR DISTILLATION
+Input: Teacher LM Mt, LM M, Summarization
+prompt set {pi}n
+1 , Compressor encdecθ, Training
+data {xi, Di, yi}T
+1 where xi is input, Di is the
+set of retrieved document for xi, yi is the target
+answer.
+Output: An updated encdecθ
+1: T ←∅
+2: for i ∈{1, . . . , T} do
+3:
+vr ←−∞
+4:
+for j ∈{1, . . . , n} do
+5:
+sj = Decode(Mt, [pj; xi; Di])
+6:
+vj = Score(M, yi, [sj; xi])
+7:
+if vj > vr then
+8:
+st ←sj, vr ←vj
+9:
+vd = Score(M, yi, [xi])
+10:
+if vr < vd then
+11:
+T ←T ∪{(xi, Di, ∅)}
+12:
+break
+13:
+T ←T ∪{(xi, Di, st)}
+14: encdecθ = Finetune(encdecθ, T)
+Figure 3: Learning an abstractive compressor for
+language modeling task.
+Generation From Teacher Model
+For the
+language modeling task, we manually construct
+four prompts to summarize evidence document
+set ({pi}n
+1).6 Given an input xi, a retrieved doc-
+ument set Di, and a prompt pj to summarize the
+document set with respect to the input, GPT-3.5
+7 generates a summary (line 3).
+Filtering with Critic
+After generating a sum-
+mary for each prompt template, we select the
+summary which results in the highest end task
+performance for each example (st) as the tar-
+get summary (line 4-8). Score(M, yi, [sj; xi])
+is the same as the extractive compressor above.
+We then compare the end task performance with
+the target summary prepended and with input
+xi only (i.e. no retrieval) on base model M
+(line 6). If the end task performance gets worse
+(e.g., increase in perplexity) when prepending
+the summary, we set the target summary to an
+empty string (line 7), otherwise we add the tar-
+get summary to the training set (line 9). This
+allows for selective augmentation and mitigates
+the risk of prepending irrelevant documents.
+5https://huggingface.co/facebook/contriever-msmarco
+6The exact prompts can be found in Table 6 in A.2.
+7We use gpt-3.5-turbo in all our experiments.
+4
+
+Constructing training datasets for the question answering tasks works similarly, with the following
+modifications. As summarization for the question answering task is more straightforward, we use a
+single prompt for each dataset. We filter out examples where prepending the summary does not lead
+to performance improvement. Pseudo code for the QA tasks is in Figure 7 in the Appendix.
+Model & Training
+We use encoder-decoder LM (775M), initialized from T5-large checkpoint (Raf-
+fel et al., 2020). This model has been trained with summarization datasets (Hermann et al., 2015).
+Data
+We summarize top 5 retrieved documents for both language modeling and question answering
+tasks. We generate training examples using 2% of the training set for the Wikitext-103 dataset. We
+generate training examples from the entire NQ training set and TriviaQA training set. For HotpotQA,
+we only generate summaries for the training data where the gold answer is in the retrieved documents
+(56% of the training data) to reduce API costs. We report percentage of data filtered and percentage
+of empty summaries in Table 5 in A.1.
+4
+EXPERIMENTAL SETTINGS
+We evaluate our approach on language modeling and open-domain QA following prior work (Shi
+et al., 2023b; Ram et al., 2023). For both tasks, we report the task performance as a measure of
+effectiveness and the number of tokens provided in context as a measure of efficiency.
+4.1
+LANGUAGE MODELING
+We evaluate language modeling perplexity on WikiText-103 (Merity et al., 2016) benchmark on
+three open-sourced LMs of varying scale: GPT2 (117M), GPT2-XL (1.5B; Radford et al. (2019))
+and GPT-J (6B; Wang & Komatsuzaki (2021)). We train our compressors using GPT2 as the base
+model and evaluate whether the trained compressor transfer to GPT2-XL and GPT-J. We use the
+BM25 retriever (Robertson & Zaragoza, 2009) to retrieve from the Wikipedia corpus from Dec. 20,
+2018 (Karpukhin et al., 2020a). The articles are then truncated into non-overlapping documents of
+100 words. During retrieval, articles containing the input sequence x is removed from the corpus to
+prevent data contamination. Following Ram et al. (2023), we perform retrieval every 32 tokens.
+4.2
+OPEN-DOMAIN QA
+Datasets
+We evaluate our model on three benchmark dataset: Natural Questions (NQ) (Kwiatkowski
+et al., 2019), TriviaQA (Joshi et al., 2017)) and HotpotQA (Yang et al., 2018). We report results on
+development set of NQ, test set of TriviaQA and randomly sampled 500 examples from HotpotQA
+development set. We report Exact Match (EM) and F1token-level F1 of answer strings to measure
+end task performance.
+Base Language Models & Retrieval Corpus
+We use Flan-UL2 (20B)(Chung et al., 2022), a large
+scale instruction-tuned LM. We use contriever model trained on MS MARCO dataset (Campos et al.,
+2016) as a retriever on Wikipedia corpus from Dec. 20, 2018 for all three datasets. The articles are
+truncated into non-overlapping documents of 100 words.
+Prompt Format
+We include few-shot in-context examples in the prompt, followed by the retrieved
+documents and the question. We use five randomly sampled training examples as in-context examples,
+which constitutes 110, 147, and 149 tokens on average for NQ, TQA and HotpotQA respectively.
+For retrieved documents, we concatenate them in ascending order of retrieval score, with the highest
+scored document closest to the question (Si et al., 2022). We do not include the retrieved documents
+for in-context examples as it did not improve performance. An example input can be found in
+Appendix Table 7.
+4.3
+BASELINES AND ORACLES
+Baselines
+We first consider two heuristic token and phrase-level compression methods: BoW,
+which converts the retrieved documents to a list of ordered unigram and concatenates them together
+5
+
+Table 1: Results on language modeling task. We report results on GPT-2, GPT2-XL and GPT-J with
+compressors trained with GPT-2.
+In-Domain
+Out-Domain
+GPT2 (117M)
+GPT2-XL (1.5B)
+GPT-J (6B)
+In-context Evidence
+# tokens
+PPL
+# tokens
+PPL
+# tokens
+PPL
+-
+0
+37.84
+0
+19.89
+0
+11.44
+RALM without compression
+Top 1 document
+141
+32.90
+14
+17.86
+141
+10.57
+Top 5 documents
+512
+35.53
+-
+-
+-
+-
+Phrase/token level compression
+Top 1 document (BoW)
+66
+36.13
+66
+18.85
+66
+10.97
+Top 1 document (NE)
+34
+37.23
+33
+19.67
+33
+11.39
+Extractive compression of Top 5 documents (select top 1 sentence)
+Oracle
+32
+30.36
+32
+16.58
+31
+9.92
+Oracle (w/ gpt2)
+32
+30.36
+32
+16.99
+32
+10.22
+Random
+27
+36.98
+27
+19.55
+27
+11.32
+BM25
+33
+36.63
+33
+19.02
+33
+11.08
+Contriever
+33
+35.54
+33
+18.98
+33
+11.05
+Ours (init. w/ Contriever)
+31
+33.67
+31
+18.19
+31
+10.73
+Abstractive compression of Top 5 documents
+Oracle
+68
+30.67
+66
+16.87
+65
+10.10
+Oracle (w/ gpt2)
+68
+30.67
+68
+17.23
+68
+10.37
+GPT-3.5
+33
+34.84
+33
+18.70
+33
+10.96
+T5
+15
+37.80
+15
+19.92
+15
+11.5
+Ours (init. w/ T5)
+15
+33.64
+15
+18.09
+15
+10.66
+and Named Entities (NE), which extracts a list of ordered named entities from retrieved documents
+and concatenates them. For the extractive compressor on the language modeling task, we use BM25
+and Contriever Izacard et al. (2021), which rank the sentences by their similarity to the input x as
+baselines. For the QA datasets, we report results using BM25, Contriever finetuned on MS MARCO
+and DPR (Karpukhin et al., 2020b) fine-tuned on NQ. We also report a Random baseline which
+randomly selects a sentence from the retrieved documents. For abstractive compression, we report
+the performance of the off-the-shelf T5 (large, 770M) model and that of GPT-3.5 model. As we
+experimented with multiple prompts for the language modeling task, we report the performance of
+the summaries generated by GPT-3.5 model with the best single prompt.
+Oracle
+We explore the performance upper bound of compressioin by considering two oracle
+approaches. For the extractive approach, we construct oracle compressor by considering all sentences
+si in the evidence document set and choosing the sentence that leads to the best end task performance
+(i.e., lowest perplexity or highest answer accuracy) for each example. For the abstractive approach,
+we consider summaries generated from different prompts ({sj}n
+1 in Figure 3) and empty summary,
+and choose the one that leads to the best end task performance. As oracle compression is model
+dependent, we also report model-independent results by always using GPT-2 as a reference LM
+(Oracle w/ gpt2) to test how well oracle sentences for one model transfer to other models for the
+language modeling task.
+5
+RESULTS
+Language modeling
+Table 1 reports the results on language modeling task. All retrieval augmen-
+tation methods improve perplexity over no retrieval setting across three LMs. Heuristic token /
+phrase-level compression methods (BoW and NE) are worse than prepending uncompressed docu-
+ments, potentially due to the disfluency of the prepended text.
+Both oracle settings show substantial gain over prepending the entire document set, with only 6-13%
+of tokens. More tokens are not always better: prepending top 1 document outperforms prepending
+top 5 documents. This confirms that the naive retrieve-and-prepend approach has a significant room
+for improvement, as prepending irrelevant documents can hurt performances.
+6
+
+Table 2: Open-domain QA results with Flan-UL2 (20B) as the LM M. We report number of tokens
+provided as in-context evidence document, excluding the in-context examples. We train separate
+compressors (one extractive, one abstractive) for each dataset. Extractive compressor selects one
+sentence for NQ/TQA, and two sentences for HotpotQA.
+NQ
+TQA
+HotpotQA
+In-Context evidence
+# tok
+EM
+F1
+# tok
+EM
+F1
+# tok
+EM
+F1
+-
+0
+21.99
+29.38
+0
+49.33
+54.85
+0
+17.80
+26.10
+RALM without compression
+Top 1 documents
+132
+33.07
+41.45
+136
+57.84
+64.94
+138
+28.80
+40.58
+Top 5 documents
+660
+39.39
+48.28
+677
+62.37
+70.09
+684
+32.80
+43.90
+Phrase/token level compression
+Top 5 documents (NE)
+338
+23.60
+31.02
+128
+54.96
+61.19
+157
+22.20
+31.89
+Top 5 documents (BoW)
+450
+28.48
+36.84
+259
+58.16
+65.15
+255
+25.60
+36.00
+Extractive compression of top 5 documents
+Oracle
+34
+60.22
+64.25
+32
+79.29
+82.06
+70
+41.80
+51.07
+Random
+32
+23.27
+31.09
+31
+50.18
+56.24
+61
+21.00
+29.86
+BM25
+36
+25.82
+33.63
+37
+54.67
+61.19
+74
+26.80
+38.02
+DPR
+39
+34.32
+43.38
+41
+56.58
+62.96
+78
+27.40
+38.15
+Contriever
+36
+30.06
+31.92
+40
+53.67
+60.01
+78
+28.60
+39.48
+Ours
+37
+36.57
+44.22
+38
+58.99
+65.26
+75
+30.40
+40.14
+Abstractive compression of top 5 documents
+Oracle
+51
+45.68
+53.66
+37
+71.01
+76.38
+102
+35.80
+46.25
+GPT-3.5
+56
+37.12
+46.35
+41
+62.03
+69.66
+107
+31.60
+42.65
+T5
+10
+25.90
+34.63
+7
+55.18
+62.34
+7
+23.20
+33.19
+Ours
+36
+37.04
+45.47
+32
+58.68
+66.34
+64
+28.20
+37.91
+Our trained extractive compressor significantly outperforms other extractive baselines (Contriever
+and BM25) across all three LMs, while prepending slightly fewer tokens. Comparing to prepending
+one document, we achieve a compression ratio of 25% at minimum performance drop. Our trained
+abstractive compressor performs the best across the board, achieving the lowest perplexity and
+the highest compression ratio. Our abstractive compressor achieves high compression rate through
+selective augmentation, prepending summaries to only 33% of examples (length distribution of
+generated summaries in Fig. 8).
+Open-domain QA
+We report the results on QA tasks in Table 2. Similar to the language modeling
+task, all retrieval augmentation methods improve performance over no retrieval setting, across three
+datasets, consistent with previous study on other LMs (Shi et al., 2023b; Mallen et al., 2022; Si
+et al., 2022). Unlike language modeling, prepending five documents shows significant gains over
+prepending a single document, motivating the use of compression to incorporate more documents.
+We find that extractive oracle outperforms the abstractive one in all datasets. Extractive oracle
+selects the best one from N candidate sentences, while abstractive oracle selects from two options
+– prepending GPT-3.5 summary or prepending nothing. Both oracles show improvements over
+prepending all information, suggesting that removing irrelevant information benefit the model.8
+Among extractive baselines, DPR performs the best as it has been fine-tuned on high-quality NQ data.
+On NQ, selecting the top 1 DPR ranked sentences from top 5 documents outperforms prepending
+top 1 document, with much fewer tokens (39 vs. 132). However, its performance degrades in out of
+domain datasets. Off-the-shelf summarization model (T5) boasts the highest level of compression,
+achieving 4-6 points gains in EM while adding mere 7-10 tokens.
+The trained compressors, both extractive and abstractive, shows promising performances. On NQ
+and TQA, the abstractive approach is more effective. On NQ, it achieves a compression ratio of 5%
+tokens while losing 2 EM points compared to prepending full documents. On TQA, we observe
+similar trends, compression ratio of 5% tokens while losing 3.7 EM points compared to prepending
+full sets of documents. On HotpotQA that requires multihop understanding of documents, we
+8We provide an example where our compressed summary yields correct answer while prepending full
+document does not in Table 9 in the appendix.
+7
+
+find extractive approach to be more helpful, achieving 11% compression rate while losing 2.4 EM
+points compared to prepending full documents. We find that learning an abstractive compressor
+for more complex tasks, such as HotpotQA, demands further study. While extreme-scale LLM
+boasts competitive summarization performance under single document setting, they are not good at
+synthesizing information from multiple documents (Shaib et al. (2023) and hallucinate more often;
+See Section 6 for further analysis).
+6
+ANALYSIS AND DISCUSSIONS
+Transferring Across Different LMs
+One benefit of textual summary is that they can transfer to
+other LMs, unlike approaches such as soft prompts (Wingate et al., 2022; Chevalier et al., 2023;
+Mu et al., 2023). We evaluate whether our compressors trained to achieve high performance with
+respect to a specific LM (GPT2 for language modeling, FlanUL2 for open domain QA) can transfer
+to other LMs. For language modeling, we find that trained compressor transfers well to other LMs
+(GPT2-XL and GPT-J), despite they are much larger LMs (Table 1. For open domain QA, we tested
+transferring our compressors to LLaMA-13B (Touvron et al., 2023) model. The results can be found
+in Table 10 in the appendix. Overall, the performance is worse than the LM from which compressors
+are trained on, sometimes unable to outperform other compression baselines (e.g., no clear gain
+from using contriever vs. our trained contriever on TQA/HotpotQA), leaving considerable gap to the
+oracle compressions for LLAMA itself. Yet, on NQ/TQA, our compressor obtains 5% compression
+ratio with less than 5 EM drop compared to full document setting, showing the robustness of our
+retrieve-compress-prepend paradigm.
+Figure 4: Histogram of abstractive sum-
+mary length (# tokens) distribution.
+How do the length of the summaries vary?
+Can the
+learned compressor reliably determine when LMs require
+retrieved documents or not? As retrieved documents were
+hurting the model performances for some input queries,
+4-24% of training examples for abstractive compressors
+contain empty summary. Fig. 4 presents the length distri-
+bution of abstractive summaries on NQ and Wikitext (his-
+tograms for other datasets is in Fig. 8 in the appendix). The
+input document lengths do not vary significantly across
+examples, yet we find the abstractive summary vary significantly in length, suggesting abstractive
+compressor enables selective retrieval augmentation. We have not experimented selective compres-
+sion with extractive compressor, fixing the number of prepended sentences for the entire dataset
+(1 for Wikitext, 1 for NQ/TQA, 2 for HotpotQA). Allowing adaptive augmentation with extractive
+summarizer can be a promising direction for future work.
+Table 3: Analysis on in-context evidence to answer
+questions in NQ dev set. For the last column, we
+report how frequently model copies from its evi-
+dence on (1) a subset where gold answer is in the
+evidence document / (2) when it is not.
+Evidence
+EM
+%Gold in Evi.
+%Pred in Evi.
+Top 1
+33.1
+36
+92 / 51
+Top 5
+39.3
+57
+96 / 81
+NE
+26.0
+46
+84 / 48
+Oracle sent
+60.2
+34
+93 / 16
+Contriever
+30.2
+25
+88 / 36
+Ours
+36.6
+28
+90 / 33
+GPT-3.5
+37.1
+45
+98 / 85
+T5
+25.9
+30
+52 / 20
+Ours
+37.0
+34
+98 / 39
+How does model leverage the in-context doc-
+uments?
+We evaluate whether retrieval aug-
+mented LMs tend to copy answers verbatim
+from in-context evidence documents or generate
+answers not present in the documents. This is an
+desired behavior only when the gold answer is
+in the evidence. We first report how frequently
+a gold answer span is present in evidence text
+(% Gold in Evi). As expected, full documents
+contain the answer most frequently, followed
+by NE and GPT-3. However, having more gold
+answers in the evidence doesn’t equate to better
+performance, as the model cannot always iden-
+tify the correct answer from the evidence (84 %
+for NE v.s. 98% for T5(ours)).
+We also observe that model can be easily dis-
+tracted by irrelevant contexts, copying from a
+document span even when it does not contain
+gold answer, echoing findings from prior work (Shi et al., 2023a). Prepending top 5 documents has
+8
+
+a higher frequency (81%) of copying incorrectly compared to top 1 document (51%), and GPT-3
+compression leads to an even higher incorrect copying frequency (85%), potentially as query-focused
+summarization generates sentences that seemingly contains the answer. Our compressor successfully
+reduce such erroneous behavior to 39%.
+Is generated summary faithful and comprehensive?
+We (the authors) manually evaluate outputs
+of the abstractive compressors on two axes (Chen et al., 2023): Faithfulness: whether the summary
+can be entailed by the retrieved documents, Comprehensiveness: whether the summary contains
+sufficient information to answer the question, regardless of whether the generated information comes
+from the retrieved documents. For both, we select one of three labels: Yes, Partially, No, and report
+the % of Useful summaries which are both faithful and comprehensive. Annotation sample can
+be found in Table 11 in the appendix. We evaluate the summaries generated by GPT-3.5 and our
+abstractive compressor. We randomly sample 30 non-empty summaries from the test set.
+Table 4: Manual analysis on abstractive summaries generated
+for NQ, TQA and HotpotQA (HQA) dataset.
+Dataset
+Model
+% Faithful
+% Compre.
+% Use.
+Y
+P
+N
+Y
+P
+N
+NQ
+GPT-3.5
+90
+0
+10
+97
+0
+3
+83
+Ours
+80
+13
+7
+100
+0
+0
+80
+TQA
+GPT-3.5
+97
+0
+3
+90
+0
+10
+83
+Ours
+83
+3
+14
+96
+0
+4
+77
+HQA
+GPT-3.5
+74
+0
+26
+78
+0
+22
+50
+Ours
+67
+0
+33
+74
+0
+26
+40
+Table 4 presents annotation results.
+GPT-3.5, substantially bigger than
+our compressor, generates more use-
+ful summary across all three datasets.
+Overall, our abstractive compressors
+were less faithful compared to the
+original GPT-3.5, while improving
+comprehensiveness. The effectiveness
+of summarization also depends on the
+datasets – summaries from both mod-
+els were the most faithful for TQA
+and the least faithful for HotpotQA
+dataset. In terms of comprehensive-
+ness, we find both models easily find the information for NQ, but struggle with HotpotQA. These
+results partially explain why the performance gain was limited for HotpotQA.
+7
+RELATED WORK
+Efficient RALM
+He et al. (2021) improves efficiency of RALMs by improving retrieval compo-
+nents, such as data store compression, dimensionality reduction for neural retriever. A line of work
+also introduces reducing retrieval frequency through selective retrieval (He et al., 2021; Mallen et al.,
+2022) or using a larger stride (Martins et al., 2022). In this work, we improve efficiency of RALM by
+compressing retrieved documents into a concise summary or an empty sequence, facilitating selective
+retrieval augmentation.
+Prompt Compression
+Recent work (Wingate et al., 2022; Chevalier et al., 2023; Mu et al., 2023)
+proposes compressing long contexts into summary vectors (soft prompts) that can be used by LMs,
+rather than shorter textual summaries. Such soft prompts can serve as efficient replacements for
+plain-text demonstrations, minimizing the computational costs during inference. Another related line
+of work proposes context distillation (Snell et al., 2022; Choi et al., 2022; Padmanabhan et al., 2023),
+which injects the prepended context into the parameters of an LM. Compared to above approaches,
+our approach yields more interpretable textual summary that can transfer across different LMs, and
+can be applied to black box LMs without requiring gradient updates. Prior work has studied textual
+compression for other tasks, such as political fact checking (Chen et al., 2023) and instruction
+learning (Yin et al., 2023).
+Distillation / Goal Oriented Summarization
+Recent work introduces symbolic knowledge distil-
+lation (West et al., 2022), which transfers knowledge from a teacher model by generating a training
+dataset with the teacher model and train a student model on it. For better performance, they introduce
+critic criteria, which filter undesirable examples from generated training dataset. Such distillation
+technique has been applied for various applications including summarization (Jung et al., 2023),
+which aims to generate high quality summaries while we optimize for generating effective summary
+for downstream LMs. One work that is similar to our setting is Hsu & Tan (2021) which trains an
+9
+
+extractive summarization model to optimize for prediction accuracy of a sentiment prediction model
+based on the summary.
+8
+CONCLUSION
+We introduce RECOMP, a method which compresses retrieved documents into textual summaries
+before prepending them to improve in-context retrieval augmented language models. We present
+two compression models – an extractive compressor and an abstractive compressor. We design a
+training scheme which leverages end task signals from a blackbox LM to generate useful summaries
+and allowing the compression models to perform selective augmentation. Our experiments show that
+our compressors can improve the efficiency of retrieval augmented LMs significantly with minimal
+drop in performances.
+ACKNOWLEDGEMENT
+We thank the members of the UT and UW NLP community for feedback on the project. We especially
+thank Alisa Liu, Junyi Jessy Li and Greg Durrett for providing comments on the draft. The project is
+partially funded by NSF grant (IIS-2312948).
+ETHICS STATEMENT
+We use commercial language model to generate training data for our compressors, which might
+include factual error. We conduct careful human evaluation on the data generated and present our
+analysis in the paper.
+REPRODUCIBILITY STATEMENT
+We release our codes, prompt, and data generated with API access publicly.
+REFERENCES
+Iz Beltagy, Matthew E. Peters, and Arman Cohan. Longformer: The long-document transformer.
+ArXiv, abs/2004.05150, 2020. URL https://api.semanticscholar.org/CorpusID:
+215737171.
+Sebastian Borgeaud, Arthur Mensch, Jordan Hoffmann, Trevor Cai, Eliza Rutherford, Katie Mil-
+lican, George Bm Van Den Driessche, Jean-Baptiste Lespiau, Bogdan Damoc, Aidan Clark,
+Diego De Las Casas, Aurelia Guy, Jacob Menick, Roman Ring, Tom Hennigan, Saffron
+Huang, Loren Maggiore, Chris Jones, Albin Cassirer, Andy Brock, Michela Paganini, Ge-
+offrey Irving, Oriol Vinyals, Simon Osindero, Karen Simonyan, Jack Rae, Erich Elsen, and
+Laurent Sifre. Improving language models by retrieving from trillions of tokens. In Kama-
+lika Chaudhuri, Stefanie Jegelka, Le Song, Csaba Szepesvari, Gang Niu, and Sivan Sabato
+(eds.), Proceedings of the 39th International Conference on Machine Learning, volume 162 of
+Proceedings of Machine Learning Research, pp. 2206–2240. PMLR, 17–23 Jul 2022. URL
+https://proceedings.mlr.press/v162/borgeaud22a.html.
+Daniel Fernando Campos, Tri Nguyen, Mir Rosenberg, Xia Song, Jianfeng Gao, Saurabh Tiwary, Ran-
+gan Majumder, Li Deng, and Bhaskar Mitra. Ms marco: A human generated machine reading com-
+prehension dataset. ArXiv, abs/1611.09268, 2016. URL https://api.semanticscholar.
+org/CorpusID:1289517.
+Jifan Chen, Grace Kim, Aniruddh Sriram, Greg Durrett, and Eunsol Choi. Complex claim ver-
+ification with evidence retrieved in the wild.
+ArXiv, abs/2305.11859, 2023.
+URL https:
+//api.semanticscholar.org/CorpusID:258822852.
+Alexis Chevalier, Alexander Wettig, Anirudh Ajith, and Danqi Chen. Adapting language models to
+compress contexts. arXiv preprint arXiv:2305.14788, 2023.
+10
+
+Eunbi Choi, Yongrae Jo, Joel Jang, and Minjoon Seo. Prompt injection: Parameterization of
+fixed inputs. ArXiv, abs/2206.11349, 2022. URL https://api.semanticscholar.org/
+CorpusID:249953762.
+Hyung Won Chung, Le Hou, S. Longpre, Barret Zoph, Yi Tay, William Fedus, Eric Li, Xuezhi Wang,
+Mostafa Dehghani, Siddhartha Brahma, Albert Webson, Shixiang Shane Gu, Zhuyun Dai, Mirac
+Suzgun, Xinyun Chen, Aakanksha Chowdhery, Dasha Valter, Sharan Narang, Gaurav Mishra,
+Adams Wei Yu, Vincent Zhao, Yanping Huang, Andrew M. Dai, Hongkun Yu, Slav Petrov, Ed Huai
+hsin Chi, Jeff Dean, Jacob Devlin, Adam Roberts, Denny Zhou, Quoc V. Le, and Jason Wei.
+Scaling instruction-finetuned language models. ArXiv, abs/2210.11416, 2022.
+Tanya Goyal, Junyi Jessy Li, and Greg Durrett. News summarization and evaluation in the era of
+gpt-3. arXiv preprint arXiv:2209.12356, 2022.
+Junxian He, Graham Neubig, and Taylor Berg-Kirkpatrick. Efficient nearest neighbor language
+models. In Proceedings of the 2021 Conference on Empirical Methods in Natural Language
+Processing, pp. 5703–5714, Online and Punta Cana, Dominican Republic, November 2021.
+Association for Computational Linguistics. doi: 10.18653/v1/2021.emnlp-main.461. URL https:
+//aclanthology.org/2021.emnlp-main.461.
+Karl Moritz Hermann, Tom´as Kocisk´y, Edward Grefenstette, Lasse Espeholt, Will Kay, Mustafa
+Suleyman, and Phil Blunsom. Teaching machines to read and comprehend. ArXiv, abs/1506.03340,
+2015. URL https://api.semanticscholar.org/CorpusID:6203757.
+Geoffrey E. Hinton, Oriol Vinyals, and Jeffrey Dean. Distilling the knowledge in a neural network.
+ArXiv, abs/1503.02531, 2015. URL https://api.semanticscholar.org/CorpusID:
+7200347.
+Matthew Honnibal, Ines Montani, Sophie Van Landeghem, and Boyd Adriane. spaCy: Industrial-
+strength natural language processing in python, 2020.
+Chao-Chun Hsu and Chenhao Tan. Decision-focused summarization. In Proceedings of the 2021
+Conference on Empirical Methods in Natural Language Processing, pp. 117–132, Online and
+Punta Cana, Dominican Republic, November 2021. Association for Computational Linguis-
+tics. doi: 10.18653/v1/2021.emnlp-main.10. URL https://aclanthology.org/2021.
+emnlp-main.10.
+Gautier Izacard, Mathilde Caron, Lucas Hosseini, Sebastian Riedel, Piotr Bojanowski, Armand
+Joulin, and Edouard Grave. Unsupervised dense information retrieval with contrastive learning,
+2021. URL https://arxiv.org/abs/2112.09118.
+Gautier Izacard, Patrick Lewis, Maria Lomeli, Lucas Hosseini, Fabio Petroni, Timo Schick, Jane A.
+Yu, Armand Joulin, Sebastian Riedel, and Edouard Grave. Few-shot learning with retrieval
+augmented language models. ArXiv, abs/2208.03299, 2022.
+Mandar Joshi, Eunsol Choi, Daniel S Weld, and Luke Zettlemoyer. Triviaqa: A large scale distantly
+supervised challenge dataset for reading comprehension. arXiv preprint 1705.03551, 2017.
+Jaehun Jung, Peter West, Liwei Jiang, Faeze Brahman, Ximing Lu, Jillian Fisher, Taylor Sorensen,
+and Yejin Choi. Impossible distillation: from low-quality model to high-quality dataset & model
+for summarization and paraphrasing. arXiv preprint arXiv:2305.16635, 2023.
+Vladimir Karpukhin, Barlas Oguz, Sewon Min, Patrick Lewis, Ledell Wu, Sergey Edunov, Danqi
+Chen, and Wen-tau Yih.
+Dense passage retrieval for open-domain question answering.
+In
+Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing
+(EMNLP), pp. 6769–6781, Online, November 2020a. Association for Computational Linguis-
+tics. doi: 10.18653/v1/2020.emnlp-main.550. URL https://aclanthology.org/2020.
+emnlp-main.550.
+Vladimir Karpukhin, Barlas O˘guz, Sewon Min, Patrick Lewis, Ledell Yu Wu, Sergey Edunov,
+Danqi Chen, and Wen tau Yih. Dense passage retrieval for open-domain question answering.
+In Conference on Empirical Methods in Natural Language Processing, 2020b. URL https:
+//api.semanticscholar.org/CorpusID:215737187.
+11
+
+Urvashi Khandelwal, Omer Levy, Dan Jurafsky, Luke Zettlemoyer, and Mike Lewis. Generalization
+through memorization: Nearest neighbor language models. ArXiv, abs/1911.00172, 2019.
+Diederik P. Kingma and Jimmy Ba.
+Adam: A method for stochastic optimization.
+CoRR,
+abs/1412.6980, 2014.
+Tom Kwiatkowski, Jennimaria Palomaki, Olivia Redfield, Michael Collins, Ankur Parikh, Chris
+Alberti, Danielle Epstein, Illia Polosukhin, Jacob Devlin, Kenton Lee, Kristina Toutanova, Llion
+Jones, Matthew Kelcey, Ming-Wei Chang, Andrew M. Dai, Jakob Uszkoreit, Quoc Le, and Slav
+Petrov. Natural questions: A benchmark for question answering research. Transactions of the
+Association for Computational Linguistics, 7:452–466, 2019. doi: 10.1162/tacl a 00276. URL
+https://aclanthology.org/Q19-1026.
+Patrick Lewis, Ethan Perez, Aleksandara Piktus, Fabio Petroni, Vladimir Karpukhin, Naman Goyal,
+Heinrich Kuttler, Mike Lewis, Wen tau Yih, Tim Rockt¨aschel, Sebastian Riedel, and Douwe Kiela.
+Retrieval-augmented generation for knowledge-intensive nlp tasks. ArXiv, abs/2005.11401, 2020.
+Nelson F Liu, Kevin Lin, John Hewitt, Ashwin Paranjape, Michele Bevilacqua, Fabio Petroni,
+and Percy Liang. Lost in the middle: How language models use long contexts. arXiv preprint
+arXiv:2307.03172, 2023.
+Alex Mallen, Akari Asai, Victor Zhong, Rajarshi Das, Hannaneh Hajishirzi, and Daniel Khashabi.
+When not to trust language models: Investigating effectiveness and limitations of parametric and
+non-parametric memories. ArXiv, abs/2212.10511, 2022.
+Pedro Henrique Martins, Zita Marinho, and Andr´e F. T. Martins. Chunk-based nearest neigh-
+bor machine translation.
+In Proceedings of the 2022 Conference on Empirical Methods in
+Natural Language Processing, pp. 4228–4245, Abu Dhabi, United Arab Emirates, December
+2022. Association for Computational Linguistics. doi: 10.18653/v1/2022.emnlp-main.284. URL
+https://aclanthology.org/2022.emnlp-main.284.
+Stephen Merity, Caiming Xiong, James Bradbury, and Richard Socher. Pointer sentinel mixture
+models. ArXiv, abs/1609.07843, 2016.
+Jesse Mu, Xiang Lisa Li, and Noah D. Goodman. Learning to compress prompts with gist tokens.
+ArXiv, abs/2304.08467, 2023. URL https://api.semanticscholar.org/CorpusID:
+258179012.
+Shankar Padmanabhan, Yasumasa Onoe, Michael J.Q. Zhang, Greg Durrett, and Eunsol Choi.
+Propagating knowledge updates to lms through distillation. ArXiv, abs/2306.09306, 2023. URL
+https://api.semanticscholar.org/CorpusID:259165330.
+Fabio Petroni, Aleksandra Piktus, Angela Fan, Patrick Lewis, Majid Yazdani, Nicola De Cao,
+James Thorne, Yacine Jernite, Vladimir Karpukhin, Jean Maillard, Vassilis Plachouras, Tim
+Rockt¨aschel, and Sebastian Riedel. KILT: a benchmark for knowledge intensive language tasks.
+In Proceedings of the 2021 Conference of the North American Chapter of the Association for
+Computational Linguistics: Human Language Technologies, pp. 2523–2544, Online, June 2021.
+Association for Computational Linguistics. doi: 10.18653/v1/2021.naacl-main.200. URL https:
+//aclanthology.org/2021.naacl-main.200.
+Abhilash Potluri, Fangyuan Xu, and Eunsol Choi. Concise answers to complex questions: Sum-
+marization of long-form answers. In Proceedings of the 61st Annual Meeting of the Association
+for Computational Linguistics (Volume 1: Long Papers), pp. 9709–9728, Toronto, Canada, July
+2023. Association for Computational Linguistics. doi: 10.18653/v1/2023.acl-long.541. URL
+https://aclanthology.org/2023.acl-long.541.
+Alec Radford, Jeff Wu, Rewon Child, David Luan, Dario Amodei, and Ilya Sutskever. Language
+models are unsupervised multitask learners. 2019.
+Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi
+Zhou, Wei Li, and Peter J Liu. Exploring the limits of transfer learning with a unified text-to-text
+transformer. The Journal of Machine Learning Research, 21(1):5485–5551, 2020.
+12
+
+Ori Ram, Yoav Levine, Itay Dalmedigos, Dor Muhlgay, Amnon Shashua, Kevin Leyton-Brown, and
+Yoav Shoham. In-context retrieval-augmented language models. ArXiv, abs/2302.00083, 2023.
+Nils Reimers and Iryna Gurevych. Sentence-BERT: Sentence embeddings using Siamese BERT-
+networks. In Proceedings of the 2019 Conference on Empirical Methods in Natural Language
+Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-
+IJCNLP), pp. 3982–3992, Hong Kong, China, November 2019. Association for Computational
+Linguistics. doi: 10.18653/v1/D19-1410. URL https://aclanthology.org/D19-1410.
+Stephen E. Robertson and Hugo Zaragoza. The probabilistic relevance framework: Bm25 and beyond.
+Found. Trends Inf. Retr., 3:333–389, 2009.
+Chantal Shaib, Millicent Li, Sebastian Joseph, Iain Marshall, Junyi Jessy Li, and Byron Wal-
+lace. Summarizing, simplifying, and synthesizing medical evidence using GPT-3 (with vary-
+ing success).
+In Proceedings of the 61st Annual Meeting of the Association for Computa-
+tional Linguistics (Volume 2: Short Papers), pp. 1387–1407, Toronto, Canada, July 2023. As-
+sociation for Computational Linguistics. doi: 10.18653/v1/2023.acl-short.119. URL https:
+//aclanthology.org/2023.acl-short.119.
+Freda Shi, Xinyun Chen, Kanishka Misra, Nathan Scales, David Dohan, Ed Huai hsin Chi,
+Nathanael Scharli, and Denny Zhou. Large language models can be easily distracted by ir-
+relevant context. In International Conference on Machine Learning, 2023a. URL https:
+//api.semanticscholar.org/CorpusID:256459776.
+Weijia Shi, Sewon Min, Michihiro Yasunaga, Minjoon Seo, Rich James, Mike Lewis, Luke Zettle-
+moyer, and Wen tau Yih. Replug: Retrieval-augmented black-box language models. ArXiv,
+abs/2301.12652, 2023b.
+Chenglei Si, Zhe Gan, Zhengyuan Yang, Shuohang Wang, Jianfeng Wang, Jordan L. Boyd-Graber,
+and Lijuan Wang. Prompting gpt-3 to be reliable. ArXiv, abs/2210.09150, 2022.
+Charles Burton Snell,
+Dan Klein,
+and Ruiqi Zhong.
+Learning by distilling context.
+ArXiv, abs/2209.15189, 2022. URL https://api.semanticscholar.org/CorpusID:
+252668389.
+Hugo Touvron, Louis Martin, Kevin R. Stone, Peter Albert, Amjad Almahairi, Yasmine Babaei,
+Nikolay Bashlykov, Soumya Batra, Prajjwal Bhargava, Shruti Bhosale, Daniel M. Bikel, Lukas
+Blecher, Cristian Cant´on Ferrer, Moya Chen, Guillem Cucurull, David Esiobu, Jude Fernandes,
+Jeremy Fu, Wenyin Fu, Brian Fuller, Cynthia Gao, Vedanuj Goswami, Naman Goyal, Anthony S.
+Hartshorn, Saghar Hosseini, Rui Hou, Hakan Inan, Marcin Kardas, Viktor Kerkez, Madian Khabsa,
+Isabel M. Kloumann, A. V. Korenev, Punit Singh Koura, Marie-Anne Lachaux, Thibaut Lavril,
+Jenya Lee, Diana Liskovich, Yinghai Lu, Yuning Mao, Xavier Martinet, Todor Mihaylov, Pushkar
+Mishra, Igor Molybog, Yixin Nie, Andrew Poulton, Jeremy Reizenstein, Rashi Rungta, Kalyan
+Saladi, Alan Schelten, Ruan Silva, 

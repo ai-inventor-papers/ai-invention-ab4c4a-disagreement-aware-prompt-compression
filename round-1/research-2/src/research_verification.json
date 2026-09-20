@@ -1,0 +1,766 @@
+{
+  "valid": true,
+  "file_errors": [],
+  "schema_errors": [],
+  "content_warnings": [],
+  "files_found": {
+    "research_out.json": {
+      "exists": true,
+      "path": "/home/adrian/projects/ai-inventor-wt-integ/aii_data/users/admin/runs/run_Ymcqd66mFtJZ/3_invention_loop/iter_1/gen_art/gen_art_research_2/research_out.json",
+      "source_count": 63,
+      "size": 67928
+    }
+  },
+  "source_count": 63,
+  "checked_at": "2026-09-20T06:16:17.808695+00:00",
+  "passage_check_scope": "Case/whitespace-normalized text occurrence at the source URL (or archive fallback). Not claim entailment, locator verification, or author/year verification. status=error means unverified, not a misquotation.",
+  "passages": [
+    {
+      "source_index": 1,
+      "source_url": "https://arxiv.org/pdf/2309.17453",
+      "quote": "Beyond the bottom two layers, the model heavily attends to the initial token across all layers and heads",
+      "locator": "Figure 2 caption",
+      "status": "valid",
+      "context": "...yers (layers 0 and 1) exhibit the \"local\" pattern, with recent tokens receiving more attention. (2) beyond the bottom two layers, the model heavily attends to the initial token across all layers and heads. furthermore, we confirm our attention sink hypothesis and demonstrate that language models can be ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 2,
+      "source_url": "https://arxiv.org/pdf/2402.17762",
+      "quote": "these massive activations lead to the concentration of attention probabilities to their corresponding tokens, and further, implicit bias terms in the",
+      "locator": "arxiv.org/pdf/2402.17762, Abstract",
+      "status": "valid",
+      "context": "...tay constant regardless of the input, and they function as indispensable bias terms in llms. third, these massive activations lead to the concentration of attention probabilities to their corresponding tokens, and further, implicit bias terms in the self- attention output. last, we also study massive activations in vision transformers. code is ava...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 2,
+      "source_url": "https://arxiv.org/pdf/2402.17762",
+      "quote": "massive activations are closely connected with self-attention. In particular, we show massive activations cause attention to be attracted to the tokens associated with them.",
+      "locator": "arxiv.org/pdf/2402.17762, Introduction",
+      "status": "valid",
+      "context": "...repurpose the tokens linked with massive activations to store these important biases. intriguingly, massive activations are closely connected with self-attention. in particular, we show massive activations cause attention to be attracted to the tokens associated with them. our findings extend the observations from “attention sinks” (xiao et al., 2023b)—we demonstrate tha...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 3,
+      "source_url": "https://arxiv.org/pdf/2406.12335",
+      "quote": "scores, the value vector norms of the attention sink tokens are much smaller than other tokens",
+      "locator": "arxiv.org/pdf/2406.12335, section on Observations",
+      "status": "valid",
+      "context": "...es the attention sink tokens with massive attention scores. we find, in contrast to the atten- tion scores, the value vector norms of the attention sink tokens are much smaller than other tokens. such a phenomenon is similar to the finding in small transformer models (kobayashi et al., 2020). ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 3,
+      "source_url": "https://arxiv.org/pdf/2406.12335",
+      "quote": "VATP uses the product of value vector norm and attention score to evaluate the importance of each token’s KV cache.",
+      "locator": "arxiv.org/pdf/2406.12335, Figure 2 caption / methods",
+      "status": "valid",
+      "context": "...lue ∑ attention score figure 2: an illustration example of value-aware token pruning (vatp) method. vatp uses the product of value vector norm and attention score to evaluate the importance of each token’s kv cache. the kv cache of the token with the lowest importance score is removed. here we use the accumulated ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 4,
+      "source_url": "https://arxiv.org/pdf/2410.10781",
+      "quote": "attention sink acts more like key biases, storing extra attention scores, which could be non-informative and not contribute to the value computation.",
+      "locator": "arxiv.org/pdf/2410.10781, Abstract",
+      "status": "valid",
+      "context": "...n is highly correlated with the loss function and data distribution. most importantly, we find that attention sink acts more like key biases, storing extra attention scores, which could be non-informative and not contribute to the value computation. we also observe that this phenomenon (at least partially) stems from tokens’ inner dependence on at...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 5,
+      "source_url": "https://arxiv.org/pdf/2307.03172",
+      "quote": "we observe a distinctive U-shaped performance curve (Figure 1); language model performance is highest when relevant information occurs at the very beginning (primacy bias) or end of its",
+      "locator": "arxiv.org/pdf/2307.03172, Introduction",
+      "status": "valid",
+      "context": "...ent language models do not robustly access and use information in long input contexts. furthermore, we observe a distinctive u-shaped performance curve (figure 1); language model performance is highest when relevant information occurs at the very beginning (primacy bias) or end of its in- put context (recency bias), and performance sig- nificantly degrades when models must access an...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 5,
+      "source_url": "https://arxiv.org/pdf/2307.03172",
+      "quote": "occurs at the very beginning (primacy bias) or end of its input context (recency bias), and performance degrades significantly when models must access and use information located in the middle of its input context.",
+      "locator": "Abstract/Figure 1",
+      "status": "valid",
+      "context": "...- text results in a u-shaped performance curve—models are better at using relevant information that occurs at the very beginning (primacy bias) or end of its input context (recency bias), and performance degrades significantly when models must access and use information located in the middle of its input context. relevant documents from a search engine, database query results, etc; petroni et al., 2020; ram et ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 5,
+      "source_url": "https://arxiv.org/pdf/2307.03172",
+      "quote": "when predicting without any documents (i.e., the closed-book setting; 56.1%)",
+      "locator": "§1 Introduction",
+      "status": "valid",
+      "context": "...t, gpt-3.5-turbo’s performance on the multi- document question task is lower than its perfor- mance when predicting without any documents (i.e., the closed-book setting; 56.1%). furthermore, we find that models often have identical performance to their extended-context counte...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 6,
+      "source_url": "https://arxiv.org/pdf/2505.23277",
+      "quote": "represents the attention weight assigned from the final prompt position to token t at layer l and head h.",
+      "locator": "arxiv.org/pdf/2505.23277, section 2.2.2",
+      "status": "valid",
+      "context": "...r. the resulting attention tensor is denoted as a ∈rl×h×t , where t is the input length, and al,h,t represents the attention weight assigned from the final prompt position to token t at layer l and head h. for a sentence si containing token index set ti, we compute its normalized attention feature at lay...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 6,
+      "source_url": "https://arxiv.org/pdf/2505.23277",
+      "quote": "denotes the set of tokens originating from the retrieved context C, excluding prompt and query tokens. This normalization improves comparability across sentences by restricting",
+      "locator": "arxiv.org/pdf/2505.23277, section 2.2.2, Eq. 1",
+      "status": "valid",
+      "context": "...ized attention feature at layer l and head h as a(l,h) i = p t∈ti al,h,t p t∈tc al,h,t (1) where tc denotes the set of tokens originating from the retrieved context c, excluding prompt and query tokens. this normalization improves comparability across sentences by restricting atten- tion mass to retrieved-context tokens. the sentence-level feature vector for sentence si is ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 6,
+      "source_url": "https://arxiv.org/pdf/2505.23277",
+      "quote": "Raw Attention (Qwen2.5-0.5B) 34.92 38.96 21.32 31.74",
+      "locator": "arxiv.org/pdf/2505.23277, Table 2",
+      "status": "valid",
+      "context": "...72 22.26 16.46 16.48 17.71 13.54 15.62 16.05 random 28.22 30.68 20.33 26.41 43.18 17.22 30.20 28.30 raw attention (qwen2.5-0.5b) 34.92 38.96 21.32 31.74 51.72 17.29 34.50 33.12 sentinel (qwen2.5-0.5b) 37.73 46.16 23.03 35.64 62.24 18.57 40.41 38.02 ori...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 7,
+      "source_url": "https://arxiv.org/pdf/2503.10720",
+      "quote": "a compressed context by selecting sentences from the original context with the top-k attended tokens.",
+      "locator": "arxiv.org/pdf/2503.10720, Introduction",
+      "status": "valid",
+      "context": "...l point of the query, guiding the llm’s attention to each token in the context. finally, we produce a compressed context by selecting sentences from the original context with the top-k attended tokens. extensive experiments on longbench (bai et al., 2024) and babilong (kuratov et al., 2024) demon- st...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 7,
+      "source_url": "https://arxiv.org/pdf/2503.10720",
+      "quote": "achieves up to 6.3x context compression while",
+      "locator": "arxiv.org/pdf/2503.10720, Abstract",
+      "status": "valid",
+      "context": "...s on longbench (bai et al., 2024) and babilong (kuratov et al., 2024) demon- strate that our method achieves up to 6.3x context compression while maintaining or exceeding the performance of uncompressed contexts. the re- sults suggest that atten...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 8,
+      "source_url": "https://arxiv.org/pdf/2408.00274",
+      "quote": "we take a trigger token to calculate the attention distribution of the context in response to the question. Based on the distribution, we propose three different filtering",
+      "locator": "arxiv.org/pdf/2408.00274, Abstract",
+      "status": "valid",
+      "context": "... leverages attention of the question over the contexts to filter useless information. specifically, we take a trigger token to calculate the attention distribution of the context in response to the question. based on the distribution, we propose three different filtering meth- ods to satisfy the budget constraints of the context length. we evalu- ate the quito using tw...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 9,
+      "source_url": "https://arxiv.org/pdf/2509.17486",
+      "quote": "compression algorithm to retain the minimal set of documents whose cumulative attention weights exceeds a predefined threshold.",
+      "locator": "arxiv.org/pdf/2509.17486, Abstract",
+      "status": "valid",
+      "context": "...eraging the attention mechanism of llms to identify relevant information, attncomp employs a top- p compression algorithm to retain the minimal set of documents whose cumulative attention weights exceeds a predefined threshold. in ad- dition to compression, attncomp estimates re- sponse confidence by assessing the overall rel...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 10,
+      "source_url": "https://arxiv.org/pdf/2501.12959",
+      "quote": "scores as evaluator heads from the layer with the highest cumulative score",
+      "locator": "arxiv.org/pdf/2501.12959, 'Practicality' section",
+      "status": "valid",
+      "context": "...ents by evaluating their performance on down- stream tasks. we select four heads with the high- est scores as evaluator heads from the layer with the highest cumulative score, and we also select four additional heads from the same layer for comparison. the performances of t...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 11,
+      "source_url": "https://arxiv.org/pdf/2005.00928",
+      "quote": "compared to raw attention, both yield higher correlations with importance scores of input tokens obtained",
+      "locator": "arxiv.org/pdf/2005.00928, Abstract",
+      "status": "valid",
+      "context": "...he input tokens. we show that these methods give complementary views on the ﬂow of information, and compared to raw attention, both yield higher correlations with importance scores of input tokens obtained us- ing an ablation method and input gradients. 1 introduction attention (bahdanau et al., 2015; va...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 11,
+      "source_url": "https://arxiv.org/pdf/2005.00928",
+      "quote": "Raw 0.69±0.27 0.10±0.43 -0.11±0.49 -0.09±0.52 0.20±0.45 0.29±0.39",
+      "locator": "arxiv.org/pdf/2005.00928, Table 1",
+      "status": "valid",
+      "context": "...le 2 this is also the case when we compute the correlations with input gradients. l1 l2 l3 l4 l5 l6 raw 0.69±0.27 0.10±0.43 -0.11±0.49 -0.09±0.52 0.20±0.45 0.29±0.39 rollout 0.32±0.26 0.38±0.27 0.51±0.26 0.62±0.26 0.70±0.25 0.71±0.24 flow 0.32±0.26 0.44±0.29 0.70±0...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 12,
+      "source_url": "https://arxiv.org/pdf/1902.10186",
+      "quote": "permuting attention weights often induces only minimal changes in output",
+      "locator": "arxiv.org/pdf/1902.10186, Introduction",
+      "status": "valid",
+      "context": "...weights, despite attending to entirely differ- ent input features. even more strikingly, ran- domly permuting attention weights often induces only minimal changes in output. by contrast, at- tention weights in simple, feedforward (weighted average) encoders enjoy better b...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 13,
+      "source_url": "https://arxiv.org/pdf/1908.04626",
+      "quote": "If we accept the Rudin and Riedl deﬁnitions of explainability as providing a plausible, but not necessarily faithful rationale for model prediction, then the argument against attention mechanisms because they are not",
+      "locator": "arxiv.org/pdf/1908.04626, section 6",
+      "status": "valid",
+      "context": "...st applying evaluations and terminology broadly without clarifying task- speciﬁc explanation needs. if we accept the rudin and riedl deﬁnitions of explainability as providing a plausible, but not necessarily faithful rationale for model prediction, then the argument against attention mechanisms because they are not exclu- sive as claimed by jain and wallace is invalid, and human evaluation (which they do not cons...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 14,
+      "source_url": "https://arxiv.org/pdf/2409.00729",
+      "quote": "We use a simple but effective baseline that computes an attribution score for each source by summing the average attention weight of individual tokens in the source across all heads in all layers",
+      "locator": "arxiv.org/pdf/2409.00729, Baselines section",
+      "status": "valid",
+      "context": "... on explaining language models leverages attention weights [lsk17; dll+17; ss19; jw19; wp19; az20]. we use a simple but effective baseline that computes an attribution score for each source by summing the average attention weight of individual tokens in the source across all heads in all layers. 3. gradient norm: other explanation methods rely on input gradients [svz13; lch+15; stk+17]. here,...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 14,
+      "source_url": "https://arxiv.org/pdf/2409.00729",
+      "quote": "While the attention baseline approaches the performance of CONTEXTCITE with Llama-3-8B, it fares quite poorly with Phi-3-mini suggesting that attention is not consistently reliable for context attribution.",
+      "locator": "arxiv.org/pdf/2409.00729, Results section",
+      "status": "valid",
+      "context": "...y outperforms baselines, even when we only use 32 context ablations to compute its surrogate model. while the attention baseline approaches the performance of contextcite with llama-3-8b, it fares quite poorly with phi-3-mini suggesting that attention is not consistently reliable for context attribution. contextcite also attains high lds across benchmarks and models, indicating that its attributions ac...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 14,
+      "source_url": "https://arxiv.org/pdf/2409.00729",
+      "quote": "the surrogate model in Figure 2 uses just 32 ablations even though the context comprises 98 sources (in this case, sentences).",
+      "locator": "§3 Context attribution with CONTEXTCITE",
+      "status": "valid",
+      "context": "...bles learning a faithful linear surrogate model even with a small number of ablations. for example, the surrogate model in figure 2 uses just 32 ablations even though the context comprises 98 sources (in this case, sentences). • sample ablation vectors uniformly: to create the surrogate model’s training dataset, we sample ab...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 15,
+      "source_url": "https://raw.githubusercontent.com/huggingface/transformers/main/src/transformers/integrations/sdpa_attention.py",
+      "quote": "Please set your attention to `eager` if you want any of these features.",
+      "locator": "sdpa_attention.py, function sdpa_attention_forward",
+      "status": "valid",
+      "context": "...ions\", false): logger.warning_once( \"`sdpa` attention does not support `output_attentions=true`.\" \" please set your attention to `eager` if you want any of these features.\" ) sdpa_kwargs = {} if hasattr(module, \"num_key_value_groups\") and module.num_key_value_groups > 1:...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 16,
+      "source_url": "https://huggingface.co/docs/transformers/en/model_doc/llama",
+      "quote": "returned when `output_attentions=True` is passed or when `config.output_attentions=True`) — Tuple of `torch.FloatTensor` (one for each layer) of shape `(batch_size, num_heads, sequence_length, sequence_length)`",
+      "locator": "LlamaModel forward outputs",
+      "status": "valid",
+      "context": "... the optional initial embedding outputs. * **attentions** (`tuple(torch.floattensor)`, _optional_ , returned when `output_attentions=true` is passed or when `config.output_attentions=true`) — tuple of `torch.floattensor` (one for each layer) of shape `(batch_size, num_heads, sequence_length, sequence_length)`. attentions weights after the attention softmax, used to compute the weighted average in the self-a...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 17,
+      "source_url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/raw/main/config.json",
+      "quote": "\"num_attention_heads\": 12, \"num_hidden_layers\": 28, \"num_key_value_heads\": 2",
+      "locator": "config.json",
+      "status": "valid",
+      "context": "...iate_size\": 8960, \"max_position_embeddings\": 32768, \"max_window_layers\": 21, \"model_type\": \"qwen2\", \"num_attention_heads\": 12, \"num_hidden_layers\": 28, \"num_key_value_heads\": 2, \"rms_norm_eps\": 1e-06, \"rope_theta\": 1000000.0, \"sliding_window\": 32768, \"tie_word_embeddings\": tr...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 18,
+      "source_url": "https://huggingface.co/unsloth/Llama-3.2-3B-Instruct/raw/main/config.json",
+      "quote": "\"num_attention_heads\": 24, \"num_hidden_layers\": 28, \"num_key_value_heads\": 8",
+      "locator": "config.json",
+      "status": "valid",
+      "context": "...ermediate_size\": 8192, \"max_position_embeddings\": 131072, \"mlp_bias\": false, \"model_type\": \"llama\", \"num_attention_heads\": 24, \"num_hidden_layers\": 28, \"num_key_value_heads\": 8, \"pad_token_id\": 128004, \"pretraining_tp\": 1, \"rms_norm_eps\": 1e-05, \"rope_scaling\": { \"factor\": 32...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 19,
+      "source_url": "https://arxiv.org/pdf/2403.12968",
+      "quote": "Compress the given text to short expressions, and such that you (GPT-4) can reconstruct it as close as possible to the original. Unlike the usual text compression, I need you to comply with the 5 conditions below: 1. You can ONLY remove unimportant words.",
+      "locator": "§3.1 Instruction Design",
+      "status": "valid",
+      "context": "...ils to adhere to these restrictions. additionally, the information our instruction for compression: compress the given text to short expressions, and such that you (gpt-4) can reconstruct it as close as possible to the original. unlike the usual text compression, i need you to comply with the 5 conditions below: 1. you can only remove unimportant words. 2. do not reorder the original words. 3. do not change the original words. 4. do not use abbreviati...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 19,
+      "source_url": "https://arxiv.org/pdf/2403.12968",
+      "quote": "we first segment each long context into multiple chunks, each containing no more than 512 tokens and ending with a period.",
+      "locator": "§3.2 Data Annotation",
+      "status": "valid",
+      "context": "...mation loss, signifi- cantly impacting the performance of downstream tasks. to mitigate this issue, we first segment each long context into multiple chunks, each containing no more than 512 tokens and ending with a period. we then instruct gpt-4 to compress each chunk individually. 3.2 data annotation having obtained pai...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 19,
+      "source_url": "https://arxiv.org/pdf/2403.12968",
+      "quote": "we exclude the examples with the top 5% highest variation rates.",
+      "locator": "§3.3 Quality Control, Variation Rate",
+      "status": "valid",
+      "context": "...her varia- tion rate implies a higher likelihood of encounter- ing hallucinated content. therefore, we exclude the examples with the top 5% highest variation rates. alignment gap we propose alignment gap (ag) to evaluate the quality of the automatically annotated ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 20,
+      "source_url": "https://arxiv.org/pdf/2310.06201",
+      "quote": "Selective Context evaluates informativeness of lexical units (i.e., tokens, phrases, or sentences) with self-information (Shannon, 1948) computed by a base causal language model.",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "... thereby reducing the computational cost and making better use of the fixed context length in llms. selective context evaluates informativeness of lexical units (i.e., tokens, phrases, or sentences) with self-information (shannon, 1948) computed by a base causal language model. by selectively retaining content with higher self-information, our method provides a more compact a...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 21,
+      "source_url": "https://arxiv.org/pdf/2310.04408",
+      "quote": "embeddings respectively. Their inner product represents how helpful it would be for the LM M to prepend si to the input x to generate y.",
+      "locator": "§2 Extractive Compressor",
+      "status": "valid",
+      "context": "...a dual encoder model encθ which embeds sentence si and the input sequence x into fixed- dimensional embeddings respectively. their inner product represents how helpful it would be for the lm m to prepend si to the input x to generate y. the final summary s from the compressor will be a concatenation of top n sentences ranked by their ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 21,
+      "source_url": "https://arxiv.org/pdf/2310.04408",
+      "quote": "an extractive oracle which selects a sentence in evidence documents that leads to the best task performance",
+      "locator": "Introduction",
+      "status": "valid",
+      "context": "...ntly fewer tokens compared to ralm without compression. we present two oracle compression methods – an extractive oracle which selects a sentence in evidence documents that leads to the best task performance and an abstractive oracle which chooses between a summary generated by extreme-scale llm (e.g. gpt-...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 22,
+      "source_url": "https://arxiv.org/pdf/2407.09014",
+      "quote": "we devise an iterative architecture where the compressed contexts are updated at each iteration",
+      "locator": "Section 3, framework overview",
+      "status": "valid",
+      "context": "...sary evidence for answering a ques- tion. to condense a large amount of information from documents, we devise an iterative architecture where the compressed contexts are updated at each iteration. in this section, we provide a comprehen- sive explanation of our framework and detail the data con...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 23,
+      "source_url": "https://arxiv.org/pdf/2305.17926",
+      "quote": "we evaluate each candidate in both positions across two runs and compute the final score as the average of the two runs.",
+      "locator": "§1, Balanced Position Calibration (BPC)",
+      "status": "valid",
+      "context": "...tabilize the evaluation. 2) balanced position calibration (bpc): to further reduce positional bias, we evaluate each candidate in both positions across two runs and compute the final score as the average of the two runs. 3) human in the loop calibration (hitlc): we also explore human-in- the-loop evaluation and conside...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 23,
+      "source_url": "https://arxiv.org/pdf/2305.17926",
+      "quote": "Vicuna-13B could beat ChatGPT on 66 over 80 tested queries with ChatGPT as an evaluator.",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...us to skew the evaluation result, making one model appear considerably superior to the other, e.g., vicuna-13b could beat chatgpt on 66 over 80 tested queries with chatgpt as an evaluator. to address this issue, we propose a calibration framework with three simple yet effective strategie...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 24,
+      "source_url": "https://arxiv.org/pdf/2309.03882",
+      "quote": "moving the golden answers to position D degrades the accuracy of gpt-3.5-turbo by 6.3 (from 67.2 to 60.9). When moving to A, llama-30b is boosted by 15.2 and surpasses gpt-3.5-turbo (68.2 vs. 65.3)",
+      "locator": "§1 Introduction",
+      "status": "valid",
+      "context": "...golden answers to a specific position causes llms’ dramatic performance fluctuations. for instance, moving the golden answers to position d degrades the accuracy of gpt-3.5-turbo by 6.3 (from 67.2 to 60.9). when moving to a, llama-30b is boosted by 15.2 and surpasses gpt-3.5-turbo (68.2 vs. 65.3), which starkly contrasts with their original performance (53.1 vs. 67.2). llms’ poor robustness to ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 24,
+      "source_url": "https://arxiv.org/pdf/2309.03882",
+      "quote": "llama-30B selects A/B/C/D 34.6% / 27.3% / 22.3% / 15.8% of the time",
+      "locator": "§1 Introduction",
+      "status": "valid",
+      "context": "..., where we controlled the number of correct answers being a/b/c/d as 250 each. among these samples, llama-30b selects a/b/c/d 34.6% / 27.3% / 22.3% / 15.8% of the time, while gpt-3.5-turbo for 22.5% / 25.6% / ∗corresponding author. 1project repository: https://github...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 25,
+      "source_url": "https://arxiv.org/pdf/2304.09542",
+      "quote": "even superior results to state-of-the-art supervised methods on popular IR benchmarks",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...n ir. surprisingly, our experiments reveal that properly instructed llms can deliver compet- itive, even superior results to state-of-the-art supervised methods on popular ir benchmarks. furthermore, to address concerns about data contamination of llms, we collect a new test set calle...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 26,
+      "source_url": "https://arxiv.org/pdf/2310.07712",
+      "quote": "we propose permutation self-consistency, a form of self-consistency over the ranking list outputs of black-box LLMs. Our key idea is to marginalize out different list orders in the prompt to produce an order-independent",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "... tional bias in how they use context, which es- pecially affects listwise ranking. to address this, we propose permutation self-consistency, a form of self-consistency over the ranking list outputs of black-box llms. our key idea is to marginalize out different list orders in the prompt to produce an order-independent rank- ing with less positional bias. first, given some input prompt, we repeatedly shuffle the list...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 26,
+      "source_url": "https://arxiv.org/pdf/2310.07712",
+      "quote": "increasing the scores of GPT-3.5, GPT-4, and LLaMA v2 (70B; Touvron et al., 2023) by up to 4–17%, 9–24%, and 8–16%, respectively",
+      "locator": "Introduction",
+      "status": "valid",
+      "context": "...ord sorting, sentence ordering, and passage reranking (craswell et al., 2020, 2021), consis- tently increasing the scores of gpt-3.5, gpt-4, and llama v2 (70b; touvron et al., 2023) by up to 4–17%, 9–24%, and 8–16%, respectively. we achieve similar gains for mistral (jiang et al., 2023) and zephyr (tunstall et al., 2023). we c...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 27,
+      "source_url": "https://arxiv.org/pdf/1810.12343",
+      "quote": "signal for news summarization, though not for other domains",
+      "locator": "§1 main results",
+      "status": "valid",
+      "context": "...es independently. our main results (§ 5) reveal: 1. sentence position bias dominates the learn- ing signal for news summarization, though not for other domains.2 summary quality for news is only slightly degraded when con- tent words are omitted from sentence...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 27,
+      "source_url": "https://arxiv.org/pdf/1810.12343",
+      "quote": "are not able to identify important information without position",
+      "locator": "§5 Document Shuffling",
+      "status": "valid",
+      "context": "...g reduces lead overlap to 35.2% but the overall system performance drops signiﬁcantly; the mod- els are not able to identify important information without position. the relative robustness of the news domain to part of speech ablation also suggests that models ar...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 28,
+      "source_url": "https://arxiv.org/pdf/2207.05221",
+      "quote": "we investigate whether models can be trained to predict \"P(IK)\", the probability that \"I know\" the answer to a question, without reference to any particular proposed answer. Models perform well at predicting P(IK) and partially generalize across tasks, though they struggle with calibration of P(IK) on new tasks.",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...nsider many of their own samples before predicting the va- lidity of one speciﬁc possibility. next, we investigate whether models can be trained to predict \"p(ik)\", the probability that \"i know\" the answer to a question, without reference to any particular proposed answer. models perform well at predicting p(ik) and partially generalize across tasks, though they struggle with calibration of p(ik) on new tasks. the predicted p(ik) probabilities also increase appropriately in the presence of relevant source ma...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 29,
+      "source_url": "https://arxiv.org/pdf/2305.14975",
+      "quote": "verbalized confidences emitted as output tokens are",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...ting confidence scores from rlhf-lms. for rlhf-lms such as chatgpt, gpt-4, and claude, we find that verbalized confidences emitted as output tokens are typi- cally better-calibrated than the model’s condi- tional probabilities on the triviaqa, sciq, a...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 30,
+      "source_url": "https://arxiv.org/pdf/2306.13063",
+      "quote": "LLMs, when verbalizing their confidence, tend to be overconfident, potentially imitating human patterns of expressing confidence.",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...e widely-used llms including gpt-4 and llama 2 chat. our analysis uncovers several key insights: 1) llms, when verbalizing their confidence, tend to be overconfident, potentially imitating human patterns of expressing confidence. 2) as model capability scales up, both calibration and failure prediction performance improve, yet ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 31,
+      "source_url": "https://arxiv.org/pdf/2410.02707",
+      "quote": "we reveal a discrepancy between LLMs’ internal encoding and external behavior: they may encode the correct answer, yet consistently generate an incorrect one.",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...he model is likely to make, facilitating the development of tailored mitigation strategies. lastly, we reveal a discrepancy between llms’ internal encoding and external behavior: they may encode the correct answer, yet consistently generate an incorrect one. taken together, these insights deepen our understanding of llm errors from the model’s internal per...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 32,
+      "source_url": "https://arxiv.org/pdf/2304.13734",
+      "quote": "our trained classifier achieves an average of 71% to 83% accuracy labeling which",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "... experiments demonstrate that given a set of test sentences, of which half are true and half false, our trained classifier achieves an average of 71% to 83% accuracy labeling which sen- tences are true versus false, depending on the llm base model. furthermore, we explore the rel...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 33,
+      "source_url": "https://arxiv.org/pdf/2406.15927",
+      "quote": "We propose semantic entropy probes (SEPs), a cheap and reliable method for",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...1 shreshth malik1 yarin gal1 1 oatml, department of computer science, university of oxford abstract we propose semantic entropy probes (seps), a cheap and reliable method for uncer- tainty quantification in large language models (llms). hallucinations, which are plausible-s...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 34,
+      "source_url": "https://arxiv.org/pdf/2603.25052",
+      "quote": "by reading the model’s internal estimate of its own competence and steering its verbalized output to match, we are able to close much of the faithfulness gap of verbalized confidence",
+      "locator": "Section 3 results discussion, near Table with ECE/Brier/MAE",
+      "status": "valid",
+      "context": "....1 to 3.3 ece and from 15.9 to 2.1 brier score. the pattern is consistent across all three metrics: by reading the model’s internal estimate of its own competence and steering its verbalized output to match, we are able to close much of the faithfulness gap of verbalized confidence . 8 preprint. under review. 4 related work verbalized confidence calibration. lin et al. (2022a) in...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 35,
+      "source_url": "https://arxiv.org/pdf/2512.11998",
+      "quote": "is not well aligned with its verbalized confidence, leading to misleading results with different calibration methods",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...it has been observed that the internal con- fidence of a model, derived from token proba- bilities, is not well aligned with its verbalized confidence, leading to misleading results with different calibration methods. in this paper, we propose direct confidence alignment (dca), a method using direct preference opti...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 36,
+      "source_url": "https://arxiv.org/pdf/2606.01148",
+      "quote": "attributions provide stronger simulatability gains than token-level attributions, LLM",
+      "locator": "Contributions list, Introduction",
+      "status": "valid",
+      "context": "... • we show that explanation format and granu- larity have impact on simulatability. sentence- level attributions provide stronger simulatability gains than token-level attributions, llm rewrit- ing does not necessarily improve usefulness de- spite greater fluency, and cot rationales p...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 37,
+      "source_url": "https://arxiv.org/pdf/2202.01602",
+      "quote": "we formalize and investigate the disagreement problem in explainable ML, a novel area of research that examines conflicts among post hoc explanation methods.",
+      "locator": "Introduction",
+      "status": "valid",
+      "context": "...ent to which explanations disagree and how practitioners resolve these disagreements. in this work, we formalize and investigate the disagreement problem in explainable ml, a novel area of research that examines conflicts among post hoc explanation methods. we present the following key contributions: 1. we conduct semi-structured interviews with 25 data s...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 38,
+      "source_url": "https://arxiv.org/pdf/2605.02611",
+      "quote": "The model therefore predicts only when the label is forced (i.e., all consistent heads agree), and abstains otherwise.",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...oint, a set of certified valid labels containing the prediction of every head in the version space. the model therefore predicts only when the label is forced (i.e., all consistent heads agree), and abstains otherwise. we also propose a monotone submodular geometric proxy for budgeted querying, and show that a greedy...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 39,
+      "source_url": "https://dl.acm.org/doi/pdf/10.1145/130385.130417",
+      "quote": "in which a committee of students is trained on the same data set. The next query is chosen according to the principle of maximal disagreement",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...n. dbp. de haim@galaxy. huj i. ac. il abstract we propose an algorithm called query by comm- ittee, in which a committee of students is trained on the same data set. the next query is chosen according to the principle of maximal disagreement. the algorithm is studied for two toy models: the high-low game and perception learning of another ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 39,
+      "source_url": "https://dl.acm.org/doi/pdf/10.1145/130385.130417",
+      "quote": "of disagreement among a committee of learners can serve as an estimate of this information value",
+      "locator": "Introduction",
+      "status": "valid",
+      "context": "...he shannon information of a query can be a suitable guide[fed72]. we further show that the de- gree of disagreement among a committee of learners can serve as an estimate of this information value. the al- *present address: at&t bell laboratories, 600 moun- tain ave., murray hill, nj 07974, seun...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 40,
+      "source_url": "https://arxiv.org/pdf/2311.00288",
+      "quote": "We represent the informativeness of new tasks with the disagreement of the current model",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...frame- work to identify informative tasks, and then actively tune the models on the selected tasks. we represent the informativeness of new tasks with the disagreement of the current model out- puts over perturbed prompts. our experiments on niv2 and self-instruct datasets demonstrate th...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 41,
+      "source_url": "https://arxiv.org/pdf/2608.31066",
+      "quote": "MIST (Model-Internal Saliency for Token-level CoT compression), which defines token importance along two complementary axes: necessity, the drop in answer likelihood when a token’s internal contribution is removed, and sufficiency, the gain in answer likelihood when that contribution alone is provided",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...pple reflects the token’s contribution to the answer computation. building on this view, we propose mist (model-internal saliency for token-level cot compression), which defines token importance along two complementary axes: necessity, the drop in answer likelihood when a token’s internal contribution is removed, and sufficiency, the gain in answer likelihood when that contribution alone is provided. com- bining the two yields a unified importance score for pruning. across four reasoning benchmark...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 42,
+      "source_url": "https://arxiv.org/pdf/2608.04569",
+      "quote": "independent selection can split dependent evidence pairs, retaining one member while deleting the other. When the retained text span contains an",
+      "locator": "Abstract/Introduction",
+      "status": "valid",
+      "context": "...ining the highest-scoring units under a budget. we identify a structural failure in this procedure: independent selection can split dependent evidence pairs, retaining one member while deleting the other. when the retained text span contains an an- swer but the deleted span defines the entity needed to interpret it, we call the result referen...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 42,
+      "source_url": "https://arxiv.org/pdf/2608.04569",
+      "quote": "leaves the answer path incomplete in 34 to 54% of bridge examples across three multi-hop question",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...gling. at compression ratio 0.30, beaver, which ranks coherent chunks using qwen3- 0.6b embeddings, leaves the answer path incomplete in 34 to 54% of bridge examples across three multi-hop question an- swering (qa) datasets. the failure is not specific to that imple- mentation: on a shared hotpot...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 43,
+      "source_url": "https://arxiv.org/pdf/2504.16574",
+      "quote": "relying solely on attention scores may lead to the removal of important tokens with high attention scores. To address this, we introduce TF-IDF scores as a corrective measure for attention scores of each token.",
+      "locator": "arxiv.org/pdf/2504.16574, methodology section",
+      "status": "valid",
+      "context": "...we specify a target compression ratio r and delete tokens with higher variance first. additionally, relying solely on attention scores may lead to the removal of important tokens with high attention scores. to address this, we introduce tf-idf scores as a corrective measure for attention scores of each token. the weighted importance score for a token xi is computed as: w(xi) = αt,i × tf(xi) p j tf(xj) !γ × ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 44,
+      "source_url": "https://arxiv.org/pdf/2310.11207",
+      "quote": "we study different ways to elicit the self-explanations, evaluate their faithfulness on a set of evaluation metrics, and compare them to traditional explanation methods such as occlusion or LIME saliency maps. Through an extensive set of experiments, we find that ChatGPT’s",
+      "locator": "arxiv.org/pdf/2310.11207, abstract",
+      "status": "valid",
+      "context": "...ommonly studied settings in the interpretability literature (for pre-chatgpt models). specifically, we study different ways to elicit the self-explanations, evaluate their faithfulness on a set of evaluation metrics, and compare them to traditional explanation methods such as occlusion or lime saliency maps. through an extensive set of experiments, we find that chatgpt’s self- explanations perform on par with traditional ones, but are quite different from them accordin...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 45,
+      "source_url": "https://arxiv.org/pdf/2512.12411",
+      "quote": "on tasks requiring differential sensitivity, we find robust evidence for partial introspection: models localize which of 10 sentences received an injection at up to 88% accuracy (vs. 10% chance) and discriminate relative injection strengths at 83% accuracy (vs. 50% chance). These capabilities are confined to early-layer injections and collapse to chance thereafter",
+      "locator": "arxiv.org/pdf/2512.12411, abstract",
+      "status": "valid",
+      "context": "...logit shifts that bias models toward affirmative responses regardless of question content. however, on tasks requiring differential sensitivity, we find robust evidence for partial introspection: models localize which of 10 sentences received an injection at up to 88% accuracy (vs. 10% chance) and discriminate relative injection strengths at 83% accuracy (vs. 50% chance). these capabilities are confined to early-layer injections and collapse to chance thereafter—a pattern we explain mechanistically through attention-based signal routing and residual stream rec...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 46,
+      "source_url": "https://arxiv.org/pdf/2401.07927",
+      "quote": "Figure 8: Faithfulness evaluation using self-consistency checks, evaluated using Llama2-70B. Results show that Llama2-70B is not affected by prompt variations, but the faithfulness for each explanation type is task-dependent.",
+      "locator": "arxiv.org/pdf/2401.07927, Figure 8 caption",
+      "status": "valid",
+      "context": "... babi-1 explanation dependent prompt variation faithfulness persona instruction human you objective figure 8: faithfulness evaluation using self-consistency checks, evaluated using llama2-70b. results show that llama2-70b is not affected by prompt variations, but the faithfulness for each explanation type is task-dependent. 0% 25% 50% 75% 100% counterfact feature redaction imdb 0% 25% 50% 75% 100% mctest 0% 25% 50% 75% 10...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 47,
+      "source_url": "https://arxiv.org/pdf/2311.07466",
+      "quote": "including iii) our new self-consistency measure CC-SHAP. CC-SHAP is a fine-grained",
+      "locator": "arxiv.org/pdf/2311.07466, abstract",
+      "status": "valid",
+      "context": "...sts that for the first time compares existing tests on a common suite of 11 open llms and 5 tasks – including iii) our new self-consistency measure cc-shap. cc-shap is a fine-grained mea- sure (not a test) of llm self-consistency. it compares how a model’s input contributes to the ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 48,
+      "source_url": "https://arxiv.org/pdf/2305.04388",
+      "quote": "Adding biasing features heavily influences model CoT predictions on BBH tasks, causing accuracy to drop as much as 36%, despite the biasing features never being referenced in the CoT explanations.",
+      "locator": "arxiv.org/pdf/2305.04388, Introduction, main findings",
+      "status": "valid",
+      "context": "...ls make predictions on the basis of common social stereotypes. our main findings are as follows: 1. adding biasing features heavily influences model cot predictions on bbh tasks, causing accuracy to drop as much as 36%, despite the biasing features never being referenced in the cot explanations. 2. when we add these biasing features for bbh, models alter their explanations to justify incorrect...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 49,
+      "source_url": "https://arxiv.org/pdf/2307.13702",
+      "quote": "We find great variation in how much LLMs use CoT on different tasks, not using CoT at all for some tasks while relying upon it heavily for other tasks",
+      "locator": "arxiv.org/pdf/2307.13702, Section on faithfulness failures",
+      "status": "valid",
+      "context": "...s work, we test for post-hoc reasoning by truncating the chain of thought or adding mistakes to it. we find great variation in how much llms use cot on different tasks, not using cot at all for some tasks while relying upon it heavily for other tasks. • unfaithful reasoning due to test-time computation: the performance boost from cot may be due to ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 50,
+      "source_url": "https://arxiv.org/pdf/2505.05410",
+      "quote": "CoTs of reasoning models often lack faithfulness and can conceal misalignment. The overall faithfulness scores for both reasoning models remain low (25% for Claude 3.7 Sonnet and 39% for DeepSeek R1) (Figure 1).",
+      "locator": "arxiv.org/pdf/2505.05410, results summary",
+      "status": "valid",
+      "context": "... average faithfulness is 3.6× higher for the claude series and 1.7× higher for the deepseek series. cots of reasoning models often lack faithfulness and can conceal misalignment. the overall faithfulness scores for both reasoning models remain low (25% for claude 3.7 sonnet and 39% for deepseek r1) (figure 1). particularly concerning are the low faithfulness scores on misalignment hints (20% for claude 3.7 s...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 51,
+      "source_url": "https://arxiv.org/pdf/2410.13787",
+      "quote": "Llama 70B predicts its own behavior more accurately (48.5%) than GPT-4o (31.8%), despite GPT-4o’s superior capabilities",
+      "locator": "arxiv.org/pdf/2410.13787, Section 3.2.1",
+      "status": "valid",
+      "context": "...ts for gpt-4o, gpt-4, and llama 70b on a set of held-out tasks, as shown in figure 5. for instance, llama 70b predicts its own behavior more accurately (48.5%) than gpt-4o (31.8%), despite gpt-4o’s superior capabilities (chiang et al., 2024). the same pattern holds the other way around: gpt-4o predicts itself better (...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 52,
+      "source_url": "https://arxiv.org/pdf/2411.15102",
+      "quote": "AttriBoT can provide a >300× speedup while remaining more faithful to a target model’s LOO error than prior context attribution methods.",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...tation, and emulates the behavior of large target models with smaller proxy models. taken together, attribot can provide a >300× speedup while remaining more faithful to a target model’s loo error than prior context attribution methods. this stark increase in performance makes computing context attributions for a given response 30× fa...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 52,
+      "source_url": "https://arxiv.org/pdf/2411.15102",
+      "quote": "We empirically test the assumptions underlying the AttriBoT’s underlying methods on",
+      "locator": "Figure 1 caption",
+      "status": "valid",
+      "context": "...tlier recall achieved by proxy model pruning llama 8b proxy llama 3b proxy llama 1b proxy figure 1: we empirically test the assumptions underlying the attribot’s underlying methods on ex- amples from hotpot qa. left: the attribution scores of small proxy models ranging from 1b to 8b...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 53,
+      "source_url": "https://huggingface.co/datasets/hotpotqa/hotpot_qa",
+      "quote": "{ \"title\": [ \"Arthur's Magazine\", \"First for Women\" ], \"sent_id\": [ 0, 0 ] }",
+      "locator": "dataset viewer, supporting_facts column",
+      "status": "valid",
+      "context": "...was started first arthur's magazine or first for women? | arthur's magazine | comparison | medium | { \"title\": [ \"arthur's magazine\", \"first for women\" ], \"sent_id\": [ 0, 0 ] } | { \"title\": [ \"radio city (indian radio station)\", \"history of albanian football\", \"echosmith\", \"w...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 54,
+      "source_url": "https://arxiv.org/pdf/1809.09600",
+      "quote": "facts required for reasoning, allowing QA systems to reason with strong supervision and explain the predictions",
+      "locator": "Introduction",
+      "status": "valid",
+      "context": "...o any pre-existing knowledge bases or knowledge schemas; (3) we provide sentence-level sup- porting facts required for reasoning, allowing qa systems to reason with strong supervision and explain the predictions; (4) we offer a new type of factoid comparison questions to test qa systems’ ability to extract rel...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 55,
+      "source_url": "https://arxiv.org/pdf/2011.01060",
+      "quote": "Evidence information in our dataset is a set of triples, where each triple is a structured data (subject entity, property, object entity) obtained from the Wikidata",
+      "locator": "§1 Introduction",
+      "status": "valid",
+      "context": "...le, namely evidence that contains comprehensive and concise information to explain the predictions. evidence information in our dataset is a set of triples, where each triple is a structured data (subject entity, property, object entity) obtained from the wikidata (see figure 1 for an example). figure 1: example of an inference question in our dataset. the diffe...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 56,
+      "source_url": "https://huggingface.co/datasets/dgslibisey/MuSiQue",
+      "quote": "{ \"id\": 482757, \"question\": \"The Collegian >> owned by\", \"answer\": \"Houston Baptist University\", \"paragraph_support_idx\": 5 }",
+      "locator": "dataset viewer, question_decomposition column",
+      "status": "valid",
+      "context": "... of independently owned teams, th... | when was the institute that owned the collegian founded? | [ { \"id\": 482757, \"question\": \"the collegian >> owned by\", \"answer\": \"houston baptist university\", \"paragraph_support_idx\": 5 }, { \"id\": 12019, \"question\": \"when was #1 founded?\", \"answer\": \"1960\", \"paragraph_support_idx\": 9 } ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 57,
+      "source_url": "https://arxiv.org/pdf/2108.00573",
+      "quote": "MuSiQue constitutes unique 21020 single-hop questions, 4132 answers to multihop questions, 19841 answers to",
+      "locator": "§6 dataset statistics",
+      "status": "valid",
+      "context": "...atistics for \u000f -ans (\u000f - full has twice the number of questions in each cell) are shown in table 2. musique constitutes unique 21020 single-hop questions, 4132 answers to multihop questions, 19841 answers to single- hop questions, and 7676 supporting paragraphs. musique has 6 types of reasoning graphs and ...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 58,
+      "source_url": "https://arxiv.org/pdf/1911.03429",
+      "quote": "A high score here implies that the rationales were indeed inﬂuential in the prediction, while a low score suggests that they were not.",
+      "locator": "§4.2 Measuring faithfulness, Comprehensiveness",
+      "status": "valid",
+      "context": "...e rationales are removed from xi. we can measure this as: comprehensiveness = m(xi)j −m(xi/ri)j (1) a high score here implies that the rationales were indeed inﬂuential in the prediction, while a low score suggests that they were not. a negative value where do you ﬁnd the most amount of leafs? where do you ﬁnd the most amount of lea...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 59,
+      "source_url": "https://arxiv.org/pdf/2402.14116",
+      "quote": "Using only knowledge encoded in their parameters, models’ loose string accuracy ranged from 0.341 (Claude) to 0.470 (Mixtral), with none reaching our estimated human baseline of 0.685",
+      "locator": "§4.2 Closed Book Results",
+      "status": "valid",
+      "context": "...s all settings in figure 2, and tab- ulate all other results in appendix e. 4.2 closed book results using only knowledge encoded in their parameters, models’ loose string accuracy ranged from 0.341 (claude) to 0.470 (mixtral), with none reaching our estimated human baseline of 0.685 or upper bound of 0.847 (see section 4.5). most errors were plausible but incorrect hallu- cination...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 60,
+      "source_url": "https://huggingface.co/docs/transformers/chat_templating",
+      "quote": "This argument adds tokens to the end of the chat that indicate the start of an",
+      "locator": "add_generation_prompt section",
+      "status": "valid",
+      "context": "....pretrainedtokenizerbase.apply_chat_template.add_generation_prompt) argument in the above examples. this argument adds tokens to the end of the chat that indicate the start of an `assistant` response. remember: beneath all the chat abstractions, chat models are still just langu...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 61,
+      "source_url": "https://huggingface.co/docs/transformers/llm_tutorial",
+      "quote": "because a LLM is not trained to continue generation from padding tokens.",
+      "locator": "Default generate section",
+      "status": "valid",
+      "context": "...config=quantization_config) tokenize your input, and set the `padding_side()` parameter to `\"left\"` because a llm is not trained to continue generation from padding tokens. the tokenizer returns the input ids and attention mask. > process more than one prompt at a time by...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 62,
+      "source_url": "https://aclanthology.org/W04-3250.pdf",
+      "quote": "to compute statistical signiﬁcance of test results, and validate them on the concrete example of the BLEU score. Even for small test sizes of only 300 sentences, our methods may give us assurances that test result differences are real",
+      "locator": "Abstract",
+      "status": "valid",
+      "context": "...ference in true system quality? to answer this question, we describe bootstrap resampling meth- ods to compute statistical signiﬁcance of test results, and validate them on the concrete example of the bleu score. even for small test sizes of only 300 sentences, our methods may give us assurances that test result differences are real. 1 introduction recently, the ﬁeld of machine translation has been changed by the emergence both of...",
+      "match_type": "exact"
+    },
+    {
+      "source_index": 63,
+      "source_url": "https://arxiv.org/pdf/1809.01448",
+      "quote": "on the same dataset, one should use the paired version of the statistical signiﬁcance test (such as the matched-pair t-test).",
+      "locator": "Introduction",
+      "status": "valid",
+      "context": "...o assume normality. additionally, when comparing the performance of two algorithms that are applied on the same dataset, one should use the paired version of the statistical signiﬁcance test (such as the matched-pair t-test). an implementation of the paired versions of all statistical tests presented here as well as of othe...",
+      "match_type": "exact"
+    }
+  ]
+}

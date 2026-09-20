@@ -1,0 +1,1689 @@
+URL: https://arxiv.org/pdf/2608.31066
+Type: PDF
+Length: 66920 chars (truncated)
+
+--- Content ---
+
+Every Token Leaves a Ripple in the Stream of Thought: Eliciting
+Model-Internal Token Saliency for Chain-of-Thought Compression
+Tianyi Zhao1, Yinhan He1, Wendy Zheng1, Chen Chen1
+1University of Virginia
+{abs4dj,nee7ne,ncd9cf,zrh6du}@virginia.edu
+Abstract
+Chain-of-thought (CoT) reasoning improves
+multi-step problem solving, but long reasoning
+traces inflate inference cost. Token-level CoT
+compression reduces this cost by pruning full
+reasoning chains into shorter traces for model
+adaptation, making token selection the central
+challenge. Existing methods often rely on exter-
+nal scorers or heuristic signals only indirectly
+tied to the model’s internal answer computation.
+We instead adopt a model-internal perspective:
+as the model forms an answer, each reasoning
+token leaves a ripple in the residual stream, the
+model’s stream of thought, and the magnitude
+of this ripple reflects the token’s contribution to
+the answer computation. Building on this view,
+we propose MIST (Model-Internal Saliency for
+Token-level CoT compression), which defines
+token importance along two complementary
+axes: necessity, the drop in answer likelihood
+when a token’s internal contribution is removed,
+and sufficiency, the gain in answer likelihood
+when that contribution alone is provided. Com-
+bining the two yields a unified importance score
+for pruning. Across four reasoning benchmarks
+and four models, MIST consistently outper-
+forms baseline methods, suggesting that model-
+internal saliency provides an effective proxy
+for reasoning-token importance.
+1
+Introduction
+Chain-of-thought (CoT) reasoning (Wei et al.,
+2022; Kojima et al., 2022; Wang et al., 2023) im-
+proves the multi-step problem-solving ability of
+large language models (LLMs), but long reason-
+ing traces increase latency, memory use, and serv-
+ing cost. This has motivated work on CoT com-
+pression, which aims to preserve reasoning perfor-
+mance while shortening intermediate traces. Pre-
+vious methods obtain compact traces in several
+ways: prompting or distillation for concise gen-
+eration (Xu et al., 2025), adaptive reasoning bud-
+gets (Han et al., 2025), latent computation that
+(a) Necessity
+reasoning tokens
+no-chain
+baseline
+(b) Sufficiency
+reasoning tokens
+residual stream
+t1
+t2
+t3
+t4
+t5
+t1
+t2
+t3
+t4
+t5
+φt3
+(drop)
+t3
+(gain)
+answer
+answer
+Figure 1: Conceptual overview of model-internal to-
+ken saliency. For each reasoning token: (a) necessity
+measures the decrease in answer likelihood when the
+token’s residual contribution is removed; (b) sufficiency
+measures the increase in answer likelihood when that
+contribution is patched into a no-chain forward pass.
+The two axes are combined to rank tokens, and the
+highest-scoring tokens are retained under compression.
+replaces explicit reasoning (Shen et al., 2025), and
+pruning tokens or steps from a full trace (Xia et al.,
+2025; Li et al., 2026). We focus on the token prun-
+ing setting, where a full CoT trace is pruned to a
+subset of reasoning tokens that supervise the model
+to generate shorter chains. This setting makes the
+central bottleneck explicit: under a retention budget
+γ, which reasoning tokens should be kept?
+Existing token-level compression methods an-
+swer this question using signals that are only in-
+directly tied to the target model’s answer compu-
+tation. TokenSkip-style (Xia et al., 2025) meth-
+ods, for example, rely on auxiliary scorers (Pan
+et al., 2024) whose rankings depend on the scorer’s
+own training objective, supervision, and domain as-
+sumptions, rather than being derived from the target
+model’s internal reasoning process. While effec-
+tive, they leave unexplored a more direct and princi-
+pled path to measuring token importance: deriving
+it from what the target model itself relies on when
+forming the answer. We therefore shift the focus
+from heuristic proxies to a complementary, model-
+internal perspective. Under this view, a reasoning
+token is important when the target model’s answer
+1
+arXiv:2608.31066v1  [cs.CL]  31 Aug 2026
+
+0.25
+0.50
+0.75
+retention budget 
+0.00
+0.25
+0.50
+0.75
+1.00
+1.25
+answer log-p recovery
+(a) Necessity
+ 
+top-necessity
+keep-last
+keep-first
+random
+top-suff.
+token
+rand.
+token
+rand.
+vector
+3
+2
+1
+0
+1
+answer log-p recovery
++1.36
+-2.14
+-2.96
+(b) Sufficiency
+ 
+1.0
+0.5
+0.0
+0.5
+1.0
+per-chain Spearman( , )
+0
+5
+10
+15
+20
+25
+#chains
+(c) Complementarity: necessity
+and sufficiency rank differently
+Figure 2: Empirical characterization of dual-axis
+model-internal token saliency. Results on 100 MATH
+reasoning chains with Qwen2.5-1.5B-Instruct.
+(a)
+Top-necessity retention consistently outperforms posi-
+tional and random baselines across budgets. (b) Top-
+sufficiency tokens recover substantially more answer
+signal than random and norm-matched controls. (c) Ne-
+cessity and sufficiency induce weakly correlated rank-
+ings (mean Spearman ρ = −0.07 and top-30% overlap
+0.28), indicating that they capture distinct yet comple-
+mentary signals.
+computation depends on the information it carries
+in the residual stream, the internal substrate through
+which information propagates across layers. We
+view this residual stream as the model’s stream of
+thought, in which each token leaves a ripple whose
+magnitude reflects its contribution to the answer.
+Tokens that contribute little answer-relevant infor-
+mation are therefore natural candidates for removal
+under compression. This reframes token-level CoT
+compression as a model-internal saliency problem:
+which reasoning tokens make the most internal con-
+tributions to the model’s answer computation?
+We formalize this saliency along two comple-
+mentary axes. (Q1) Necessity: if a token’s inter-
+nal contribution is removed, how much does the
+ground-truth answer likelihood drop? (Q2) Suf-
+ficiency: if only that token’s internal information
+is provided, how much of the ground-truth answer
+likelihood is recovered? Necessity reflects full-
+chain dependence: it captures tokens whose erasure
+disrupts the chain’s own computation. Sufficiency
+reflects no-chain recoverability: it captures the con-
+textual hinges whose residuals, given the query,
+recover answer-relevant information without the
+rest of the chain. Each view is biased without the
+other: necessity admits low-information context
+that is not directly anchored to answer relevance
+under abundant retention budgets, while sufficiency
+alone underperforms under aggressive compres-
+sion, when no single token’s residual can substitute
+for the chain. Combining the two yields a ranking
+that remains reliable across compression budgets.
+Building on this framing, we propose MIST
+(Model-Internal Saliency for Token-level CoT com-
+pression). For each reasoning token, MIST oper-
+ationalizes the two axes as residual-stream inter-
+ventions: necessity measures the effect of erasing a
+token’s residual state from the full-chain computa-
+tion, while sufficiency measures the answer signal
+recovered by patching that state into a no-chain for-
+ward pass. Directly evaluating these interventions
+requires a separate pass for each token, scaling
+as O(T) in chain length T which makes token-
+wise scoring expensive. We show that both axes
+admit a first-order Taylor linearization in the resid-
+ual stream, reducing each per-token score to an
+inner product of gradients and activations, so a sin-
+gle backward pass per axis yields all token scores.
+MIST then combines the two scores into a unified
+token-importance score. The highest-scoring to-
+kens are retained to form compressed CoT traces,
+which are then used to adapt the model to generate
+shorter reasoning chains.
+We evaluate MIST on four benchmarks span-
+ning mathematical reasoning (GSM8K (Cobbe
+et al., 2021) and MATH (Hendrycks et al.,
+2021)) and general-domain reasoning (MMLU-
+Pro (Wang et al., 2024) and BIG-Bench Hard (Suz-
+gun et al., 2023)), using Qwen2.5-1.5B-Instruct,
+Qwen2.5-7B-Instruct (Team, 2024), Llama-3.1-8B-
+Instruct (Grattafiori et al., 2024), and Mistral-7B-
+Instruct-v0.3 (Jiang et al., 2023a). Extensive results
+suggest that model-internal saliency serves as a re-
+liable proxy for reasoning-token importance, and
+that the proposed method consistently improves
+CoT compression performance across settings. In
+summary, our contributions are:
+• We formulate token-level CoT compression
+as a model-internal saliency problem: rather
+than asking which tokens appear important
+to heuristic proxies, we ask which reasoning
+tokens contribute to the target model’s own an-
+swer computation, formalized along two com-
+plementary axes, necessity and sufficiency.
+• We propose MIST, which operationalizes
+both axes as residual-stream interventions, de-
+rives first-order linearizations that reduce per-
+chain scoring to a single backward pass per
+axis, and combines the two axes into a unified
+token-importance score.
+• Extensive experimental results across diverse
+datasets and models demonstrate the effective-
+ness of our proposed method.
+2
+
+2
+Related Work
+Efficient chain-of-thought reasoning.
+Chain-
+of-thought (CoT) prompting improves multi-step
+reasoning (Wei et al., 2022; Kojima et al., 2022;
+Wang et al., 2023) but inflates inference cost,
+motivating efficient-reasoning methods spanning
+concise generation (Xu et al., 2025; Munkhbat
+et al., 2025), adaptive decoding budgets (Han et al.,
+2025), length-controllable fine-tuning (Ma et al.,
+2025), latent reasoning (Hao et al., 2024; Shen
+et al., 2025), and token- or step-level pruning of
+generated traces (Xia et al., 2025; Li et al., 2026).
+We focus on the pruning setting.
+Token-level CoT pruning.
+Within the pruning
+setting, TokenSkip (Xia et al., 2025) constructs
+compressed CoT supervision with an auxiliary
+LLMLingua-style token scorer (Jiang et al., 2023b;
+Pan et al., 2024), while step-level methods use sig-
+nals such as entropy to skip generation (Li et al.,
+2026). More direct approaches include GoGI-Skip,
+which scores intermediate representations by gradi-
+ent norm (Zhuang et al., 2025), and likelihood-
+preserving greedy deletion, which identifies re-
+movable tokens through repeated deletion evalu-
+ations (Singh and Hakkani-Tür, 2026). In contrast,
+MIST derives a unified token-importance score
+from two complementary saliency measures in the
+model’s residual stream, avoiding external scorers,
+single-axis heuristics, and costly iterative deletion.
+Model-internal attribution and interventions.
+Mechanistic interpretability methods identify be-
+haviorally relevant components such as neurons
+and attention heads through interventions such as
+causal mediation, causal tracing, and activation
+patching (Vig et al., 2020; Meng et al., 2022; Zhang
+and Nanda, 2024; Heimersheim and Nanda, 2024;
+Syed et al., 2024; Ghandeharioun et al., 2024).
+Residual-stream analysis and direct logit attribution
+decompose how internal components contribute to
+output logits (Elhage et al., 2021; nostalgebraist,
+2020). Inspired by this line of work, we define a
+token-saliency measure in the residual stream and
+use this model-internal signal to quantify the im-
+portance of reasoning tokens for CoT compression.
+3
+MIST: Model-Internal Saliency for
+Token-level CoT Compression
+We present MIST, a model-internal method for
+token-level CoT compression. Given a query x, a
+reasoning chain c = (t1, . . . , tT ) generated by the
+target model M, and the answer a, MIST assigns
+a saliency score to each chain token, retains the
+top-scoring tokens under a retention budget, and
+uses the resulting compressed chains to adapt the
+model for compact reasoning-trace generation. The
+key idea is to first define what it means for a token
+to matter to the target model’s own answer compu-
+tation, and then quantify this importance from the
+model’s internal states.
+3.1
+Problem Formulation: A Model-Internal
+Notion of Token Importance
+Token-level CoT compression requires a ranking
+of reasoning tokens. A natural objective is to keep
+the subset of tokens that best supports the model’s
+answer computation:
+c⋆
+γ = arg
+max
+c′⊆c, |c′|=⌈γT⌉log pM(a | x, c′),
+(1)
+where γ ∈(0, 1] is the retention budget. Solving
+this objective directly is combinatorial, so practi-
+cal compression methods reduce the problem to
+computing per-token importance and retaining the
+top-ranked subset. In this work, we formulate this
+importance as model-internal saliency: a token is
+salient if the target model’s own answer computa-
+tion depends on the internal information carried by
+that token. To make this notion operational, we
+measure a token’s internal contribution through its
+residual stream, a natural choice since the residual
+stream is the model’s internal computational sub-
+strate. We then define this saliency through two
+complementary axes.
+Necessity. Necessity measures what the model
+loses when the internal contribution of a token is
+removed from the full reasoning chain. Let hi
+denote the residual-stream states associated with
+token i. We operationalize this removal by zeroing
+hi, and then quantify the resulting drop in answer
+likelihood as the necessity saliency:
+ϕi := log pM(a | x, c) −log pM
+ a | x, chi→0
+.
+(2)
+Sufficiency. Sufficiency asks how much of the
+answer likelihood can be recovered if only token
+i’s internal state is provided, relative to the no chain
+forward pass. We operationalize this by patching hi
+into the no-chain forward pass at the final position
+and quantify the resulting gain in answer likelihood
+as the sufficiency saliency:
+ψi := log pM
+ a | x, patch(i)
+
+−log pM(a | x, ∅).
+(3)
+3
+
+0.2
+0.4
+0.6
+GSM8K
+Accuracy
+Qwen2.5-1.5B-Instruct
+0.2
+0.4
+0.6
+0.8
+Qwen2.5-7B-Instruct
+0.2
+0.4
+0.6
+0.8
+Llama-3.1-8B-Instruct
+0.1
+0.2
+0.3
+0.4
+0.5
+0.6
+Mistral-7B-Instruct
+0.5
+0.6
+0.7
+0.8
+0.9
+Retention budget γ
+0.1
+0.2
+0.3
+0.4
+MATH-500
+Accuracy
+0.5
+0.6
+0.7
+0.8
+0.9
+Retention budget γ
+0.2
+0.3
+0.4
+0.5
+0.6
+0.7
+0.5
+0.6
+0.7
+0.8
+0.9
+Retention budget γ
+0.2
+0.3
+0.4
+0.5
+0.5
+0.6
+0.7
+0.8
+0.9
+Retention budget γ
+0.050
+0.075
+0.100
+0.125
+0.150
+0.175
+MIST (ours)
+TokenSkip
+GoGI-ℓ1
+Perplexity
+Prompt-Reduce
+Attn-rollout
+H2O
+Uniform
+Full CoT
+No CoT
+Figure 3: Accuracy across γ ∈{0.5, ..., 0.9} for MIST and all baselines on GSM8K and MATH-500.
+Why both axes? Informative and complemen-
+tary views of token importance. The above def-
+initions of necessity and sufficiency offer two be-
+haviorally grounded notions of token importance.
+We further conduct an empirical evaluation on 100
+gold MATH chains to show that both notions yield
+meaningful token-importance information in prac-
+tice. Retaining tokens ranked by exact necessity
+consistently outperforms positional and random
+baselines across compression budgets, indicating
+that necessity identifies tokens on which the full-
+chain answer computation depends (Fig. 2a). Con-
+versely, patching the most sufficient tokens into
+no-chain computations recovers substantial answer-
+relevant information, whereas random-token and
+norm-matched controls do not (Fig. 2b). Despite
+their individual effectiveness, the two rankings are
+only weakly correlated and exhibit limited top-
+token overlap (Fig. 2c), suggesting that they cap-
+ture largely distinct aspects of token importance.
+Neither axis alone therefore provides a complete
+account of token importance, motivating their com-
+bination in our dual-axis saliency measure.
+3.2
+Quantifying Model-Internal Saliency in
+Practice
+The formulations above provide conceptually clean
+measures of token saliency, but their naive compu-
+tation is prohibitively expensive. Evaluating each
+token would require an additional forward pass to
+instantiate either chi→0 or patch(i), yielding an
+O(T) cost per chain that is impractical at scale.
+We instead treat both as residual-stream interven-
+tions and linearize log pM around the unperturbed
+forward passes.This yields a practical first-order
+scorer computable with two backward passes per
+chain, independent of T.
+Let h(l)
+i
+for l ∈{1, . . . , L} denote token i’s
+residual at layer l, with h(l),src
+i
+and h(l),tgt
+final
+denot-
+ing the unperturbed source and target activations at
+layer l. The necessity intervention chi→0 perturbs
+h(l),src
+i
+along the direction −h(l),src
+i
+; the sufficiency
+intervention patch(i) perturbs h(l),tgt
+final
+along the di-
+rection h(l),src
+i
+−h(l),tgt
+final . The answer log-likelihood
+log pM is differentiable in the residual activations,
+so both saliencies admit a first-order Taylor expan-
+sion along these directions.
+Necessity term.
+The first-order expansion of
+log psrc
+M along −h(l),src
+i
+identifies the per-layer main
+term:
+bϕ(l)
+i
+:=
+
+∇h(l)
+i log psrc
+M , h(l),src
+i
+
+,
+(4)
+Both the gradient and the activation in bϕ(l)
+i
+are read
+from the same source forward pass: one backward
+through log psrc
+M yields ∇h(l)
+i log psrc
+M at every (i, l)
+pair simultaneously, so the per-chain cost on the
+necessity axis is one forward and one backward.
+Sufficiency term. The first-order expansion of
+log ptgt
+M along h(l),src
+i
+−h(l),tgt
+final
+identifies the per-
+layer main term:
+bψ(l)
+i
+:=
+
+∇h(l)
+final log ptgt
+M , h(l),src
+i
+−h(l),tgt
+final
+
+, (5)
+4
+
+The gradient is taken at the target’s final position;
+one backward through log ptgt
+M yields these gradi-
+ents across all layers l, and the source activations
+h(l),src
+i
+are reused from the necessity pass. The full
+Taylor expansion and remainder bounds for both
+terms are given in Appendix D.
+3.3
+The Unified MIST Score
+The per-layer terms bϕ(l)
+i
+and bψ(l)
+i
+are building
+blocks; the MIST score combines them into a uni-
+fied per-token saliency signal by first aggregating
+across layers along each axis, and then combining
+the two axes.
+Per-axis aggregation. Different layers contribute
+differently to the answer computation; we therefore
+adopt a logit-lens-induced (nostalgebraist, 2020)
+layer weighting: each transformer layer l writes
+an additive update h(l)
+t
+−h(l−1)
+t
+into the residual-
+stream state at position t, and the inner product
+of this update with the unembedding row WU[a]
+corresponding to the gold answer token,
+¯cl = 1
+T
+T
+X
+t=1
+
+h(l)
+t
+−h(l−1)
+t
+, WU[a]
+
+,
+(6)
+captures how much that layer’s update pushes the
+chain-averaged hidden state toward the answer; the
+empirical per-layer distribution of ¯cl across chains
+is visualized in Fig. 11 (App. H). Aggregating each
+axis with this shared weight yields the per-token
+saliencies along the two axes:
+bϕi =
+X
+l
+¯cl ·
+bϕ(l)
+i
+,
+bψi =
+X
+l
+¯cl ·
+ bψ(l)
+i
+. (7)
+Combining the two axes. Finally, we combine the
+two axes as1:
+SMIST
+i
+= α · bϕi + (1 −α) · bψi,
+α ∈[0, 1]. (8)
+where α is a hyperparameter. Tokens ranked by
+SMIST
+i
+form the compressed chains that supervise
+the fine-tuning of M at retention budget γ.
+4
+Experiments
+4.1
+Experimental Setup
+Datasets and Models.
+We evaluate on four
+reasoning
+benchmarks
+spanning
+mathemati-
+cal reasoning (GSM8K (Cobbe et al., 2021);
+1 bϕi and bψi are normalized before combining; see App. I
+for details.
+Dataset
+Model
+Method
+∆Acc. (%)
+Comp. rate
+GSM8K
+Qwen2.5-7B-Inst.
+⋆MIST
+↓2.4
+21.3%
+tokenskip
+↓4.3
+20.0%
+gogi_l1
+↓11.9
+8.9%
+perplexity
+↓29.2
+17.6%
+attn_rollout
+↓35.1
+21.4%
+h2o
+↓45.2
+22.0%
+Mistral-7B-Inst.
+⋆MIST
+↓1.3
+13.4%
+tokenskip
+↓2.1
+10.4%
+gogi_l1
+↓9.2
+14.8%
+perplexity
+↓39.5
+25.6%
+attn_rollout
+↓28.8
+22.5%
+h2o
+↓32.6
+23.0%
+MATH-500
+Qwen2.5-1.5B-Inst.
+⋆MIST
+↑5.3
+9.3%
+tokenskip
+↓4.1
+10.2%
+gogi_l1
+↓6.6
+3.9%
+perplexity
+↓14.1
+8.5%
+attn_rollout
+↓4.2
+0.0%
+h2o
+↓6.7
+4.7%
+Llama-3.1-8B-Inst.
+⋆MIST
+↑1.2
+10.6%
+tokenskip
+↓2.3
+13.8%
+gogi_l1
+↓3.8
+7.2%
+perplexity
+↓14.1
+11.1%
+attn_rollout
+↓2.6
+8.0%
+h2o
+↓6.6
+10.0%
+Table 1: Performance and compression comparison
+on GSM8K and MATH-500. Each entry is the mean
+over γ ∈{0.5, 0.6, 0.7, 0.8, 0.9} relative to the full-
+chain baseline. ∆Acc. (%): relative accuracy change (↓
+drop, ↑gain); Comp. rate: fraction by which the LoRA-
+adapted model’s inference-time generated tokens are
+reduced relative to the same full-chain baseline.
+MATH (Hendrycks et al., 2021)) and general-
+domain reasoning (MMLU-Pro (Wang et al.,
+2024); BIG-Bench Hard (Suzgun et al., 2023)).
+Per-dataset split sizes, preprocessing, and self-
+generation
+hyperparameters
+are
+deferred
+to
+Appendix A. We evaluate four models covering
+three families and three scales: Qwen2.5-1.5B-
+Instruct and Qwen2.5-7B-Instruct (Team, 2024),
+Llama-3.1-8B-Instruct (Grattafiori et al., 2024),
+and Mistral-7B-Instruct-v0.3 (Jiang et al., 2023a).
+Baselines.
+We
+compare
+MIST
+against
+nine
+baselines
+across
+three
+categories.
+Training-free baselines:
+prompt-reduce
+(Xia
+et al., 2025) prompts the frozen target model
+to compress its own chain without finetuning.
+Naive baselines: full-chain, no-chain, and uniform
+share the pipeline but use trivial token selection:
+no compression, chain removal, and uniform
+retention, respectively.
+Token scorer baselines:
+TokenSkip (Xia et al., 2025) scores tokens with the
+external LLMLingua-2 classifier, GoGI (Zhuang
+5
+
+65
+70
+MIST
+TokenSkip
+Attn-rollout
+H2O
+GoGI-ℓ1
+Full CoT
+Llama-3.1-8B-Instruct
+46
+48
+50
+Full CoT
+Mistral-7B-Instruct-v0.3
+Accuracy at γ=0.6 → γ=0.9  [%]
+Figure 4: Results on BIG-Bench Hard.
+17.5
+20.0
+22.5
+25.0
+MIST
+H2O
+TokenSkip
+GoGI-ℓ1
+Perplexity
+Full CoT
+Qwen2.5-1.5B-Instruct
+28
+30
+32
+34
+Full CoT
+Llama-3.1-8B-Instruct
+Accuracy at γ=0.6 → γ=0.9  [%]
+Figure 5: Results on MMLU-Pro.
+et al., 2025) with the single-layer gradient norm,
+perplexity with per-token self-information (Jiang
+et al., 2023b), and attention rollout (Abnar and
+Zuidema, 2020) and H2O (Zhang et al., 2023) with
+two attention-based proxies. Per-baseline details
+are in Appendix B.
+Training and evaluation protocol.
+We adopt
+the standard procedure from TokenSkip (Xia et al.,
+2025). Given a target model M and a training set,
+we (i) sample self-generate reasoning chains from
+M and keep those that yield the correct answer, (ii)
+for each retention budget γ ∈{0.5, 0.6, . . . , 1.0}
+in a grid, score each chain with MIST and form
+a compressed chain by retaining the top-⌈γT⌉to-
+kens, and (iii) fine-tune M with a single LoRA
+adapter (rank 8, α = 16, learning rate 5×10−5,
+three epochs, effective batch size 8) on the mixture
+of compressed chains across all γ values, so that
+the same adapter can be decoded at any retention
+budget at inference. It should be noted that since
+γ controls the supervision tokens retained during
+SFT rather than imposing a hard length constraint
+at inference, the adapter is decoded freely and the
+actual inference-time compression rate (Comp. rate
+in Table 1) is typically smaller than 1 −γ. Addi-
+tional details are provided in Appendix C.
+4.2
+Main Results
+We report main results in Figure 3 and Table 1.
+Model-internal saliency outperforms external
+scorers.
+TokenSkip is the strongest baseline over-
+all, but it relies on an auxiliary scorer whose impor-
+tance signal is not derived from the target model’s
+own answer computation. Across the evaluated
+datasets and models, MIST achieves better perfor-
+mance than TokenSkip. Averaged over γ, MIST in-
+curs only a 1.3-2.4 percentage-point (pp) accuracy
+drop on GSM8K with Qwen2.5-7B and Mistral-7B,
+compared with 2.1-4.3 pp for TokenSkip. The gap
+is even larger on MATH-500: MIST improves av-
+erage accuracy by 5.3 pp on Qwen2.5-1.5B and 1.2
+pp on Llama-3.1-8B, whereas TokenSkip drops by
+4.1 pp and 2.3 pp, respectively. This suggests that
+the target model’s own internal computations pro-
+vide a reliable signal for identifying the reasoning
+tokens it actually relies on.
+A principled internal scorer outperforms in-
+ternal heuristics.
+The remaining baselines use
+target-model signals such as gradients, perplexity,
+or attention weights, but map these signals to token
+importance through heuristic scoring rules. For
+instance, GoGI is the closest internal-gradient base-
+line, but it treats gradient norm at a preselected
+layer as a heuristic proxy for token importance,
+without deriving it from any explicit definition of
+saliency. MIST, by contrast, operationalizes token
+importance through necessity and sufficiency inter-
+ventions and derives its scorer from their first-order
+effects on the answer likelihood. The gradient ap-
+pears in MIST only multiplied by the activation
+and aggregated across all layers; the bare gradi-
+ent norm used by GoGI can be viewed as a strict
+simplification of this construction along the neces-
+sity axis. The empirical gaps further highlight the
+advantage of MIST’s principled saliency construc-
+tion. On GSM8K, GoGI incurs 11.9 and 9.2 pp
+accuracy drops with Qwen2.5-7B and Mistral-7B,
+respectively, compared with only 2.4 and 1.3 pp
+for MIST. On MATH-500, GoGI drops by 6.6 pp
+with Qwen2.5-1.5B and 3.8 pp with Llama-3.1-8B,
+while MIST improves over full CoT by 5.3 and
+1.2 pp. Other internal or model-derived heuristics
+degrade further, with perplexity, attention rollout,
+and H2O reaching drops as large as 39.5, 28.8, and
+32.6 pp, respectively (Table 1).
+MIST achieves favorable accuracy-compression
+trade-off.
+MIST achieves competitive compres-
+sion while incurring the smallest reasoning perfor-
+mance loss. On GSM8K with Qwen2.5-7B, MIST
+achieves a 21.3% reduction in chain length, com-
+pared with 20.0% for TokenSkip, while incurring
+only a 2.4-pp accuracy drop compared with 4.3
+pp for TokenSkip. Methods with internal heuris-
+tics signals, such as perplexity, attention rollout,
+6
+
+0.6
+0.7
+0.8
+0.9
+Eval retention budget γeval
+52.5
+55.0
+57.5
+60.0
+62.5
+65.0
+Accuracy  (%)
+α=0.4
+α=0.5
+α=0.6
+α=0.7
+mean
+Figure 6: Sensitivity analysis for α on GSM8K with
+Qwen2.5-1.5B-Instruct.
+and H2O, can achieve similar or higher compres-
+sion rates but suffer much larger accuracy drops.
+This trade-off suggests that, under the same reten-
+tion budget, the tokens selected by MIST carry
+a greater share of the answer-relevant signal, al-
+lowing the adapter to recover chain-level accuracy
+from a shorter trace.
+0.5
+0.6
+0.7
+0.8
+Retention budget γ
+36
+38
+40
+42
+44
+46
+48
+50
+Accuracy  (%)
+MIST
+MIST-uniform̂
+ψ onlŷ
+ϕ only
+MIST-single
+Figure 7: Component ablation of MIST on MATH-500
+with Llama-3.1-8B-Instruct.
+4.3
+Generalization Beyond Mathematical
+Reasoning
+The main results in §4.2 establish MIST’s advan-
+tage on two mathematical-reasoning benchmarks,
+GSM8K and MATH-500. We next ask whether this
+advantage extends beyond mathematical reasoning.
+To this end, we further evaluate on two general-
+domain benchmarks: MMLU-Pro and BBH.
+As shown in Figures 4 and 5, MIST remains the
+strongest method on both benchmarks and across
+the evaluated models.
+On MMLU-Pro, MIST
+consistently outperforms external and heuristic
+baselines, indicating that model-internal saliency
+remains effective in multi-domain, knowledge-
+intensive settings. On BBH, MIST also stays clos-
+est to, and in some settings surpasses, the full CoT
+reference, while heuristic baselines fall noticeably
+behind. These results suggest that MIST is not
+merely exploiting math-specific token patterns; it
+effectively captures answer-relevant internal contri-
+butions across broader domains and more hetero-
+geneous reasoning formats. Additional results are
+reported in App. F.
+4.4
+Ablation Study
+Sensitivity analysis.
+We examine the sensitivity
+of MIST to the mixing coefficient α in Eq. (8),
+using Qwen2.5-1.5B-Instruct on GSM8K. Figure 6
+compares α ∈{0.4, 0.5, 0.6, 0.7} across retention
+budgets. Performance is stable across this range,
+indicating that the blend is not knife-edge sensitive
+to α. We fix α = 0.6 in all main experiments as it
+achieves the best overall performance
+Each component contributes to the unified
+MIST quality.
+We ablate the three design
+choices that distinguish MIST from one-axis or
+single-layer simplifications: (i) using both saliency
+axes, by removing one at a time (bφ-only, bψ-
+only); (ii) the layer weighting in Eq. 7, by replac-
+ing ¯cl with a uniform per-layer weight (MIST-
+uniform); and (iii) the multi-layer aggregation, by
+computing each axis from only the penultimate
+layer (MIST-single). Figure 7 reports accuracy
+on MATH-500 with Llama-3.1-8B-Instruct across
+γ ∈{0.5, 0.6, 0.7, 0.8}. Full MIST achieves the
+best performance at every retention budget. The
+single-axis ablations lose the most: bψ-only drops
+by up to 7.5 pp at the most aggressive budget
+(γ=0.5: 37.5% vs. MIST’s 45.0%), and bφ-only
+loses up to 3.4 pp at γ=0.8 (46.2% vs. 49.6%).
+MIST-uniform and MIST-single each lose be-
+tween 0.8 and 4.6 pp depending on γ, confirming
+that neither the weighting nor the multi-layer ag-
+gregation is interchangeable with a uniform-weight
+or single-layer simplification. The three design
+choices combine to yield MIST’s final quality.
+4.5
+Token Type Analysis
+To understand what each method actually keeps, we
+partition every token into one of seven role classes
+grouped into three macro-categories (Table 2):
+Quantitative (number, math operator, variable /
+function), Logical (connective, quantifier / nega-
+tion), and Narrative (content, function). We then
+measure each method’s budget composition (left)
+and per-class retention rate (right) on Qwen2.5-
+1.5B-Instruct + GSM8K at γ = 0.5 (Figure 8).
+Figure 8 reports two complementary views. The
+7
+
+0%
+25%
+50%
+75%
+100%
+Composition (% of kept budget across 7 classes)
+MIST (ours)
+GoGI-ℓ1
+Perplexity
+Attn-rollout
+29
+10
+37
+16
+20
+5
+46
+23
+12
+6
+6
+47
+25
+7
+11
+46
+26
+number
+math op
+var/fn
+connective
+quant./neg.
+content
+function
+number
+math op
+var/fn
+connective
+quant./neg.
+content
+function
+0%
+20%
+40%
+60%
+80%
+100%
+Per-class retention rate
+Quantitative
+Logical
+Narrative
+MIST (ours)
+GoGI-ℓ1
+Perplexity
+Attn-rollout
+Figure 8: What each scorer keeps under compression (GSM8K, Qwen2.5-1.5B-Instruct). Tokens classified
+using the taxonomy in Table 2. Left. How each method allocates its 50% retention budget across the 7 token types.
+Right. Per-class retention rate: for each class (x-axis), the fraction of class tokens retained by each method.
+Type
+Definition
+Examples
+Quantitative
+number
+integers, decimals, frac-
+tions, percentages
+15, 3.14
+math op
+arithmetic
+operators
+and relations
++, −, ×, ÷, =, ≥
+var/fn
+single-letter variables
+and math functions
+x, y, sin, log
+Logical
+connective
+causal / inferential / se-
+quential glue
+so,
+if,
+then,
+because
+quant./neg. quantifiers and negation
+markers
+all, some, no, not
+Narrative
+content
+nouns,
+verbs,
+adjec-
+tives, adverbs
+Janet,
+eggs,
+calculate
+function
+articles,
+prepositions,
+pronouns, auxiliaries
+the, of, is, she
+Table 2: Token taxonomy used in the analysis.
+left panel shows how each method allocates its
+retained-token budget across token classes. MIST
+allocates a larger share of its budget to quantitative
+tokens than heuristic baselines do: 29% to numbers
+and 10% to mathematical operators, while still re-
+taining content and function words for local coher-
+ence. Within these classes, MIST also retains the
+highest fraction: 75% of all numbers and 66% of
+all mathematical operators (Figure 8 right). In con-
+trast, attention rollout and perplexity allocate only
+7% and 12% of their budgets to numbers, retaining
+22% and 33% of number tokens, respectively.
+MIST is therefore the only scorer that both
+over-allocates budget to Quantitative tokens and
+achieves the highest within-class retention for them.
+Attention rollout concentrates on frequent opera-
+tors and function words that often act as attention
+hubs, while perplexity tends to conflate surprisal,
+retaining high-surprisal but information-light to-
+kens such as therefore and so.
+This pattern is
+consistent with the diagnosis in §4.2: heuristic
+scorers concentrate on syntactically prominent but
+information-light tokens, while MIST’s saliency-
+derived ranking aligns with the tokens that carry
+the answer-relevant computation.
+4.6
+Case Study
+Figure 9 visualizes MIST’s saliency on a three-step
+GSM8K chain. Necessity bϕ assigns high saliency
+to tokens that the full-chain computation depends
+on, concentrating on the intermediate numerical
+facts ($4, 30) and the final answer $120. Suffi-
+ciency bψ instead highlights a related but distinct set
+of tokens, including those associated with buying,
+spending, currency, and equality, whose residual
+states carry answer-relevant information when sup-
+plied to the no-chain computation. The two views
+overlap on some answer-bearing tokens but also
+emphasize different parts of the reasoning trace.
+Combining these signals, the unified MIST score
+retains tokens around the arithmetic computation
+$4 × 30 = $120 together with the answer-bearing
+phrase “spends $120”, preserving both quantita-
+tive anchors and the local semantic context that
+binds them, and matching the class-level allocation
+reported in §4.5.
+5
+Conclusion
+We present MIST, a model-internal method for
+token-level CoT compression. MIST defines to-
+ken importance operationally through two com-
+plementary interventions instantiated on the resid-
+ual stream, necessity and sufficiency, and converts
+both into a tractable per-token scorer via first-order
+Taylor approximations, reducing the cost of token-
+wise interventions to two backward passes per
+chain. Extensive empirical evaluations across di-
+verse datasets and models demonstrate the effec-
+tiveness of our proposed method.
+8
+
+Limitations
+Model scale and gradient access.
+Our experi-
+ments use 1.5B to 8B instruction-tuned models.
+Whether the saliency signal remains similarly con-
+centrated in larger models is not established. Be-
+sides, MIST requires access to the target model’s
+internal activations and gradients, so it does not
+apply to black-box API-only systems.
+Evaluation domain.
+Our four benchmarks span
+mathematical and general-domain reasoning. Fu-
+ture work can extend the framework to open-ended
+generation, code generation, or multi-turn dialogue
+to further validate the effectiveness of the proposed
+method.
+Approximate intervention scores.
+MIST ap-
+proximates the necessity and sufficiency interven-
+tions with their first-order Taylor terms in the resid-
+ual stream. Because transformer computations are
+nonlinear, higher-order interactions among tokens,
+layers, and heads are not captured, so the MIST
+score is a model-internal saliency estimator rather
+than an exact causal decomposition.
+References
+Samira Abnar and Willem Zuidema. 2020. Quantifying
+attention flow in transformers. In Proceedings of the
+58th annual meeting of the association for computa-
+tional linguistics, pages 4190–4197.
+Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian,
+Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias
+Plappert, Jerry Tworek, Jacob Hilton, Reiichiro
+Nakano, and 1 others. 2021.
+Training verifiers
+to solve math word problems.
+arXiv preprint
+arXiv:2110.14168.
+Nelson Elhage, Neel Nanda, Catherine Olsson, Tom
+Henighan, Nicholas Joseph, Ben Mann, Amanda
+Askell, Yuntao Bai, Anna Chen, Tom Conerly, and
+1 others. 2021.
+A mathematical framework for
+transformer circuits. Transformer Circuits Thread,
+1(1):12.
+Asma Ghandeharioun, Avi Caciularu, Adam Pearce, Lu-
+cas Dixon, and Mor Geva. 2024. Patchscopes: A
+unifying framework for inspecting hidden represen-
+tations of language models. In International Con-
+ference on Machine Learning, pages 15466–15490.
+PMLR.
+Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri,
+Abhinav Pandey, Abhishek Kadian, Ahmad Al-
+Dahle, Aiesha Letman, Akhil Mathur, Alan Schelten,
+Alex Vaughan, and 1 others. 2024. The llama 3 herd
+of models. arXiv preprint arXiv:2407.21783.
+Tingxu Han, Zhenting Wang, Chunrong Fang, Shiyu
+Zhao, Shiqing Ma, and Zhenyu Chen. 2025. Token-
+budget-aware llm reasoning. In Findings of the As-
+sociation for Computational Linguistics: ACL 2025,
+pages 24842–24855.
+Shibo Hao, Sainbayar Sukhbaatar, DiJia Su, Xian Li,
+Zhiting Hu, Jason Weston, and Yuandong Tian. 2024.
+Training large language models to reason in a contin-
+uous latent space. arXiv preprint arXiv:2412.06769.
+Stefan Heimersheim and Neel Nanda. 2024. How to
+use and interpret activation patching. arXiv preprint
+arXiv:2404.15255.
+Dan Hendrycks, Collin Burns, Saurav Kadavath, Akul
+Arora, Steven Basart, Eric Tang, Dawn Song, and
+Jacob Steinhardt. 2021. Measuring mathematical
+problem solving with the MATH dataset. In Thirty-
+fifth Conference on Neural Information Processing
+Systems Datasets and Benchmarks Track (Round 2).
+Albert Qiaochu Jiang, Alexandre Sablayrolles, Arthur
+Mensch, Chris Bamford, Devendra Singh Chap-
+lot, Diego de Las Casas, Florian Bressand, Gi-
+anna Lengyel, Guillaume Lample, Lucile Saulnier,
+Lélio Renard Lavaud, Marie-Anne Lachaux, Pierre
+Stock, Teven Le Scao, Thibaut Lavril, Thomas Wang,
+Timothée Lacroix, and William El Sayed. 2023a.
+Mistral 7b. ArXiv, abs/2310.06825.
+Huiqiang Jiang, Qianhui Wu, Chin-Yew Lin, Yuqing
+Yang, and Lili Qiu. 2023b. Llmlingua: Compressing
+prompts for accelerated inference of large language
+models. In Proceedings of the 2023 conference on
+empirical methods in natural language processing,
+pages 13358–13376.
+Takeshi Kojima, Shixiang Shane Gu, Machel Reid, Yu-
+taka Matsuo, and Yusuke Iwasawa. 2022. Large lan-
+guage models are zero-shot reasoners. Advances in
+neural information processing systems, 35:22199–
+22213.
+Zeju Li, Jianyuan Zhong, Ziyang Zheng, Xiangyu Wen,
+Zhijian Xu, Yingying Cheng, Fan Zhang, and Qiang
+Xu. 2026. Making slow thinking faster: Compressing
+llm chain-of-thought via step entropy. In The Four-
+teenth International Conference on Learning Repre-
+sentations.
+Xinyin Ma, Guangnian Wan, Runpeng Yu, Gongfan
+Fang, and Xinchao Wang. 2025. Cot-valve: Length-
+compressible chain-of-thought tuning. In Proceed-
+ings of the 63rd Annual Meeting of the Association
+for Computational Linguistics (Volume 1: Long Pa-
+pers), pages 6025–6035.
+Kevin Meng, David Bau, Alex Andonian, and Yonatan
+Belinkov. 2022. Locating and editing factual associa-
+tions in gpt. Advances in neural information process-
+ing systems, 35:17359–17372.
+Tergel Munkhbat, Namgyu Ho, Seo Hyun Kim, Yongjin
+Yang, Yujin Kim, and Se-Young Yun. 2025. Self-
+training elicits concise reasoning in large language
+9
+
+models. In Findings of the Association for Computa-
+tional Linguistics: ACL 2025, pages 25127–25152.
+nostalgebraist. 2020. interpreting gpt: the logit lens.
+LessWrong.
+Zhuoshi Pan, Qianhui Wu, Huiqiang Jiang, Menglin
+Xia, Xufang Luo, Jue Zhang, Qingwei Lin, Victor
+Rühle, Yuqing Yang, Chin-Yew Lin, and 1 others.
+2024. Llmlingua-2: Data distillation for efficient
+and faithful task-agnostic prompt compression. In
+Findings of the Association for Computational Lin-
+guistics: ACL 2024, pages 963–981.
+Zhenyi Shen, Hanqi Yan, Linhai Zhang, Zhanghao Hu,
+Yali Du, and Yulan He. 2025.
+Codi: Compress-
+ing chain-of-thought into continuous space via self-
+distillation. In Proceedings of the 2025 Conference
+on Empirical Methods in Natural Language Process-
+ing, pages 677–693.
+Janvijay Singh and Dilek Hakkani-Tür. 2026. Do llms
+encode functional importance of reasoning tokens?
+arXiv preprint arXiv:2601.03066.
+Mirac Suzgun, Nathan Scales, Nathanael Schärli, Se-
+bastian Gehrmann, Yi Tay, Hyung Won Chung,
+Aakanksha Chowdhery, Quoc Le, Ed Chi, Denny
+Zhou, and 1 others. 2023. Challenging big-bench
+tasks and whether chain-of-thought can solve them.
+In Findings of the Association for Computational
+Linguistics: ACL 2023, pages 13003–13051.
+Aaquib Syed, Can Rager, and Arthur Conmy. 2024.
+Attribution patching outperforms automated circuit
+discovery. In Proceedings of the 7th BlackboxNLP
+Workshop: Analyzing and Interpreting Neural Net-
+works for NLP, pages 407–416.
+Qwen Team. 2024. Qwen2.5: A party of foundation
+models.
+Jesse Vig, Sebastian Gehrmann, Yonatan Belinkov,
+Sharon Qian, Daniel Nevo, Yaron Singer, and Stuart
+Shieber. 2020. Investigating gender bias in language
+models using causal mediation analysis. Advances
+in neural information processing systems, 33:12388–
+12401.
+Xuezhi Wang, Jason Wei, Dale Schuurmans, Quoc V Le,
+Ed H. Chi, Sharan Narang, Aakanksha Chowdhery,
+and Denny Zhou. 2023. Self-consistency improves
+chain of thought reasoning in language models. In
+The Eleventh International Conference on Learning
+Representations.
+Yubo Wang, Xueguang Ma, Ge Zhang, Yuansheng Ni,
+Abhranil Chandra, Shiguang Guo, Weiming Ren,
+Aaran Arulraj, Xuan He, Ziyan Jiang, Tianle Li, Max
+Ku, Kai Wang, Alex Zhuang, Rongqi Fan, Xiang
+Yue, and Wenhu Chen. 2024. MMLU-pro: A more
+robust and challenging multi-task language under-
+standing benchmark. In The Thirty-eight Conference
+on Neural Information Processing Systems Datasets
+and Benchmarks Track.
+Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten
+Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny Zhou,
+and 1 others. 2022. Chain-of-thought prompting elic-
+its reasoning in large language models. Advances
+in neural information processing systems, 35:24824–
+24837.
+Heming Xia, Chak Tou Leong, Wenjie Wang, Yongqi
+Li, and Wenjie Li. 2025. Tokenskip: Controllable
+chain-of-thought compression in llms. In Proceed-
+ings of the 2025 Conference on Empirical Methods
+in Natural Language Processing, pages 3351–3363.
+Silei Xu, Wenhao Xie, Lingxiao Zhao, and Pengcheng
+He. 2025. Chain of draft: Thinking faster by writing
+less. arXiv preprint arXiv:2502.18600.
+Fred Zhang and Neel Nanda. 2024. Towards best prac-
+tices of activation patching in language models: Met-
+rics and methods. In The Twelfth International Con-
+ference on Learning Representations.
+Zhenyu Zhang, Ying Sheng, Tianyi Zhou, Tianlong
+Chen, Lianmin Zheng, Ruisi Cai, Zhao Song, Yuan-
+dong Tian, Christopher Re, Clark Barrett, Zhangyang
+Wang, and Beidi Chen. 2023. H2o: Heavy-hitter ora-
+cle for efficient generative inference of large language
+models. In Thirty-seventh Conference on Neural In-
+formation Processing Systems.
+Ren Zhuang, Ben Wang, and Shuifa Sun. 2025. Ac-
+celerating chain-of-thought reasoning: When goal-
+gradient importance meets dynamic skipping. arXiv
+preprint arXiv:2505.08392.
+A
+Dataset Details
+Table 3 summarizes the per-dataset split sizes
+used throughout our evaluation pipeline. Below
+we describe per-dataset preprocessing and self-
+generation hyperparameters.
+Dataset
+Train
+Test
+GSM8K
+7,473
+1,319
+MATH
+7,500
+500
+MMLU-Pro
+10,501
+1,531
+BBH-MC
+3,258
+816
+Table 3: Dataset split sizes used in our evaluation
+pipeline.
+GSM8K.
+We use the standard train and test
+splits from the GSM8K release without further fil-
+tering.
+MATH.
+The training set is the concatenation of
+the seven Hendrycks (Hendrycks et al., 2021) sub-
+jects; the test set is the canonical MATH-500 sub-
+set.
+10
+
+Question
+Jon buys 2 coffees a day from his favorite coffee shop. They cost $2
+each. How much does he spend in April?
+Necessity
+Sufficiency
+MIST
+Gold answer
+120
+To find out how much Jon spends in April, we need to
+ calculate the total number of days in April and multiply it
+ by the daily cost of coffees.  
+1. Determine the number of days in April: April has 30 days
+.  
+2. Calculate the daily cost of coffees: Jon buys 2 coffees a
+ day at $2 each, so the daily cost is 2 * $2 = $4.  
+3. Multiply the daily cost by the number of days in April: $4
+ * 30 = $120.  
+Therefore, Jon spends $120 in April
+To find out how much Jon spends in April, we need to
+ calculate the total number of days in April and multiply it
+ by the daily cost of coffees.  
+1. Determine the number of days in April: April has 30 days
+.  
+2. Calculate the daily cost of coffees: Jon buys 2 coffees a
+ day at $2 each, so the daily cost is 2 * $2 = $4.  
+3. Multiply the daily cost by the number of days in April: $4
+ * 30 = $120.  
+Therefore, Jon spends $120 in April
+To find out how much Jon spends in April, we need to
+ calculate the total number of days in April and multiply it
+ by the daily cost of coffees.  
+1. Determine the number of days in April: April has 30 days
+.  
+2. Calculate the daily cost of coffees: Jon buys 2 coffees a
+ day at $2 each, so the daily cost is 2 * $2 = $4.  
+3. Multiply the daily cost by the number of days in April: $4
+ * 30 = $120.  
+Therefore, Jon spends $120 in April
+Figure 9: Per-token MIST saliency on a GSM8K chain
+(Qwen2.5-1.5B-Instruct, γ = 0.5)
+MMLU-Pro.
+The original release does not pro-
+vide a standard training split, supplying only a
+12,032-example test split and a 70-example few-
+shot validation set. We therefore randomly partition
+the 12,032 examples into 10,501 training and 1,531
+evaluation examples.
+BBH-MC.
+We use the 17 letter-multiple-choice
+subtasks of BIG-Bench Hard (Suzgun et al., 2023),
+excluding the 10 binary or free-form subtasks.
+BBH does not provide a standard training split,
+supplying only a test set per subtask, so we ran-
+domly partition the available examples into 3,258
+training and 816 evaluation examples (80/20 split).
+B
+Baseline Details
+This appendix details the nine baselines compared
+in Section 4.1.
+Subtask
+Letters
+N
+date_understanding
+A–F
+250
+disambiguation_qa
+A–C
+250
+geometric_shapes
+A–K
+250
+hyperbaton
+A–B
+250
+logical_deduction_three_objects
+A–C
+250
+logical_deduction_five_objects
+A–E
+250
+logical_deduction_seven_objects
+A–G
+250
+movie_recommendation
+A–D
+250
+penguins_in_a_table
+A–E
+146
+reasoning_about_colored_objects
+A–R
+250
+ruin_names
+A–D
+250
+salient_translation_error_detection
+A–F
+250
+snarks
+A–B
+178
+temporal_sequences
+A–D
+250
+tracking_shuffled_objects_three_objects
+A–C
+250
+tracking_shuffled_objects_five_objects
+A–E
+250
+tracking_shuffled_objects_seven_objects
+A–G
+250
+Total
+4,074
+Table 4: The 17 subtasks of BIG-Bench Hard used
+in our MIST evaluation. “Letters” shows the answer-
+letter range; “N” is the original number of examples per
+subtask before our 80/20 partition.
+Prompt-reduce.
+The frozen target model is
+prompted with the chain-of-thought instruction to-
+gether with the reduction directive from TokenSkip
+(Xia et al., 2025, Table 1), which appends please
+reduce (1−γ)×100% of the words in your
+CoT. This is a frozen-model, γ-aware baseline that
+compresses the chain in a single forward pass with-
+out any finetuning.
+Full-chain.
+The LoRA adapter is finetuned on
+the unmodified self-generated chains (γ = 1.0, no
+token selection).
+No-chain.
+The LoRA adapter is finetuned on the
+self-generated answer span only, with the entire
+reasoning chain stripped.
+Uniform.
+For each chain, a uniformly random
+subset of ⌈γT⌉tokens is retained at each retention
+budget.
+TokenSkip.
+We follow Xia et al. (2025) and use
+a pretrained LLMLingua-2 (Pan et al., 2024) clas-
+sifier as the external token scorer. The classifier
+assigns per-token importance values to each self-
+generated chain, and the top-⌈γT⌉tokens are re-
+tained at each retention budget.
+GoGI-ℓ1.
+We use the single-layer gradient norm
+scorer from Adaptive GoGI-Skip (Zhuang et al.,
+2025). The gradient of log pM(a | x, c) is taken
+at the residual state of the last causally connected
+layer (l⋆= max(L −2, 0)), and the per-token
+11
+
+score is ∥∇h(l⋆)
+i
+log pM∥1. We adopt the single-
+layer formulation as the closest gradient-norm-only
+counterpart to MIST.
+Perplexity.
+We use per-token self-information
+si
+=
+−log pM(ti
+|
+x, t<i) following the
+LLMLingua-1 prompt compression scorer (Jiang
+et al., 2023b); higher-self-information tokens are
+retained, on the grounds that they carry more con-
+ditional information.
+Attention
+rollout.
+Following Abnar and
+Zuidema (2020), we aggregate per-head attention
+weights into a cross-layer importance score. Start-
+ing from the identity, the cumulative attention ma-
+trix at layer l is
+A(l) = ( eA(l) + I) A(l−1),
+A(0) = I,
+(9)
+where eA(l) is the head-averaged attention matrix at
+layer l. The per-token score is the column sum of
+A(L) at the answer position(s).
+H2O.
+We use the Heavy-Hitter Oracle score
+(Zhang et al., 2023), defined as the cumulative
+attention mass received by each token across all
+layers and heads from the answer position(s):
+score(i) =
+X
+l,h
+X
+j∈answer
+A(l,h)
+j,i .
+(10)
+C
+Training, Evaluation, and
+Implementation Details
+This appendix details the pipeline, hyperparame-
+ters, evaluation protocol, and hardware configura-
+tion used in all experiments.
+Pipeline overview.
+For each (model, dataset) cell
+we follow a three-stage protocol: (i) self-generate
+CoT chains from the target model on the train-
+ing set and retain those whose extracted answer
+matches the gold label; (ii) score each retained
+chain with MIST or the baseline scorer, produc-
+ing per-token importance values; and (iii) for each
+retention budget γ ∈{0.5, 0.6, 0.7, 0.8, 0.9}, re-
+tain the top-⌈γT⌉tokens of every chain, fine-tune
+the target model with a LoRA adapter on the re-
+sulting compressed chains, and evaluate by greedy
+decoding on the test set.
+We distinguish two ratios that reviewers may oth-
+erwise conflate. The training retention budget γ is
+the per-chain fraction of CoT tokens kept when con-
+structing the SFT supervision (so γ = 0.7 retains
+70% of the original chain’s tokens). The reported
+inference compression rate is the relative reduction
+in total tokens generated by the fine-tuned adapter,
+measured against the full-chain LoRA baseline.
+The two need not coincide: the adapter learns its
+own length policy from the γ-mixture and, espe-
+cially on smaller models, often produces chains
+shorter than the average retention floor would sug-
+gest.
+Self-generation (Phase 0).
+We greedy-decode
+the target model on training-set queries using tem-
+perature 0 and top-p 1.0. The maximum num-
+ber of new tokens per chain is set per dataset to
+match each task’s typical chain length: 512 for
+GSM8K, 768 for MMLU-Pro and BBH-MC, and
+1,024 for MATH. Generations are filtered to keep
+only chains whose extracted answer matches the
+gold label. Self-generation uses the SDPA attention
+backend and bfloat16 precision for numerical sta-
+bility with batched generation (batch size 32).
+Reproducibility and fairness.
+The same set of
+self-generated chains, sampled once per (model,
+dataset) cell, is reused across all scorers (MIST
+and all baselines), so any performance difference
+is attributable to the scoring stage rather than to
+differences in supervision data.
+Token scoring (Phase 1).
+For each retained
+chain, computing MIST requires two backward
+passes through the target model: a source backward
+through the answer log-likelihood log pM(a | x, c)
+on the full prompt-and-chain input, and a target
+backward through log pM(a | x, ∅) on the prompt-
+only no-chain input. We register retain-grad hooks
+at the output of every transformer block, so a
+single source backward simultaneously exposes
+∇h(l)
+i log psrc
+M for every chain position i and every
+layer l (Appendix D.4); the target backward analo-
+gously exposes the per-layer gradient at the target’s
+final position. The per-layer activations h(l),src
+i
+an

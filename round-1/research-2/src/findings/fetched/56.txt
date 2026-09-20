@@ -1,0 +1,168 @@
+URL: https://huggingface.co/datasets/dgslibisey/MuSiQue
+Type: HTML
+Length: 15604 chars
+
+--- Content ---
+
+[ Hugging Face](/)
+
+  * [ Models ](/models)
+  * [ Datasets ](/datasets)
+  * [ Spaces ](/spaces)
+  * [ Buckets new](/storage)
+  * [ Docs ](/docs)
+  * [ Enterprise ](/enterprise)
+  * [Pricing](/pricing)
+  *     * Website
+
+      * [ Tasks](/tasks)
+      * [ HuggingChat](/chat)
+      * [ Collections](/collections)
+      * [ Languages](/languages)
+      * [ Organizations](/organizations)
+    * Community
+
+      * [ Blog](/blog)
+      * [ Posts](/posts)
+      * [ Daily Papers](/papers)
+      * [ Hardware](/hardware)
+      * [ Learn](/learn)
+      * [ Discord](/join/discord)
+      * [ Forum](https://discuss.huggingface.co/)
+      * [ GitHub](https://github.com/huggingface)
+    * Solutions
+
+      * [ Team & Enterprise](/enterprise)
+      * [ Hugging Face PRO](/pro)
+      * [ Enterprise Support](/support)
+      * [ Inference Providers](/inference/models)
+      * [ Inference Endpoints](/inference-endpoints)
+      * [ Storage Buckets](/storage)
+
+  * * * *
+
+  * [Log In](/login)
+  * [Sign Up](/join)
+
+
+
+# [ Datasets:](/datasets)
+
+* * *
+
+[ ](/dgslibisey)
+
+[dgslibisey](/dgslibisey)
+
+/
+
+[MuSiQue](/datasets/dgslibisey/MuSiQue)
+
+Like 38
+
+Modalities: [ Text ](/datasets?modality=modality%3Atext)
+
+Formats: [ json ](/datasets?format=format%3Ajson)
+
+Size: [ 10K - 100K ](/datasets?size_categories=size_categories%3A10K%3Cn%3C100K)
+
+Libraries: [ Datasets ](/datasets?library=library%3Adatasets)[ pandas ](/datasets?library=library%3Apandas)
+
+Croissant
+
+\+ 1
+
+[ Dataset card ](/datasets/dgslibisey/MuSiQue)[ Data Studio ](/datasets/dgslibisey/MuSiQue/viewer/)[ Files Files and versions xet ](/datasets/dgslibisey/MuSiQue/tree/main)[ Community ](/datasets/dgslibisey/MuSiQue/discussions)
+
+Dataset Viewer
+
+[ Auto-converted to Parquet](/datasets/dgslibisey/MuSiQue/tree/refs%2Fconvert%2Fparquet/default) API Embed [ Duplicate](/datasets/dgslibisey/MuSiQue?duplicate=true) Data Studio
+
+Subset (1)
+
+default · 22.4k rows
+
+default (22.4k rows)
+
+Split (2)
+
+train · 19.9k rows
+
+train (19.9k rows)validation (2.42k rows)
+
+SQL
+
+Console
+
+id stringlengths 13 34 | paragraphs list | question stringlengths 29 283 | question_decomposition list | answer stringlengths 1 100 | answer_aliases sequence | answerable bool 1 class  
+---|---|---|---|---|---|---  
+2hop__482757_12019 |  [ { "idx": 0, "title": "Pakistan Super League", "paragraph_text": "Pakistan Super League (Urdu: پاکستان سپر لیگ ‬ ‎; PSL) is a Twenty20 cricket league, founded in Lahore on 9 September 2015 with five teams and now comprises six teams. Instead of operating as an association of independently owned teams, th... |  When was the institute that owned The Collegian founded? |  [ { "id": 482757, "question": "The Collegian >> owned by", "answer": "Houston Baptist University", "paragraph_support_idx": 5 }, { "id": 12019, "question": "When was #1 founded?", "answer": "1960", "paragraph_support_idx": 9 } ] |  1960 |  [] | true  
+2hop__129292_160863 |  [ { "idx": 0, "title": "The Spy in Black", "paragraph_text": "\"The Spy in Black\" was filmed at Denham Studios, with location shooting at Northchurch Common in Berkhamsted, Hertfordshire and in Orkney, Scotland. The film wrapped production on 24 December 1938 and was released in the U.K. on 12 August 193... |  What year saw the creation of the region where the county of Hertfordshire is located? |  [ { "id": 129292, "question": "In which state is Hertfordshire located?", "answer": "East of England", "paragraph_support_idx": 6 }, { "id": 160863, "question": "When was #1 birthed?", "answer": "1994", "paragraph_support_idx": 10 } ] |  1994 |  [] | true  
+2hop__679261_120616 |  [ { "idx": 0, "title": "PolyGram Filmed Entertainment", "paragraph_text": "PolyGram Filmed Entertainment (formerly known as PolyGram Films and PolyGram Pictures or simply PFE) was a British-American film studio founded in 1980 which became a European competitor to Hollywood, but was eventually sold to Sea... |  When was the abolishment of the studio that distributed The Game? |  [ { "id": 679261, "question": "The Game >> distributed by", "answer": "PolyGram Filmed Entertainment", "paragraph_support_idx": 17 }, { "id": 120616, "question": "When was #1 abolished?", "answer": "1999", "paragraph_support_idx": 0 } ] |  1999 |  [] | true  
+2hop__813857_127131 |  [ { "idx": 0, "title": "PopSister", "paragraph_text": "PopSister was a Japanese monthly gal-shibuya-kei-oriented fashion magazine published by Kadokawa Publishing & Co.. Launched in 2010 as the \"older sister\" magazine of \"Popteen\", \"PopSister\" was targeted at females in their teens and early 20s.", ... |  When was the publisher of Crux launched? |  [ { "id": 813857, "question": "Crux >> publisher", "answer": "CrossGen", "paragraph_support_idx": 17 }, { "id": 127131, "question": "When was #1 launched?", "answer": "1998", "paragraph_support_idx": 12 } ] |  1998 |  [] | true  
+2hop__144408_215084 |  [ { "idx": 0, "title": "Jan Anton van der Baren", "paragraph_text": "Jan Anton van der Baren (variations on the first name: 'Jan Anthonie', 'Jan Antonius', 'Jean-Antoine' and 'Johannes Antonius') (1615 – 1 January 1687) was a Flemish painter, draughtsman, priest and museum curator active in Brussels and V... |  Jan Šindel's was born in what country? |  [ { "id": 144408, "question": "What is Jan Šindel's birthplace?", "answer": "Hradec Králové", "paragraph_support_idx": 3 }, { "id": 215084, "question": "#1 >> country", "answer": "Czech Republic", "paragraph_support_idx": 11 } ] |  Czech Republic |  [ "CZE", "cz", "cze" ] | true  
+2hop__63119_153058 |  [ { "idx": 0, "title": "Buddhism", "paragraph_text": "Mahayana Buddhism received significant theoretical grounding from Nagarjuna (perhaps c. 150–250 CE), arguably the most influential scholar within the Mahayana tradition. Nagarjuna's primary contribution to Buddhist philosophy was the systematic exposit... |  What city is the person who broadened the doctrine of philosophy of language from? |  [ { "id": 63119, "question": "who broadened the doctrine of philosophy of language", "answer": "Søren Kierkegaard", "paragraph_support_idx": 14 }, { "id": 153058, "question": "What city is #1 from?", "answer": "Copenhagen", "paragraph_support_idx": 11 } ] |  Copenhagen |  [] | true  
+2hop__63593_126904 |  [ { "idx": 0, "title": "2016 World Series", "paragraph_text": "The 2016 World Series was the championship series of Major League Baseball's (MLB) 2016 season. The 112th edition of the World Series, it was a best - of - seven playoff between the National League (NL) champion Chicago Cubs and the American L... |  When was the baseball team winning the world series in 2015 baseball created? |  [ { "id": 63593, "question": "who won the world series in 2015 baseball", "answer": "Kansas City Royals", "paragraph_support_idx": 10 }, { "id": 126904, "question": "When was #1 created?", "answer": "1969", "paragraph_support_idx": 5 } ] |  1969 |  [] | true  
+2hop__125960_675104 |  [ { "idx": 0, "title": "Baldevins bryllup", "paragraph_text": "Baldevins bryllup () is a 1926 Norwegian comedy film directed by George Schnéevoigt, starring Einar Sissener and Victor Bernau. The film is based on a play by Vilhelm Krag, and tells the story of how Simen Sørensen (Bernau) manages to get his ... |  Where did the Baldevins bryllup director die? |  [ { "id": 125960, "question": "Who directed Baldevins bryllup?", "answer": "George Schnéevoigt", "paragraph_support_idx": 0 }, { "id": 675104, "question": "#1 >> place of death", "answer": "Copenhagen", "paragraph_support_idx": 10 } ] |  Copenhagen |  [] | true  
+2hop__86989_14904 |  [ { "idx": 0, "title": "The Man Hunter", "paragraph_text": "The Man Hunter is a 1930 American pre-Code all-talking adventure drama that stars Rin Tin Tin. The film was released by Warner Brothers, and was adapted by James A. Starr (who wrote the screenplay and dialogue) from a story by Lillie Hayward who ... |  Who was thee first president of the association that wrote the code of ethics for psychology? |  [ { "id": 86989, "question": "who wrote the code of ethics for psychology", "answer": "The American Psychological Association", "paragraph_support_idx": 14 }, { "id": 14904, "question": "Who was the first president of #1 ?", "answer": "G. Stanley Hall", "paragraph_support_idx": 8 ... |  G. Stanley Hall |  [ "Stanley Hall" ] | true  
+2hop__28482_46077 |  [ { "idx": 0, "title": "Pavlodar", "paragraph_text": "Pavlodar (Kazakh and Russian: Павлодар) is a city in northeastern Kazakhstan and the capital of Pavlodar Region. It is located 450 km northeast of the national capital Nur-Sultan, and 405 km southeast of the Russian city of Omsk along the Irtysh River.... |  Which major Russian city borders the body of water in which Saaremaa is located? |  [ { "id": 28482, "question": "Where is Saaremaa located?", "answer": "the Baltic Sea", "paragraph_support_idx": 17 }, { "id": 46077, "question": "which major russian city borders #1", "answer": "Saint Petersburg", "paragraph_support_idx": 4 } ] |  Saint Petersburg |  [ "Petersburg" ] | true  
+2hop__465230_21416 |  [ { "idx": 0, "title": "Affirmative action in the United States", "paragraph_text": "In the 1960 presidential election, Democratic candidate and future President John F. Kennedy \"criticized President Eisenhower for not ending discrimination in federally supported housing\" and \"advocated a permanent Fai... |  When was the employer of John J. Collins established? |  [ { "id": 465230, "question": "John J. Collins >> employer", "answer": "Yale Divinity School", "paragraph_support_idx": 16 }, { "id": 21416, "question": "When was #1 established?", "answer": "1822", "paragraph_support_idx": 2 } ] |  1822 |  [] | true  
+2hop__30913_30900 |  [ { "idx": 0, "title": "John Kerry", "paragraph_text": "During his bid to be elected president in 2004, Kerry frequently criticized President George W. Bush for the Iraq War. While Kerry had initially voted in support of authorizing President Bush to use force in dealing with Saddam Hussein, he voted agai... |  When did Bush declare the war causing Kerry to criticize him during the 2004 campaign? |  [ { "id": 30913, "question": "Why did Kerry criticize Bush during the 2004 campaign?", "answer": "for the Iraq War", "paragraph_support_idx": 0 }, { "id": 30900, "question": "When did Bush declare #1 ?", "answer": "2003", "paragraph_support_idx": 16 } ] |  2003 |  [] | true  
+2hop__121758_211071 |  [ { "idx": 0, "title": "97 Aces Go Places", "paragraph_text": "97 Aces Go Places is a 1997 Hong Kong action comedy film directed by Chin Kar-lok and starring Alan Tam, Tony Leung, Christy Chung, Donna Chu and Francis Ng. The film is the sixth and final installment of the \"Aces Go Places\" film series and... |  What is the college Francis Walsingham attended an instance of? |  [ { "id": 121758, "question": "What college did Francis Walsingham go to?", "answer": "King's College", "paragraph_support_idx": 11 }, { "id": 211071, "question": "#1 >> instance of", "answer": "college of the University of Cambridge", "paragraph_support_idx": 13 } ] |  college of the University of Cambridge |  [ "Cambridge", "University of Cambridge", "Cambridge University" ] | true  
+2hop__121445_444063 |  [ { "idx": 0, "title": "Franz Ries", "paragraph_text": "Franz Ries (Berlin, 7 April 1846 – Naumburg, 20 January 1932) was a Romantic German violinist and composer, son of Hubert Ries. He studied at the Paris Conservatory. He also worked in the publishing business.", "is_supporting": false }, { ... |  What type of university is the college Kyeon Mi-ri attended? |  [ { "id": 121445, "question": "The college Kyeon Mi-ri attended was what?", "answer": "Sejong University", "paragraph_support_idx": 15 }, { "id": 444063, "question": "#1 >> instance of", "answer": "private university", "paragraph_support_idx": 3 } ] |  private university |  [ "uni", "university", "Private university" ] | true  
+2hop__446183_21489 |  [ { "idx": 0, "title": "Kaskitayo, Edmonton", "paragraph_text": "Kaskitayo is a residential area in the southwest portion of the City of Edmonton in Alberta, Canada. It was established in 1973 through Edmonton City Council's adoption of the Kaskitayo Outline Plan, which guides the overall development of t... |  In what year was the author of The Insider's Guide to the Colleges established? |  [ { "id": 446183, "question": "The Insider's Guide to the Colleges >> author", "answer": "Yale Daily News", "paragraph_support_idx": 17 }, { "id": 21489, "question": "In what year was #1 established?", "answer": "1878", "paragraph_support_idx": 18 } ] |  1878 |  [] | true  
+2hop__7483_160863 |  [ { "idx": 0, "title": "Royal Institute of British Architects", "paragraph_text": "RIBA Visiting Boards continue to assess courses for exemption from the RIBA's examinations in architecture. Under arrangements made in 2011 the validation criteria are jointly held by the RIBA and the Architects Registratio... |  When was the territory covered by RIBA's Cambridge branch office created? |  [ { "id": 7483, "question": "What territory did RIBA's Cambridge branch office cover?", "answer": "the East of England", "paragraph_support_idx": 17 }, { "id": 160863, "question": "When was #1 birthed?", "answer": "1994", "paragraph_support_idx": 12 } ] |  1994 |  [] | true  
+2hop__2946_2741 |  [ { "idx": 0, "title": "Biblical apocrypha", "paragraph_text": "The preface to the Apocrypha in the Geneva Bible explained that while these books ``were not received by a common consent to be read and expounded publicly in the Church, ''and did not serve`` to prove any point of Christian religion save in ... |  What's the meaning of the name of the school that does not include the Mahayava scriptures in its canon? |  [ { "id": 2946, "question": "What school does not include the Mahayava scriptures in its canon?", "answer": "the Theravada", "paragraph_support_idx": 15 }, { "id": 2741, "question": "#1 means what?", "answer": "The School of the Elders", "paragraph_support_idx": 17 } ] |  The School of the Elders |  [] | true  
+  
+End of preview. [Expand in Data Studio](/datasets/dgslibisey/MuSiQue/viewer/default/train)
+
+* * *
+
+  * [ Previous]()
+  * [1](/datasets/dgslibisey/MuSiQue/viewer/default/train?p=0)
+  * [2](/datasets/dgslibisey/MuSiQue/viewer/default/train?p=1)
+  * [3](/datasets/dgslibisey/MuSiQue/viewer/default/train?p=2)
+  * ...
+  * [200](/datasets/dgslibisey/MuSiQue/viewer/default/train?p=199)
+  * [Next ](/datasets/dgslibisey/MuSiQue/viewer/default/train?p=1)
+
+
+
+No dataset card yet
+
+Copy to bucket new
+
+Use this dataset
+
+Downloads last month
+
+    20,049
+
+Number of rows: 22,355 Total file size: 271 MB
+
+##  Models trained or fine-tuned on dgslibisey/MuSiQue
+
+#### [saytes/SoT_DistilBERT Text Classification • 67M • Updated Mar 11, 2025 • 3.77k • • 7 ](/saytes/SoT_DistilBERT)
+
+#### [UKPLab/GritHopper-7B Sentence Similarity • Updated Jun 5 • 116 • 8 ](/UKPLab/GritHopper-7B)
+
+#### [MindscapeRAG/QRRanker Text Ranking • 3B • Updated Apr 2 • 39 • 11 ](/MindscapeRAG/QRRanker)
+
+#### [Sakatepon/Brujula-450M-DocQA Text Generation • 0.5B • Updated Jul 28 • 15 ](/Sakatepon/Brujula-450M-DocQA)
+
+#### [sandheepp/qwen3.5-0.8b-grpo-musique-h200-m5_5-seed42-f1-floor-fmt Text Generation • Updated May 20 ](/sandheepp/qwen3.5-0.8b-grpo-musique-h200-m5_5-seed42-f1-floor-fmt)
+
+##  Space using dgslibisey/MuSiQue 1
+
+[🎙️ MHamdan/auralynq-rag ](/spaces/MHamdan/auralynq-rag)
+
+System theme
+
+Company
+
+[TOS](/terms-of-service) [Privacy](/privacy) [About](/huggingface) [Careers](https://apply.workable.com/huggingface/) [](/)
+
+Website
+
+[Models](/models) [Datasets](/datasets) [Spaces](/spaces) [Pricing](/pricing) [Docs](/docs)
+

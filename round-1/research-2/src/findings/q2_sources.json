@@ -1,0 +1,129 @@
+[
+  {
+    "url": "https://arxiv.org/pdf/2403.12968",
+    "title": "LLMLingua-2: A Fast and Faithful Task-Agnostic Prompt Compression",
+    "summary": "GPT-4 distillation instruction for word-level compression; chunks contexts at <=512 tokens; Variation Rate filter for hallucination/labeling quality control.",
+    "authors": ["Zhuoshi Pan", "Qianhui Wu", "Huiqiang Jiang", "et al."],
+    "year": 2024,
+    "supporting_passages": [
+      {"quote": "Compress the given text to short expressions, and such that you (GPT-4) can reconstruct it as close as possible to the original. Unlike the usual text compression, I need you to comply with the 5 conditions below: 1. You can ONLY remove unimportant words.", "locator": "§3.1 Instruction Design"},
+      {"quote": "we first segment each long context into multiple chunks, each containing no more than 512 tokens and ending with a period.", "locator": "§3.2 Data Annotation"},
+      {"quote": "we exclude the examples with the top 5% highest variation rates.", "locator": "§3.3 Quality Control, Variation Rate"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2310.06201",
+    "title": "Compressing Context to Enhance Inference Efficiency of Large Language Models (Selective Context)",
+    "summary": "Prunes context by self-information (surprisal) computed by a base causal LM, not by LLM verbal judgment.",
+    "authors": ["Yucheng Li", "Bo Dong", "Chenghua Lin", "Frank Guerin"],
+    "year": 2023,
+    "supporting_passages": [
+      {"quote": "Selective Context evaluates informativeness of lexical units (i.e., tokens, phrases, or sentences) with self-information (Shannon, 1948) computed by a base causal language model.", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2310.04408",
+    "title": "RECOMP: Improving Retrieval-Augmented LMs with Compression and Selective Augmentation",
+    "summary": "Extractive compressor uses a trained dual-encoder to score sentences by inner product with the query; also defines an extractive oracle by brute-force substitution.",
+    "authors": ["Fangyuan Xu", "Weijia Shi", "Eunsol Choi"],
+    "year": 2023,
+    "supporting_passages": [
+      {"quote": "we train a dual encoder model encθ which embeds sentence si and the input sequence x into fixed-dimensional embeddings respectively. Their inner product represents how helpful it would be for the LM M to prepend si to the input x to generate y.", "locator": "§2 Extractive Compressor"},
+      {"quote": "an extractive oracle which selects a sentence in evidence documents that leads to the best task performance.", "locator": "Introduction"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2407.09014",
+    "title": "CompAct: Compressing Retrieved Documents Actively for Question Answering",
+    "summary": "LLM sentence-level selection prompt allows 0-3 + 0-3 sentences (soft band, not fixed K); iterative compression can re-add previously omitted content.",
+    "authors": null,
+    "year": 2024,
+    "supporting_passages": [
+      {"quote": "1. Choose 0 to 3 sentences that directly address the critical points needed to answer the question. Additionally, include 0 to 3 sentences that provide useful context, even if they do not directly answer the question.", "locator": "Table 11, Prompts used in COMPACT"},
+      {"quote": "If certain sentences provide relevant information or implicitly clarify ambiguous points within the question, the LLM is instructed to generate these sentences from the provided documents.", "locator": "Appendix, Sentence-Level Selection"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2305.17926",
+    "title": "Large Language Models are not Fair Evaluators",
+    "summary": "Documents strong positional bias in pairwise LLM judging; proposes Balanced Position Calibration (average score over both orderings).",
+    "authors": ["Peiyi Wang", "Lei Li", "Liang Chen", "et al."],
+    "year": 2023,
+    "supporting_passages": [
+      {"quote": "we evaluate each candidate in both positions across two runs and compute the final score as the average of the two runs.", "locator": "§1, Balanced Position Calibration (BPC)"},
+      {"quote": "Vicuna-13B could beat ChatGPT on 66 over 80 tested queries with ChatGPT as an evaluator.", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2309.03882",
+    "title": "Large Language Models Are Not Robust Multiple Choice Selectors",
+    "summary": "Identifies option-ID token bias (selection bias) in MCQ answering; proposes PriDe debiasing; quantifies large accuracy swings from moving the correct option.",
+    "authors": ["Chujie Zheng", "Hao Zhou", "Fandong Meng", "Jie Zhou", "Minlie Huang"],
+    "year": 2023,
+    "supporting_passages": [
+      {"quote": "moving the golden answers to position D degrades the accuracy of gpt-3.5-turbo by 6.3 (from 67.2 to 60.9). When moving to A, llama-30b is boosted by 15.2 and surpasses gpt-3.5-turbo (68.2 vs. 65.3)", "locator": "§1 Introduction"},
+      {"quote": "llama-30B selects A/B/C/D 34.6% / 27.3% / 22.3% / 15.8% of the time", "locator": "§1 Introduction"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2307.03172",
+    "title": "Lost in the Middle: How Language Models Use Long Contexts",
+    "summary": "U-shaped performance curve: primacy and recency bias, degraded performance for mid-context information.",
+    "authors": ["Nelson F. Liu", "Kevin Lin", "John Hewitt", "Ashwin Paranjape", "Michele Bevilacqua", "Fabio Petroni", "Percy Liang"],
+    "year": 2023,
+    "supporting_passages": [
+      {"quote": "language model performance is highest when relevant information occurs at the very beginning (primacy bias) or end of its input context (recency bias), and performance degrades significantly when models must access and use information located in the middle of its input context.", "locator": "Abstract/Figure 1"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2304.09542",
+    "title": "Is ChatGPT Good at Search? Investigating Large Language Models as Re-Ranking Agents (RankGPT)",
+    "summary": "Zero-shot LLM listwise passage re-ranking; competitive with supervised SOTA; introduces permutation distillation.",
+    "authors": ["Weiwei Sun", "Lingyong Yan", "Xinyu Ma", "Shuaiqiang Wang", "Pengjie Ren", "Zhumin Chen", "Dawei Yin", "Zhaochun Ren"],
+    "year": 2023,
+    "supporting_passages": [
+      {"quote": "properly instructed LLMs can deliver competitive, even superior results to state-of-the-art supervised methods on popular IR benchmarks.", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2310.07712",
+    "title": "Found in the Middle: Permutation Self-Consistency Improves Listwise Ranking in Large Language Models",
+    "summary": "Marginalizes out list order by repeated shuffling and aggregation to reduce positional bias in listwise ranking.",
+    "authors": ["Raphael Tang", "Xinyu Zhang", "Xueguang Ma", "Jimmy Lin", "Ferhan Ture"],
+    "year": 2023,
+    "supporting_passages": [
+      {"quote": "we propose permutation self-consistency, a form of self-consistency over the ranking list outputs of black-box LLMs. Our key idea is to marginalize out different list orders in the prompt to produce an order-independent ranking with less positional bias.", "locator": "Abstract"},
+      {"quote": "consistently increasing the scores of GPT-3.5, GPT-4, and LLaMA v2 (70B; Touvron et al., 2023) by up to 4–17%, 9–24%, and 8–16%, respectively.", "locator": "Introduction"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/1810.12343",
+    "title": "Content Selection in Deep Learning Models of Summarization",
+    "summary": "Establishes lead bias dominance in news summarization; sentence-shuffling ablation shows models rely heavily on position, not content.",
+    "authors": ["Chris Kedzie", "Kathleen McKeown", "Hal Daumé III"],
+    "year": 2018,
+    "supporting_passages": [
+      {"quote": "Sentence position bias dominates the learning signal for news summarization, though not for other domains.", "locator": "§1 main results"},
+      {"quote": "Shuffling reduces lead overlap to 35.2% but the overall system performance drops significantly; the models are not able to identify important information without position.", "locator": "§5 Document Shuffling"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/html/2607.02104v2",
+    "title": "When Can You Debias an LLM Judge? Identifiability Limits, a Test, and Designs for Top-k Ranking",
+    "summary": "Adjacent work on debiasing LLM judges for top-k ranking, surfaced while searching for round-number/fixed-count selection bias; no direct quote extracted.",
+    "authors": null,
+    "year": null,
+    "supporting_passages": [],
+    "verified": false
+  }
+]

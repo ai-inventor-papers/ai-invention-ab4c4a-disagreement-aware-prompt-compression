@@ -1,0 +1,171 @@
+[
+  {
+    "url": "https://arxiv.org/pdf/2409.00729",
+    "title": "ContextCite: Attributing Model Generation to Context",
+    "summary": "Fits a sparse (LASSO) linear surrogate to logit-scaled response probability from ~32-512 random context ablations; defines top-k log-probability drop metric.",
+    "authors": ["Benjamin Cohen-Wang", "Harshay Shah", "Kristian Georgiev", "Aleksander Madry"],
+    "year": 2024,
+    "supporting_passages": [
+      {"quote": "the surrogate model in Figure 2 uses just 32 ablations even though the context comprises 98 sources (in this case, sentences).", "locator": "§3 Context attribution with CONTEXTCITE"},
+      {"quote": "Top-k-drop(τ) = log p_LM(R | C, Q) − log p_LM(R | ABLATE(C, v_top-k(τ)), Q)", "locator": "Definition 2.2"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2411.15102",
+    "title": "AttriBoT: A Bag of Tricks for Efficiently Approximating Leave-One-Out Context Attribution",
+    "summary": "Speeds up exact LOO via KV caching, hierarchical attribution, and proxy models; >300x speedup, tested on HotpotQA examples.",
+    "authors": null,
+    "year": 2024,
+    "supporting_passages": [
+      {"quote": "AttriBoT can provide a >300× speedup while remaining more faithful to a target model's LOO error than prior context attribution methods.", "locator": "Abstract"},
+      {"quote": "We empirically test the assumptions underlying the AttriBoT's underlying methods on examples from Hotpot QA.", "locator": "Figure 1 caption"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://huggingface.co/datasets/hotpotqa/hotpot_qa",
+    "title": "hotpotqa/hotpot_qa dataset card (Hugging Face)",
+    "summary": "Confirms configs (distractor/fullwiki), splits (train/validation), and field schema (id, question, answer, type, level, supporting_facts.title/sent_id, context.title/sentences).",
+    "authors": null,
+    "year": null,
+    "supporting_passages": [
+      {"quote": "{\"title\": [\"Arthur's Magazine\", \"First for Women\"], \"sent_id\": [0, 0]}", "locator": "example row, supporting_facts field"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/1809.09600",
+    "title": "HotpotQA: A Dataset for Diverse, Explainable Multi-hop Question Answering",
+    "summary": "Original HotpotQA paper defining sentence-level supporting facts, bridge entities, and comparison questions.",
+    "authors": ["Zhilin Yang", "Peng Qi", "Saizhen Zhang", "Yoshua Bengio", "William W. Cohen", "Ruslan Salakhutdinov", "Christopher D. Manning"],
+    "year": 2018,
+    "supporting_passages": [
+      {"quote": "we call 'Thom Yorke' a bridge entity in this example.", "locator": "§2 collection pipeline"},
+      {"quote": "we provide sentence-level supporting facts required for reasoning, allowing QA systems to reason with strong supervision and explain the predictions", "locator": "Introduction"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2011.01060",
+    "title": "Constructing A Multi-hop QA Dataset for Comprehensive Evaluation of Reasoning Steps (2WikiMultiHopQA)",
+    "summary": "Introduces evidence triples (subject, property, object) alongside sentence-level supporting facts; four question types.",
+    "authors": ["Xanh Ho", "Anh-Khoa Duong Nguyen", "Saku Sugawara", "Akiko Aizawa"],
+    "year": 2020,
+    "supporting_passages": [
+      {"quote": "Evidence information in our dataset is a set of triples, where each triple is a structured data (subject entity, property, object entity) obtained from the Wikidata.", "locator": "§1 Introduction"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://huggingface.co/datasets/dgslibisey/MuSiQue",
+    "title": "dgslibisey/MuSiQue dataset card (Hugging Face)",
+    "summary": "Confirms paragraph_support_idx field in question_decomposition, i.e. MuSiQue support annotation is paragraph-level not sentence-level.",
+    "authors": null,
+    "year": null,
+    "supporting_passages": [
+      {"quote": "{\"id\": 482757, \"question\": \"The Collegian >> owned by\", \"answer\": \"Houston Baptist University\", \"paragraph_support_idx\": 5}", "locator": "example row, question_decomposition field"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2108.00573",
+    "title": "MuSiQue: Multihop Questions via Single-hop Question Composition",
+    "summary": "MuSiQue paper; corroborates paragraph-level supporting-paragraph annotation concept (does not contain literal field name paragraph_support_idx in prose).",
+    "authors": ["Harsh Trivedi", "Niranjan Balasubramanian", "Tushar Khot", "Ashish Sabharwal"],
+    "year": 2022,
+    "supporting_passages": [
+      {"quote": "MuSiQue constitutes unique 21020 single-hop questions, 4132 answers to multihop questions, 19841 answers to single-hop questions, and 7676 supporting paragraphs.", "locator": "§6 dataset statistics"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/1911.03429",
+    "title": "ERASER: A Benchmark to Evaluate Rationalized NLP Models",
+    "summary": "Defines comprehensiveness and sufficiency faithfulness metrics via contrast examples with rationale removed.",
+    "authors": ["Jay DeYoung", "Sarthak Jain", "Nazneen Fatema Rajani", "et al."],
+    "year": 2019,
+    "supporting_passages": [
+      {"quote": "comprehensiveness = m(xi)j − m(xi/ri)j. A high score here implies that the rationales were indeed influential in the prediction, while a low score suggests that they were not.", "locator": "§4.2 Measuring faithfulness, Comprehensiveness"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2307.03172",
+    "title": "Lost in the Middle: How Language Models Use Long Contexts",
+    "summary": "Reports closed-book (no-context) vs oracle accuracy on a multi-document QA task (NaturalQuestions-based, not literally HotpotQA); illustrates the parametric-memory pitfall for LOO ground truth.",
+    "authors": ["Nelson F. Liu", "Kevin Lin", "John Hewitt", "et al."],
+    "year": 2023,
+    "supporting_passages": [
+      {"quote": "GPT-3.5-Turbo's performance on the multi-document question task is lower than its performance when predicting without any documents (i.e., the closed-book setting; 56.1%).", "locator": "§1 Introduction"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2402.14116",
+    "title": "FanOutQA: A Multi-Hop, Multi-Document Question Answering Benchmark for Large Language Models",
+    "summary": "HotpotQA-adjacent multi-hop benchmark reporting explicit closed-book LLM accuracy figures.",
+    "authors": ["Andrew Zhu", "Alyssa Hwang", "Liam Dugan", "Chris Callison-Burch"],
+    "year": 2024,
+    "supporting_passages": [
+      {"quote": "Using only knowledge encoded in their parameters, models' loose string accuracy ranged from 0.341 (Claude) to 0.470 (Mixtral), with none reaching our estimated human baseline of 0.685.", "locator": "§4.2 Closed Book Results"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/2608.04569",
+    "title": "Relevant but Incomplete: Referential Dangling as a Paradigm-Level Failure Mode in Hard Prompt Compression",
+    "summary": "Independent per-sentence/chunk selection can drop a bridge-defining sentence while keeping the answer sentence, breaking the inference chain; tested on HotpotQA, 2WikiMultiHopQA, MuSiQue.",
+    "authors": ["Zhengpei Hu", "Kai Li", "Dapeng Fu", "Xuechao Zou", "Yuanhao Tang", "Yue Li", "Tengfei Cao", "Jianqiang Huang"],
+    "year": 2026,
+    "supporting_passages": [
+      {"quote": "independent selection can split dependent evidence pairs, retaining one member while deleting the other. When the retained text span contains an answer but the deleted span defines the entity needed to interpret it, we call the result referential dangling.", "locator": "Abstract"},
+      {"quote": "At compression ratio 0.30, Beaver ... leaves the answer path incomplete in 34 to 54% of bridge examples across three multi-hop question answering (QA) datasets.", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://huggingface.co/docs/transformers/chat_templating",
+    "title": "Chat templates (Hugging Face Transformers docs)",
+    "summary": "Explains add_generation_prompt and the assistant-header boundary; adjacent to but not an exact citation for the 'leading space' tokenization pitfall.",
+    "authors": null,
+    "year": null,
+    "supporting_passages": [
+      {"quote": "This argument adds tokens to the end of the chat that indicate the start of an assistant response... if you don't include these tokens, the model may get confused and do something strange, like continuing the user's message instead of replying to it!", "locator": "add_generation_prompt section"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://huggingface.co/docs/transformers/llm_tutorial",
+    "title": "Text generation (Hugging Face Transformers docs)",
+    "summary": "Confirms padding_side='left' requirement for decoder-only batched generation.",
+    "authors": null,
+    "year": null,
+    "supporting_passages": [
+      {"quote": "set the padding_side() parameter to \"left\" because a LLM is not trained to continue generation from padding tokens.", "locator": "Default generate section"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://aclanthology.org/W04-3250.pdf",
+    "title": "Statistical Significance Tests for Machine Translation Evaluation",
+    "summary": "Introduces paired bootstrap resampling for comparing two systems on the same test set.",
+    "authors": ["Philipp Koehn"],
+    "year": 2004,
+    "supporting_passages": [
+      {"quote": "we describe bootstrap resampling methods to compute statistical significance of test results, and validate them on the concrete example of the BLEU score. Even for small test sizes of only 300 sentences, our methods may give us assurances that test result differences are real.", "locator": "Abstract"}
+    ],
+    "verified": true
+  },
+  {
+    "url": "https://arxiv.org/pdf/1809.01448",
+    "title": "The Hitchhiker's Guide to Testing Statistical Significance in Natural Language Processing",
+    "summary": "Recommends paired significance tests when comparing systems on the same dataset.",
+    "authors": ["Rotem Dror", "Gili Baumer", "Segev Shlomov", "Roi Reichart"],
+    "year": 2018,
+    "supporting_passages": [
+      {"quote": "on the same dataset, one should use the paired version of the statistical significance test (such as the matched-pair t-test).", "locator": "Introduction"}
+    ],
+    "verified": true
+  }
+]

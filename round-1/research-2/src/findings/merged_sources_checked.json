@@ -1,0 +1,1294 @@
+[
+ {
+  "url": "https://arxiv.org/pdf/2309.17453",
+  "title": "Efficient Streaming Language Models with Attention Sinks",
+  "summary": "Introduces StreamingLLM; shows initial tokens act as 'attention sinks' absorbing a large, content-independent share of attention mass.",
+  "authors": [
+   "Guangxuan Xiao",
+   "Yuandong Tian",
+   "Beidi Chen",
+   "Song Han",
+   "Mike Lewis"
+  ],
+  "year": 2023,
+  "supporting_passages": [
+   {
+    "quote": "Beyond the bottom two layers, the model heavily attends to the initial token across all layers and heads",
+    "locator": "Figure 2 caption"
+   }
+  ],
+  "verified": true,
+  "_idx": 1
+ },
+ {
+  "url": "https://arxiv.org/pdf/2402.17762",
+  "title": "Massive Activations in Large Language Models",
+  "summary": "Identifies a small set of massive-magnitude activations at specific tokens (often BOS/delimiters) that act as fixed bias terms and pull attention toward themselves.",
+  "authors": [
+   "Mingjie Sun",
+   "Xinlei Chen",
+   "J. Zico Kolter",
+   "Zhuang Liu"
+  ],
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "these massive activations lead to the concentration of attention probabilities to their corresponding tokens, and further, implicit bias terms in the",
+    "locator": "arxiv.org/pdf/2402.17762, Abstract"
+   },
+   {
+    "quote": "massive activations are closely connected with self-attention. In particular, we show massive activations cause attention to be attracted to the tokens associated with them.",
+    "locator": "arxiv.org/pdf/2402.17762, Introduction"
+   }
+  ],
+  "verified": true,
+  "_idx": 2
+ },
+ {
+  "url": "https://arxiv.org/pdf/2406.12335",
+  "title": "Unveiling and Harnessing Hidden Attention Sinks: Enhancing Large Language Models without Training through Attention Calibration (VATP: Value-Aware Token Pruning)",
+  "summary": "Shows attention-sink tokens have near-zero value-vector norm despite large attention scores, and proposes weighting attention by value-vector norm (VATP) for token pruning.",
+  "authors": null,
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "We find, in contrast to the attention scores, the value vector norms of the attention sink tokens are much smaller than other tokens.",
+    "locator": "arxiv.org/pdf/2406.12335, section on Observations"
+   },
+   {
+    "quote": "VATP uses the product of value vector norm and attention score to evaluate the importance of each token's KV cache.",
+    "locator": "arxiv.org/pdf/2406.12335, Figure 2 caption / methods"
+   }
+  ],
+  "verified": true,
+  "_idx": 3
+ },
+ {
+  "url": "https://arxiv.org/pdf/2410.10781",
+  "title": "When Attention Sink Emerges in Language Models: An Empirical View",
+  "summary": "Studies when/why attention sinks emerge during pretraining; argues sinks act like key biases storing extra, non-informative attention mass, tied to softmax normalization.",
+  "authors": [
+   "Xiangming Gu",
+   "Tianyu Pang",
+   "Chao Du",
+   "Qian Liu",
+   "Fengzhuo Zhang",
+   "Cunxiao Du",
+   "Ye Wang",
+   "Min Lin"
+  ],
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "attention sink acts more like key biases, storing extra attention scores, which could be non-informative and not contribute to the value computation.",
+    "locator": "arxiv.org/pdf/2410.10781, Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 4
+ },
+ {
+  "url": "https://arxiv.org/pdf/2307.03172",
+  "title": "Lost in the Middle: How Language Models Use Long Contexts",
+  "summary": "Reports closed-book (no-context) vs oracle accuracy on a multi-document QA task (NaturalQuestions-based, not literally HotpotQA); illustrates the parametric-memory pitfall for LOO ground truth.",
+  "authors": [
+   "Nelson F. Liu",
+   "Kevin Lin",
+   "John Hewitt",
+   "Ashwin Paranjape",
+   "Michele Bevilacqua",
+   "Fabio Petroni",
+   "Percy Liang"
+  ],
+  "year": 2023,
+  "supporting_passages": [
+   {
+    "quote": "we observe a distinctive U-shaped performance curve (Figure 1); language model performance is highest when relevant information occurs at the very beginning (primacy bias) or end of its input context (recency bias), and performance significantly degrades when models must access and use information in the middle of their input context",
+    "locator": "arxiv.org/pdf/2307.03172, Introduction"
+   },
+   {
+    "quote": "occurs at the very beginning (primacy bias) or end of its input context (recency bias), and performance degrades significantly when models must access and use information located in the middle of its input context.",
+    "locator": "Abstract/Figure 1"
+   },
+   {
+    "quote": "question task is lower than its performance when predicting without any documents (i.e., the closed-book setting; 56.1%).",
+    "locator": "§1 Introduction"
+   }
+  ],
+  "verified": true,
+  "_idx": 5
+ },
+ {
+  "url": "https://arxiv.org/pdf/2505.23277",
+  "title": "Sentinel: Decoding Context Utilization via Attention Probing for Efficient LLM Context Compression",
+  "summary": "Sentence-level attention-probing compressor: uses last-prompt-position query attention, sum-over-sentence-tokens numerator normalized by context-only denominator; beats raw attention baseline on LongBench.",
+  "authors": null,
+  "year": 2025,
+  "supporting_passages": [
+   {
+    "quote": "represents the attention weight assigned from the final prompt position to token t at layer l and head h.",
+    "locator": "arxiv.org/pdf/2505.23277, section 2.2.2"
+   },
+   {
+    "quote": "denotes the set of tokens originating from the retrieved context C, excluding prompt and query tokens. This normalization improves comparability across sentences by restricting attention mass to retrieved-context tokens.",
+    "locator": "arxiv.org/pdf/2505.23277, section 2.2.2, Eq. 1"
+   },
+   {
+    "quote": "Raw Attention (Qwen2.5-0.5B) 34.92 38.96 21.32 31.74",
+    "locator": "arxiv.org/pdf/2505.23277, Table 2"
+   }
+  ],
+  "verified": true,
+  "_idx": 6
+ },
+ {
+  "url": "https://arxiv.org/pdf/2503.10720",
+  "title": "AttentionRAG: Attention-Guided Context Pruning in Retrieval-Augmented Generation",
+  "summary": "Reformulates the query as a next-token-prediction 'answer hint prefix' so a single anchor token carries query semantics for efficient query-context attention; selects sentences by top-k attended tokens.",
+  "authors": [
+   "Yixiong Fang",
+   "Tianran Sun",
+   "Yuling Shi",
+   "Xiaodong Gu"
+  ],
+  "year": 2025,
+  "supporting_passages": [
+   {
+    "quote": "The core idea of ATTENTIONRAG lies in its attention focus mechanism, which reformulates RAG queries into a next-token prediction paradigm. This mechanism isolates the query's semantic focus to a single token, enabling precise and efficient attention calculation between queries and retrieved contexts.",
+    "locator": "arxiv.org/pdf/2503.10720, Abstract"
+   },
+   {
+    "quote": "a compressed context by selecting sentences from the original context with the top-k attended tokens.",
+    "locator": "arxiv.org/pdf/2503.10720, Introduction"
+   },
+   {
+    "quote": "achieves up to 6.3x context compression while outperforming",
+    "locator": "arxiv.org/pdf/2503.10720, Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 7
+ },
+ {
+  "url": "https://arxiv.org/pdf/2408.00274",
+  "title": "QUITO: Accelerating Long-Context Reasoning through Query-Guided Context Compression",
+  "summary": "Uses a single 'trigger token' to compute the attention distribution of the context relative to the question, then filters context by that distribution.",
+  "authors": [
+   "Wenshan Wang",
+   "Yihang Wang",
+   "Yixing Fan",
+   "Huaming Liao",
+   "Jiafeng Guo"
+  ],
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "we take a trigger token to calculate the attention distribution of the context in response to the question. Based on the distribution, we propose three different filtering methods to satisfy the budget constraints of the context length.",
+    "locator": "arxiv.org/pdf/2408.00274, Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 8
+ },
+ {
+  "url": "https://arxiv.org/pdf/2509.17486",
+  "title": "AttnComp: Attention-Guided Adaptive Context Compression for Retrieval-Augmented Generation",
+  "summary": "Uses cross-attention from query to context documents plus a Top-P compression rule to retain the minimal document set whose cumulative attention exceeds a threshold; also yields a confidence score.",
+  "authors": [
+   "Lvzhou Luo",
+   "Yixuan Cao",
+   "Ping Luo"
+  ],
+  "year": 2025,
+  "supporting_passages": [
+   {
+    "quote": "compression algorithm to retain the minimal set of documents whose cumulative attention weights exceeds a predefined threshold.",
+    "locator": "arxiv.org/pdf/2509.17486, Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 9
+ },
+ {
+  "url": "https://arxiv.org/pdf/2501.12959",
+  "title": "Efficient Prompt Compression with Evaluator Heads for Long-Context Transformer Inference (EHPC)",
+  "summary": "Identifies a small per-model set of early-layer 'evaluator heads' via a needle-in-a-haystack pilot, uses their cumulative/pooled attention scores to select important tokens, and applies this training-free to prompt compression.",
+  "authors": [
+   "Weizhi Fei",
+   "Xueyan Niu",
+   "Guoqing Xie",
+   "Yingqing Liu",
+   "Bo Bai",
+   "Wei Han"
+  ],
+  "year": 2025,
+  "supporting_passages": [
+   {
+    "quote": "We select four heads with the highest scores as evaluator heads from the layer with the highest cumulative score",
+    "locator": "arxiv.org/pdf/2501.12959, 'Practicality' section"
+   }
+  ],
+  "verified": true,
+  "_idx": 10
+ },
+ {
+  "url": "https://arxiv.org/pdf/2005.00928",
+  "title": "Quantifying Attention Flow in Transformers",
+  "summary": "Proposes attention rollout and attention flow as post-hoc corrections to raw attention; shows both correlate better with ablation/gradient-based importance than raw attention, in an encoder-style classification setting.",
+  "authors": [
+   "Samira Abnar",
+   "Willem Zuidema"
+  ],
+  "year": 2020,
+  "supporting_passages": [
+   {
+    "quote": "compared to raw attention, both yield higher correlations with importance scores of input tokens obtained using an ablation method and input gradients.",
+    "locator": "arxiv.org/pdf/2005.00928, Abstract"
+   },
+   {
+    "quote": "Raw 0.69±0.27 0.10±0.43 -0.11±0.49 -0.09±0.52 0.20±0.45 0.29±0.39",
+    "locator": "arxiv.org/pdf/2005.00928, Table 1"
+   }
+  ],
+  "verified": true,
+  "_idx": 11
+ },
+ {
+  "url": "https://arxiv.org/pdf/1902.10186",
+  "title": "Attention is not Explanation",
+  "summary": "Shows adversarial or randomly permuted attention distributions can leave BiLSTM model predictions almost unchanged, questioning attention as a faithful explanation.",
+  "authors": [
+   "Sarthak Jain",
+   "Byron C. Wallace"
+  ],
+  "year": 2019,
+  "supporting_passages": [
+   {
+    "quote": "it is very often possible to construct adversarial attention distributions that yield effectively equivalent predictions as when using the originally induced attention weights, despite attending to entirely different input features. Even more strikingly, randomly permuting attention weights often induces only minimal changes in output.",
+    "locator": "arxiv.org/pdf/1902.10186, Introduction"
+   }
+  ],
+  "verified": true,
+  "_idx": 12
+ },
+ {
+  "url": "https://arxiv.org/pdf/1908.04626",
+  "title": "Attention is not not Explanation",
+  "summary": "Responds to Jain & Wallace; argues attention can serve as a plausible (though not necessarily faithful) explanation under the right diagnostic tests.",
+  "authors": [
+   "Sarah Wiegreffe",
+   "Yuval Pinter"
+  ],
+  "year": 2019,
+  "supporting_passages": [
+   {
+    "quote": "If we accept the Rudin and Riedl definitions of explainability as providing a plausible, but not necessarily faithful rationale for model prediction, then the argument against attention mechanisms because they are not exclusive as claimed by Jain and Wallace is invalid",
+    "locator": "arxiv.org/pdf/1908.04626, section 6"
+   }
+  ],
+  "verified": true,
+  "_idx": 13
+ },
+ {
+  "url": "https://arxiv.org/pdf/2409.00729",
+  "title": "ContextCite: Attributing Model Generation to Context",
+  "summary": "Proposes a linear-surrogate context-attribution method; benchmarks it against an attention-sum baseline, finding attention's reliability for context attribution is model-dependent (works reasonably for Llama-3-8B, poorly for Phi-3-mini).",
+  "authors": [
+   "Benjamin Cohen-Wang",
+   "Harshay Shah",
+   "Kristian Georgiev",
+   "Aleksander Madry"
+  ],
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "We use a simple but effective baseline that computes an attribution score for each source by summing the average attention weight of individual tokens in the source across all heads in all layers",
+    "locator": "arxiv.org/pdf/2409.00729, Baselines section"
+   },
+   {
+    "quote": "While the attention baseline approaches the performance of CONTEXTCITE with Llama-3-8B, it fares quite poorly with Phi-3-mini suggesting that attention is not consistently reliable for context attribution.",
+    "locator": "arxiv.org/pdf/2409.00729, Results section"
+   },
+   {
+    "quote": "the surrogate model in Figure 2 uses just 32 ablations even though the context comprises 98 sources (in this case, sentences).",
+    "locator": "§3 Context attribution with CONTEXTCITE"
+   }
+  ],
+  "verified": true,
+  "_idx": 14
+ },
+ {
+  "url": "https://raw.githubusercontent.com/huggingface/transformers/main/src/transformers/integrations/sdpa_attention.py",
+  "title": "transformers integrations/sdpa_attention.py (source)",
+  "summary": "Runtime warning in the SDPA attention backend confirming that output_attentions=True is unsupported under SDPA and requires attn_implementation='eager'.",
+  "authors": null,
+  "year": null,
+  "supporting_passages": [
+   {
+    "quote": "Please set your attention to `eager` if you want any of these features.",
+    "locator": "sdpa_attention.py, function sdpa_attention_forward"
+   }
+  ],
+  "verified": true,
+  "_idx": 15
+ },
+ {
+  "url": "https://huggingface.co/docs/transformers/en/model_doc/llama",
+  "title": "Llama - HuggingFace Transformers docs",
+  "summary": "Documents the 'attentions' output field, returned only when output_attentions=True is passed, shape (batch_size, num_heads, sequence_length, sequence_length).",
+  "authors": null,
+  "year": null,
+  "supporting_passages": [
+   {
+    "quote": "returned when `output_attentions=True` is passed or when `config.output_attentions=True`) - Tuple of `torch.FloatTensor` (one for each layer) of shape `(batch_size, num_heads, sequence_length, sequence_length)`",
+    "locator": "LlamaModel forward outputs"
+   }
+  ],
+  "verified": true,
+  "_idx": 16
+ },
+ {
+  "url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/raw/main/config.json",
+  "title": "Qwen2.5-1.5B-Instruct config.json",
+  "summary": "Model config confirming 28 layers, 12 attention heads, 2 key-value heads (GQA) for Qwen2.5-1.5B-Instruct.",
+  "authors": null,
+  "year": null,
+  "supporting_passages": [
+   {
+    "quote": "\"num_attention_heads\": 12, \"num_hidden_layers\": 28, \"num_key_value_heads\": 2",
+    "locator": "config.json"
+   }
+  ],
+  "verified": true,
+  "_idx": 17
+ },
+ {
+  "url": "https://huggingface.co/unsloth/Llama-3.2-3B-Instruct/raw/main/config.json",
+  "title": "Llama-3.2-3B-Instruct config.json (unsloth mirror; meta-llama/Llama-3.2-3B-Instruct is gated, returned HTTP 401)",
+  "summary": "Model config confirming 28 layers, 24 attention heads, 8 key-value heads (GQA), head_dim 128 for Llama-3.2-3B-Instruct, fetched from the unsloth mirror because the canonical meta-llama repo is gated.",
+  "authors": null,
+  "year": null,
+  "supporting_passages": [
+   {
+    "quote": "\"num_attention_heads\": 24, \"num_hidden_layers\": 28, \"num_key_value_heads\": 8",
+    "locator": "config.json"
+   }
+  ],
+  "verified": true,
+  "_idx": 18
+ },
+ {
+  "url": "https://arxiv.org/pdf/2403.12968",
+  "title": "LLMLingua-2: A Fast and Faithful Task-Agnostic Prompt Compression",
+  "summary": "GPT-4 distillation instruction for word-level compression; chunks contexts at <=512 tokens; Variation Rate filter for hallucination/labeling quality control.",
+  "authors": [
+   "Zhuoshi Pan",
+   "Qianhui Wu",
+   "Huiqiang Jiang",
+   "et al."
+  ],
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "Compress the given text to short expressions, and such that you (GPT-4) can reconstruct it as close as possible to the original. Unlike the usual text compression, I need you to comply with the 5 conditions below: 1. You can ONLY remove unimportant words.",
+    "locator": "§3.1 Instruction Design"
+   },
+   {
+    "quote": "we first segment each long context into multiple chunks, each containing no more than 512 tokens and ending with a period.",
+    "locator": "§3.2 Data Annotation"
+   },
+   {
+    "quote": "we exclude the examples with the top 5% highest variation rates.",
+    "locator": "§3.3 Quality Control, Variation Rate"
+   }
+  ],
+  "verified": true,
+  "_idx": 19
+ },
+ {
+  "url": "https://arxiv.org/pdf/2310.06201",
+  "title": "Compressing Context to Enhance Inference Efficiency of Large Language Models (Selective Context)",
+  "summary": "Prunes context by self-information (surprisal) computed by a base causal LM, not by LLM verbal judgment.",
+  "authors": [
+   "Yucheng Li",
+   "Bo Dong",
+   "Chenghua Lin",
+   "Frank Guerin"
+  ],
+  "year": 2023,
+  "supporting_passages": [
+   {
+    "quote": "Selective Context evaluates informativeness of lexical units (i.e., tokens, phrases, or sentences) with self-information (Shannon, 1948) computed by a base causal language model.",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 20
+ },
+ {
+  "url": "https://arxiv.org/pdf/2310.04408",
+  "title": "RECOMP: Improving Retrieval-Augmented LMs with Compression and Selective Augmentation",
+  "summary": "Extractive compressor uses a trained dual-encoder to score sentences by inner product with the query; also defines an extractive oracle by brute-force substitution.",
+  "authors": [
+   "Fangyuan Xu",
+   "Weijia Shi",
+   "Eunsol Choi"
+  ],
+  "year": 2023,
+  "supporting_passages": [
+   {
+    "quote": "embeddings respectively. Their inner product represents how helpful it would be for the LM M to prepend si to the input x to generate y.",
+    "locator": "§2 Extractive Compressor"
+   },
+   {
+    "quote": "an extractive oracle which selects a sentence in evidence documents that leads to the best task performance",
+    "locator": "Introduction"
+   }
+  ],
+  "verified": true,
+  "_idx": 21
+ },
+ {
+  "url": "https://arxiv.org/pdf/2407.09014",
+  "title": "CompAct: Compressing Retrieved Documents Actively for Question Answering",
+  "summary": "LLM sentence-level selection prompt allows 0-3 + 0-3 sentences (soft band, not fixed K); iterative compression can re-add previously omitted content.",
+  "authors": null,
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "If certain sentences provide relevant information or implicitly clarify ambiguous points within the question, the LLM is instructed to generate these sentences from the provided documents.",
+    "locator": "Appendix, Sentence-Level Selection"
+   }
+  ],
+  "verified": true,
+  "_idx": 22
+ },
+ {
+  "url": "https://arxiv.org/pdf/2305.17926",
+  "title": "Large Language Models are not Fair Evaluators",
+  "summary": "Documents strong positional bias in pairwise LLM judging; proposes Balanced Position Calibration (average score over both orderings).",
+  "authors": [
+   "Peiyi Wang",
+   "Lei Li",
+   "Liang Chen",
+   "et al."
+  ],
+  "year": 2023,
+  "supporting_passages": [
+   {
+    "quote": "we evaluate each candidate in both positions across two runs and compute the final score as the average of the two runs.",
+    "locator": "§1, Balanced Position Calibration (BPC)"
+   },
+   {
+    "quote": "Vicuna-13B could beat ChatGPT on 66 over 80 tested queries with ChatGPT as an evaluator.",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 23
+ },
+ {
+  "url": "https://arxiv.org/pdf/2309.03882",
+  "title": "Large Language Models Are Not Robust Multiple Choice Selectors",
+  "summary": "Identifies option-ID token bias (selection bias) in MCQ answering; proposes PriDe debiasing; quantifies large accuracy swings from moving the correct option.",
+  "authors": [
+   "Chujie Zheng",
+   "Hao Zhou",
+   "Fandong Meng",
+   "Jie Zhou",
+   "Minlie Huang"
+  ],
+  "year": 2023,
+  "supporting_passages": [
+   {
+    "quote": "moving the golden answers to position D degrades the accuracy of gpt-3.5-turbo by 6.3 (from 67.2 to 60.9). When moving to A, llama-30b is boosted by 15.2 and surpasses gpt-3.5-turbo (68.2 vs. 65.3)",
+    "locator": "§1 Introduction"
+   },
+   {
+    "quote": "llama-30B selects A/B/C/D 34.6% / 27.3% / 22.3% / 15.8% of the time",
+    "locator": "§1 Introduction"
+   }
+  ],
+  "verified": true,
+  "_idx": 24
+ },
+ {
+  "url": "https://arxiv.org/pdf/2304.09542",
+  "title": "Is ChatGPT Good at Search? Investigating Large Language Models as Re-Ranking Agents (RankGPT)",
+  "summary": "Zero-shot LLM listwise passage re-ranking; competitive with supervised SOTA; introduces permutation distillation.",
+  "authors": [
+   "Weiwei Sun",
+   "Lingyong Yan",
+   "Xinyu Ma",
+   "Shuaiqiang Wang",
+   "Pengjie Ren",
+   "Zhumin Chen",
+   "Dawei Yin",
+   "Zhaochun Ren"
+  ],
+  "year": 2023,
+  "supporting_passages": [
+   {
+    "quote": "properly instructed LLMs can deliver competitive, even superior results to state-of-the-art supervised methods on popular IR benchmarks.",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 25
+ },
+ {
+  "url": "https://arxiv.org/pdf/2310.07712",
+  "title": "Found in the Middle: Permutation Self-Consistency Improves Listwise Ranking in Large Language Models",
+  "summary": "Marginalizes out list order by repeated shuffling and aggregation to reduce positional bias in listwise ranking.",
+  "authors": [
+   "Raphael Tang",
+   "Xinyu Zhang",
+   "Xueguang Ma",
+   "Jimmy Lin",
+   "Ferhan Ture"
+  ],
+  "year": 2023,
+  "supporting_passages": [
+   {
+    "quote": "we propose permutation self-consistency, a form of self-consistency over the ranking list outputs of black-box LLMs. Our key idea is to marginalize out different list orders in the prompt to produce an order-independent ranking with less positional bias.",
+    "locator": "Abstract"
+   },
+   {
+    "quote": "consistently increasing the scores of GPT-3.5, GPT-4, and LLaMA v2 (70B; Touvron et al., 2023) by up to 4-17%, 9-24%, and 8-16%, respectively.",
+    "locator": "Introduction"
+   }
+  ],
+  "verified": true,
+  "_idx": 26
+ },
+ {
+  "url": "https://arxiv.org/pdf/1810.12343",
+  "title": "Content Selection in Deep Learning Models of Summarization",
+  "summary": "Establishes lead bias dominance in news summarization; sentence-shuffling ablation shows models rely heavily on position, not content.",
+  "authors": [
+   "Chris Kedzie",
+   "Kathleen McKeown",
+   "Hal Daumé III"
+  ],
+  "year": 2018,
+  "supporting_passages": [
+   {
+    "quote": "Sentence position bias dominates the learning signal for news summarization, though not for other domains.",
+    "locator": "§1 main results"
+   },
+   {
+    "quote": "Shuffling reduces lead overlap to 35.2% but the overall system performance drops significantly; the models are not able to identify important information without position.",
+    "locator": "§5 Document Shuffling"
+   }
+  ],
+  "verified": true,
+  "_idx": 27
+ },
+ {
+  "url": "https://arxiv.org/pdf/2207.05221",
+  "title": "Language Models (Mostly) Know What They Know",
+  "summary": "Introduces P(True) and P(IK) as ways for LLMs to self-evaluate the correctness/knowability of their own answers.",
+  "authors": [
+   "Saurav Kadavath",
+   "Tom Conerly",
+   "Amanda Askell",
+   "et al."
+  ],
+  "year": 2022,
+  "supporting_passages": [
+   {
+    "quote": "we investigate whether models can be trained to predict \"P(IK)\", the probability that \"I know\" the answer to a question, without reference to any particular proposed answer. Models perform well at predicting P(IK) and partially generalize across tasks, though they struggle with calibration of P(IK) on new tasks.",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 28
+ },
+ {
+  "url": "https://arxiv.org/pdf/2305.14975",
+  "title": "Just Ask for Calibration: Strategies for Eliciting Calibrated Confidence Scores from Language Models",
+  "summary": "Shows verbalized confidence scores from RLHF-LMs are often better calibrated than raw conditional token probabilities.",
+  "authors": [
+   "Katherine Tian",
+   "Eric Mitchell",
+   "et al."
+  ],
+  "year": 2023,
+  "supporting_passages": [
+   {
+    "quote": "verbalized confidences emitted as output tokens are typically better-calibrated than the model's conditional probabilities on the TriviaQA, SciQ, and TruthfulQA benchmarks, often reducing the expected calibration error by a relative 50%.",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 29
+ },
+ {
+  "url": "https://arxiv.org/pdf/2306.13063",
+  "title": "Can LLMs Express Their Uncertainty? An Empirical Evaluation of Confidence Elicitation in LLMs",
+  "summary": "Systematic black-box framework for eliciting verbalized confidence, showing LLMs are overconfident when verbalizing.",
+  "authors": [
+   "Miao Xiong",
+   "Zhiyuan Hu",
+   "et al."
+  ],
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "LLMs, when verbalizing their confidence, tend to be overconfident, potentially imitating human patterns of expressing confidence.",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 30
+ },
+ {
+  "url": "https://arxiv.org/pdf/2410.02707",
+  "title": "LLMs Know More Than They Show: On the Intrinsic Representation of LLM Hallucinations",
+  "summary": "Shows LLM internal representations encode truthfulness info beyond what is used in generation, including cases where the model internally encodes the right answer but outputs the wrong one.",
+  "authors": [
+   "Hadas Orgad",
+   "Michael Toker",
+   "Zorik Gekhman",
+   "Roi Reichart",
+   "Idan Szpektor",
+   "Hadas Kotek",
+   "Yonatan Belinkov"
+  ],
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "we reveal a discrepancy between LLMs' internal encoding and external behavior: they may encode the correct answer, yet consistently generate an incorrect one.",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 31
+ },
+ {
+  "url": "https://arxiv.org/pdf/2304.13734",
+  "title": "The Internal State of an LLM Knows When It's Lying",
+  "summary": "Trains a classifier (SAPLMA) on LLM hidden-layer activations to detect statement truthfulness.",
+  "authors": [
+   "Amos Azaria",
+   "Tom Mitchell"
+  ],
+  "year": 2023,
+  "supporting_passages": [
+   {
+    "quote": "our trained classifier achieves an average of 71% to 83% accuracy labeling which sentences are true versus false, depending on the LLM base model.",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 32
+ },
+ {
+  "url": "https://arxiv.org/pdf/2406.15927",
+  "title": "Semantic Entropy Probes: Robust and Cheap Hallucination Detection in LLMs",
+  "summary": "Proposes cheap linear probes on hidden states that approximate expensive semantic-entropy-based hallucination detection.",
+  "authors": [
+   "Jannik Kossen",
+   "Jiatong Han",
+   "Muhammed Razzak",
+   "Lisa Schut",
+   "Shreshth Malik",
+   "Yarin Gal"
+  ],
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "We propose semantic entropy probes (SEPs), a cheap and reliable method for uncertainty quantification in Large Language Models (LLMs).",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 33
+ },
+ {
+  "url": "https://arxiv.org/pdf/2603.25052",
+  "title": "Closing the Confidence-Faithfulness Gap in Large Language Models",
+  "summary": "Shows the geometric relationship between internal accuracy signal and verbalized confidence, and closes the gap by steering verbalized output to match an internal accuracy estimate (adaptive steering vs SteerConf).",
+  "authors": [
+   "Miranda Muqing Miao",
+   "Lyle Ungar"
+  ],
+  "year": 2026,
+  "supporting_passages": [
+   {
+    "quote": "by reading the model's internal estimate of its own competence and steering its verbalized output to match, we are able to close much of the faithfulness gap of verbalized confidence",
+    "locator": "Section 3 results discussion, near Table with ECE/Brier/MAE"
+   }
+  ],
+  "verified": true,
+  "_idx": 34
+ },
+ {
+  "url": "https://arxiv.org/pdf/2512.11998",
+  "title": "Direct Confidence Alignment: Aligning Verbalized Confidence with Internal Confidence In Large Language Models",
+  "summary": "Uses Direct Preference Optimization (DCA) to align an LLM's verbalized confidence with its internal (token-probability-derived) confidence rather than ground-truth accuracy.",
+  "authors": [
+   "Glenn Zhang",
+   "Treasure Mayowa",
+   "Jason Fan",
+   "Yicheng Fu",
+   "Aaron Sandoval",
+   "Sean O'Brien",
+   "Kevin Zhu"
+  ],
+  "year": 2026,
+  "supporting_passages": [
+   {
+    "quote": "it has been observed that the internal confidence of a model, derived from token probabilities, is not well aligned with its verbalized confidence, leading to misleading results with different calibration methods.",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 35
+ },
+ {
+  "url": "https://arxiv.org/pdf/2606.01148",
+  "title": "Not All Explanations Simulate Equally: Comparing Verbalized Feature Attributions and Self-Generated Rationales",
+  "summary": "Compares sentence-level and token-level feature-attribution explanations against self-generated rationales via simulatability; sentence-level attributions give stronger simulatability gains than token-level.",
+  "authors": null,
+  "year": 2026,
+  "supporting_passages": [
+   {
+    "quote": "attributions provide stronger simulatability gains than token-level attributions, LLM rewriting does not necessarily improve usefulness despite greater fluency, and CoT rationales provide the strongest simulation signal among the studied types.",
+    "locator": "Contributions list, Introduction"
+   }
+  ],
+  "verified": true,
+  "_idx": 36
+ },
+ {
+  "url": "https://arxiv.org/pdf/2202.01602",
+  "title": "The Disagreement Problem in Explainable Machine Learning: A Practitioner's Perspective",
+  "summary": "Formalizes and empirically studies disagreement among post-hoc explanation methods (SHAP, LIME, etc.) across 6 explainers and 4 datasets; interviews 25 practitioners on how they resolve disagreement qualitatively. Does not propose disagreement as an automated downstream risk score.",
+  "authors": [
+   "Satyapriya Krishna",
+   "Tessa Han",
+   "Alex Gu",
+   "Steven Wu",
+   "et al."
+  ],
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "we formalize and investigate the disagreement problem in explainable ML, a novel area of research that examines conflicts among post hoc explanation methods.",
+    "locator": "Introduction"
+   }
+  ],
+  "verified": true,
+  "_idx": 37
+ },
+ {
+  "url": "https://arxiv.org/pdf/2605.02611",
+  "title": "Selective Prediction from Agreement: A Lipschitz-Consistent Version Space Approach",
+  "summary": "Selective classification method that abstains unless all Lipschitz-consistent classification heads (a version space) agree on the label; disagreement among an ensemble of consistent heads triggers abstention. Image classification (CIFAR-10/SVHN), not LLM/explanation disagreement.",
+  "authors": [
+   "Mohamadsadegh Khosravani"
+  ],
+  "year": 2026,
+  "supporting_passages": [
+   {
+    "quote": "The model therefore predicts only when the label is forced (i.e., all consistent heads agree), and abstains otherwise.",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 38
+ },
+ {
+  "url": "https://dl.acm.org/doi/pdf/10.1145/130385.130417",
+  "title": "Query by Committee",
+  "summary": "Foundational query-by-committee active-learning paper: disagreement among a committee of learners estimates the information value of a query, giving exponential generalization-error decay.",
+  "authors": [
+   "H. S. Seung",
+   "M. Opper",
+   "H. Sompolinsky"
+  ],
+  "year": 1992,
+  "supporting_passages": [
+   {
+    "quote": "We propose an algorithm called query by committee, in which a committee of students is trained on the same data set. The next query is chosen according to the principle of maximal disagreement.",
+    "locator": "Abstract"
+   },
+   {
+    "quote": "the degree of disagreement among a committee of learners can serve as an estimate of this information value.",
+    "locator": "Introduction"
+   }
+  ],
+  "verified": true,
+  "_idx": 39
+ },
+ {
+  "url": "https://arxiv.org/pdf/2311.00288",
+  "title": "Active Instruction Tuning: Improving Cross-Task Generalization by Training on Prompt Sensitive Tasks",
+  "summary": "Defines 'Prompt Uncertainty' as the disagreement of a single model's predictions across the original vs. perturbed task instructions, motivated by BALD (Bayesian Active Learning by Disagreement); used for task-level selection in instruction tuning, not sentence-level content salience.",
+  "authors": [
+   "Po-Nien Kung",
+   "Fan Yin",
+   "Di Wu",
+   "Kai-Wei Chang",
+   "Nanyun Peng"
+  ],
+  "year": 2023,
+  "supporting_passages": [
+   {
+    "quote": "We represent the informativeness of new tasks with the disagreement of the current model outputs over perturbed prompts.",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 40
+ },
+ {
+  "url": "https://arxiv.org/pdf/2608.31066",
+  "title": "Every Token Leaves a Ripple in the Stream of Thought: Eliciting Model-Internal Token Saliency for Chain-of-Thought Compression (MIST)",
+  "summary": "Proposes MIST, combining two model-internal saliency axes (necessity: residual-stream ablation effect; sufficiency: residual-stream patching effect) into one fused importance score for pruning CoT reasoning tokens. Both signals are internal; no verbalized signal; fusion not disagreement.",
+  "authors": [
+   "Tianyi Zhao",
+   "Yinhan He",
+   "Wendy Zheng",
+   "Chen Chen"
+  ],
+  "year": 2026,
+  "supporting_passages": [
+   {
+    "quote": "MIST (Model-Internal Saliency for Token-level CoT compression), which defines token importance along two complementary axes: necessity, the drop in answer likelihood when a token's internal contribution is removed, and sufficiency, the gain in answer likelihood when that contribution alone is provided. Combining the two yields a unified importance score for pruning.",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 41
+ },
+ {
+  "url": "https://arxiv.org/pdf/2608.04569",
+  "title": "Relevant but Incomplete: Referential Dangling as a Paradigm-Level Failure Mode in Hard Prompt Compression",
+  "summary": "Identifies 'referential dangling': independent per-unit importance scoring in hard prompt compressors splits dependent evidence pairs, leaving retained spans uninterpretable; measured up to 60% dangling rate on HotpotQA bridge questions across 6 compressors, with 29-34pp accuracy recovery from fixing it.",
+  "authors": [
+   "Zhengpei Hu",
+   "Kai Li",
+   "Dapeng Fu",
+   "Xuechao Zou",
+   "Yuanhao Tang",
+   "Yue Li",
+   "Tengfei Cao",
+   "Jianqiang Huang"
+  ],
+  "year": 2026,
+  "supporting_passages": [
+   {
+    "quote": "independent selection can split dependent evidence pairs, retaining one member while deleting the other. When the retained text span contains an answer but the deleted span defines the entity needed to interpret it, we call the result referential dangling.",
+    "locator": "Abstract/Introduction"
+   },
+   {
+    "quote": "leaves the answer path incomplete in 34 to 54% of bridge examples across three multi-hop question answering (QA) datasets",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 42
+ },
+ {
+  "url": "https://arxiv.org/pdf/2504.16574",
+  "title": "PIS: Linking Importance Sampling and Attention Mechanisms for Efficient Prompt Compression",
+  "summary": "Treats attention scores as importance-sampling weights for prompt compression but notes relying solely on attention can drop important tokens; addresses this via attention-score variance across layers rather than a second, independent (e.g. verbalized) signal.",
+  "authors": [
+   "Lizhe Chen",
+   "Binjia Zhou",
+   "Yuyao Ge",
+   "Jiayi Chen",
+   "Shiguang Ni"
+  ],
+  "year": 2025,
+  "supporting_passages": [
+   {
+    "quote": "relying solely on attention scores may lead to the removal of important tokens with high attention scores. To address this, we introduce TF-IDF scores as a corrective measure for attention scores of each token.",
+    "locator": "arxiv.org/pdf/2504.16574, methodology section"
+   }
+  ],
+  "verified": true,
+  "_idx": 43
+ },
+ {
+  "url": "https://arxiv.org/pdf/2310.11207",
+  "title": "Can Large Language Models Explain Themselves? A Study of LLM-Generated Self-Explanations",
+  "summary": "Compares ChatGPT's self-generated feature-attribution explanations against occlusion and LIME saliency maps; self-explanations perform on par with faithfulness metrics but disagree substantially with the traditional methods.",
+  "authors": [
+   "Shiyuan Huang",
+   "Siddarth Mamidanna",
+   "Shreedhar Jangam",
+   "Yilun Zhou",
+   "Leilani H. Gilpin"
+  ],
+  "year": 2023,
+  "supporting_passages": [
+   {
+    "quote": "we study different ways to elicit the self-explanations, evaluate their faithfulness on a set of evaluation metrics, and compare them to traditional explanation methods such as occlusion or LIME saliency maps. Through an extensive set of experiments, we find that ChatGPT's",
+    "locator": "arxiv.org/pdf/2310.11207, abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 44
+ },
+ {
+  "url": "https://arxiv.org/pdf/2512.12411",
+  "title": "Detecting the Disturbance: A Nuanced View of Introspective Abilities in LLMs",
+  "summary": "Finds LLM introspection of injected concept perturbations is partial: near-chance on naive binary detection but well above chance (up to 88%/83%) on localization/strength-comparison tasks, confined to early layers.",
+  "authors": [
+   "Ely Hahami",
+   "Ishaan Sinha",
+   "Lavik Jain",
+   "Josh Kaplan",
+   "Jon Hahami"
+  ],
+  "year": 2026,
+  "supporting_passages": [
+   {
+    "quote": "on tasks requiring differential sensitivity, we find robust evidence for partial introspection: models localize which of 10 sentences received an injection at up to 88% accuracy (vs. 10% chance) and discriminate relative injection strengths at 83% accuracy (vs. 50% chance). These capabilities are confined to early-layer injections and collapse to chance thereafter",
+    "locator": "arxiv.org/pdf/2512.12411, abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 45
+ },
+ {
+  "url": "https://arxiv.org/pdf/2401.07927",
+  "title": "Are self-explanations from Large Language Models faithful?",
+  "summary": "Introduces self-consistency checks to measure faithfulness of LLM self-explanations; finds faithfulness varies by explanation type and task, not just by model.",
+  "authors": [
+   "Andreas Madsen",
+   "Sarath Chandar",
+   "Siva Reddy"
+  ],
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "Figure 8: Faithfulness evaluation using self-consistency checks, evaluated using Llama2-70B. Results show that Llama2-70B is not affected by prompt variations, but the faithfulness for each explanation type is task-dependent.",
+    "locator": "arxiv.org/pdf/2401.07927, Figure 8 caption"
+   }
+  ],
+  "verified": true,
+  "_idx": 46
+ },
+ {
+  "url": "https://arxiv.org/pdf/2311.07466",
+  "title": "On Measuring Faithfulness or Self-consistency of Natural Language Explanations",
+  "summary": "Introduces CC-SHAP, a fine-grained Shapley-value-based measure of self-consistency between a model's input contributions when producing a prediction versus when producing its explanation. NOTE: the ID given in the source task (2311.13725) is incorrect and resolves to an unrelated paper (Ali & Breazeal, 'Studying Artist Sentiments around AI-generated Artwork'); the correct ID, confirmed by page-1 title and content match, is 2311.07466 (Parcalabescu & Frank, ACL 2024).",
+  "authors": [
+   "Letitia Parcalabescu",
+   "Anette Frank"
+  ],
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "including iii) our new self-consistency measure CC-SHAP. CC-SHAP is a fine-grained measure (not a test) of LLM self-consistency. It compares how a model's input contributes to the predicted answer and to generating the explanation.",
+    "locator": "arxiv.org/pdf/2311.07466, abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 47
+ },
+ {
+  "url": "https://arxiv.org/pdf/2305.04388",
+  "title": "Language Models Don't Always Say What They Think: Unfaithful Explanations in Chain-of-Thought Prompting",
+  "summary": "Shows CoT explanations can be systematically unfaithful: biasing features (e.g. reordering answer options) shift model predictions by up to 36% without being mentioned in the explanation.",
+  "authors": [
+   "Miles Turpin",
+   "Julian Michael",
+   "Ethan Perez",
+   "Samuel R. Bowman"
+  ],
+  "year": 2023,
+  "supporting_passages": [
+   {
+    "quote": "Adding biasing features heavily influences model CoT predictions on BBH tasks, causing accuracy to drop as much as 36%, despite the biasing features never being referenced in the CoT explanations.",
+    "locator": "arxiv.org/pdf/2305.04388, Introduction, main findings"
+   }
+  ],
+  "verified": true,
+  "_idx": 48
+ },
+ {
+  "url": "https://arxiv.org/pdf/2307.13702",
+  "title": "Measuring Faithfulness in Chain-of-Thought Reasoning",
+  "summary": "Tests several possible faithfulness failure modes of CoT (post-hoc reasoning, etc.); finds models vary greatly in how much they use/rely on CoT depending on the task.",
+  "authors": [
+   "Tamera Lanham",
+   "Anna Chen",
+   "Ansh Radhakrishnan",
+   "et al."
+  ],
+  "year": 2023,
+  "supporting_passages": [
+   {
+    "quote": "We find great variation in how much LLMs use CoT on different tasks, not using CoT at all for some tasks while relying upon it heavily for other tasks",
+    "locator": "arxiv.org/pdf/2307.13702, Section on faithfulness failures"
+   }
+  ],
+  "verified": true,
+  "_idx": 49
+ },
+ {
+  "url": "https://arxiv.org/pdf/2505.05410",
+  "title": "Reasoning Models Don't Always Say What They Think",
+  "summary": "Measures how often reasoning-model CoT verbalizes hints actually used to change the answer; overall faithfulness scores are low (25% Claude 3.7 Sonnet, 39% DeepSeek R1).",
+  "authors": [
+   "Yanda Chen",
+   "Joe Benton",
+   "Ansh Radhakrishnan",
+   "et al.",
+   "Ethan Perez"
+  ],
+  "year": 2025,
+  "supporting_passages": [
+   {
+    "quote": "CoTs of reasoning models often lack faithfulness and can conceal misalignment. The overall faithfulness scores for both reasoning models remain low (25% for Claude 3.7 Sonnet and 39% for DeepSeek R1) (Figure 1).",
+    "locator": "arxiv.org/pdf/2505.05410, results summary"
+   }
+  ],
+  "verified": true,
+  "_idx": 50
+ },
+ {
+  "url": "https://arxiv.org/pdf/2410.13787",
+  "title": "Looking Inward: Language Models Can Learn About Themselves by Introspection",
+  "summary": "Shows a model trained on its own self-prediction data predicts its own behavior more accurately than a cross-trained model predicting it, evidence for (limited) introspection.",
+  "authors": [
+   "Felix J Binder",
+   "James Chua",
+   "Tomek Korbak",
+   "et al."
+  ],
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "Llama 70B predicts its own behavior more accurately (48.5%) than GPT-4o (31.8%), despite GPT-4o's superior capabilities",
+    "locator": "arxiv.org/pdf/2410.13787, Section 3.2.1"
+   }
+  ],
+  "verified": true,
+  "_idx": 51
+ },
+ {
+  "url": "https://arxiv.org/pdf/2411.15102",
+  "title": "AttriBoT: A Bag of Tricks for Efficiently Approximating Leave-One-Out Context Attribution",
+  "summary": "Speeds up exact LOO via KV caching, hierarchical attribution, and proxy models; >300x speedup, tested on HotpotQA examples.",
+  "authors": null,
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "AttriBoT can provide a >300× speedup while remaining more faithful to a target model's LOO error than prior context attribution methods.",
+    "locator": "Abstract"
+   },
+   {
+    "quote": "We empirically test the assumptions underlying the AttriBoT's underlying methods on examples from Hotpot QA.",
+    "locator": "Figure 1 caption"
+   }
+  ],
+  "verified": true,
+  "_idx": 52
+ },
+ {
+  "url": "https://huggingface.co/datasets/hotpotqa/hotpot_qa",
+  "title": "hotpotqa/hotpot_qa dataset card (Hugging Face)",
+  "summary": "Confirms configs (distractor/fullwiki), splits (train/validation), and field schema (id, question, answer, type, level, supporting_facts.title/sent_id, context.title/sentences).",
+  "authors": null,
+  "year": null,
+  "supporting_passages": [
+   {
+    "quote": "{ \"title\": [ \"Arthur's Magazine\", \"First for Women\" ], \"sent_id\": [ 0, 0 ] }",
+    "locator": "dataset viewer, supporting_facts column"
+   }
+  ],
+  "verified": true,
+  "_idx": 53
+ },
+ {
+  "url": "https://arxiv.org/pdf/1809.09600",
+  "title": "HotpotQA: A Dataset for Diverse, Explainable Multi-hop Question Answering",
+  "summary": "Original HotpotQA paper defining sentence-level supporting facts, bridge entities, and comparison questions.",
+  "authors": [
+   "Zhilin Yang",
+   "Peng Qi",
+   "Saizhen Zhang",
+   "Yoshua Bengio",
+   "William W. Cohen",
+   "Ruslan Salakhutdinov",
+   "Christopher D. Manning"
+  ],
+  "year": 2018,
+  "supporting_passages": [
+   {
+    "quote": "we provide sentence-level supporting facts required for reasoning, allowing QA systems to reason with strong supervision and explain the predictions",
+    "locator": "Introduction"
+   }
+  ],
+  "verified": true,
+  "_idx": 54
+ },
+ {
+  "url": "https://arxiv.org/pdf/2011.01060",
+  "title": "Constructing A Multi-hop QA Dataset for Comprehensive Evaluation of Reasoning Steps (2WikiMultiHopQA)",
+  "summary": "Introduces evidence triples (subject, property, object) alongside sentence-level supporting facts; four question types.",
+  "authors": [
+   "Xanh Ho",
+   "Anh-Khoa Duong Nguyen",
+   "Saku Sugawara",
+   "Akiko Aizawa"
+  ],
+  "year": 2020,
+  "supporting_passages": [
+   {
+    "quote": "Evidence information in our dataset is a set of triples, where each triple is a structured data (subject entity, property, object entity) obtained from the Wikidata",
+    "locator": "§1 Introduction"
+   }
+  ],
+  "verified": true,
+  "_idx": 55
+ },
+ {
+  "url": "https://huggingface.co/datasets/dgslibisey/MuSiQue",
+  "title": "dgslibisey/MuSiQue dataset card (Hugging Face)",
+  "summary": "Confirms paragraph_support_idx field in question_decomposition, i.e. MuSiQue support annotation is paragraph-level not sentence-level.",
+  "authors": null,
+  "year": null,
+  "supporting_passages": [
+   {
+    "quote": "{ \"id\": 482757, \"question\": \"The Collegian >> owned by\", \"answer\": \"Houston Baptist University\", \"paragraph_support_idx\": 5 }",
+    "locator": "dataset viewer, question_decomposition column"
+   }
+  ],
+  "verified": true,
+  "_idx": 56
+ },
+ {
+  "url": "https://arxiv.org/pdf/2108.00573",
+  "title": "MuSiQue: Multihop Questions via Single-hop Question Composition",
+  "summary": "MuSiQue paper; corroborates paragraph-level supporting-paragraph annotation concept (does not contain literal field name paragraph_support_idx in prose).",
+  "authors": [
+   "Harsh Trivedi",
+   "Niranjan Balasubramanian",
+   "Tushar Khot",
+   "Ashish Sabharwal"
+  ],
+  "year": 2022,
+  "supporting_passages": [
+   {
+    "quote": "MuSiQue constitutes unique 21020 single-hop questions, 4132 answers to multihop questions, 19841 answers to",
+    "locator": "§6 dataset statistics"
+   }
+  ],
+  "verified": true,
+  "_idx": 57
+ },
+ {
+  "url": "https://arxiv.org/pdf/1911.03429",
+  "title": "ERASER: A Benchmark to Evaluate Rationalized NLP Models",
+  "summary": "Defines comprehensiveness and sufficiency faithfulness metrics via contrast examples with rationale removed.",
+  "authors": [
+   "Jay DeYoung",
+   "Sarthak Jain",
+   "Nazneen Fatema Rajani",
+   "et al."
+  ],
+  "year": 2019,
+  "supporting_passages": [
+   {
+    "quote": "A high score here implies that the rationales were indeed influential in the prediction, while a low score suggests that they were not.",
+    "locator": "§4.2 Measuring faithfulness, Comprehensiveness"
+   }
+  ],
+  "verified": true,
+  "_idx": 58
+ },
+ {
+  "url": "https://arxiv.org/pdf/2402.14116",
+  "title": "FanOutQA: A Multi-Hop, Multi-Document Question Answering Benchmark for Large Language Models",
+  "summary": "HotpotQA-adjacent multi-hop benchmark reporting explicit closed-book LLM accuracy figures.",
+  "authors": [
+   "Andrew Zhu",
+   "Alyssa Hwang",
+   "Liam Dugan",
+   "Chris Callison-Burch"
+  ],
+  "year": 2024,
+  "supporting_passages": [
+   {
+    "quote": "Using only knowledge encoded in their parameters, models' loose string accuracy ranged from 0.341 (Claude) to 0.470 (Mixtral), with none reaching our estimated human baseline of 0.685",
+    "locator": "§4.2 Closed Book Results"
+   }
+  ],
+  "verified": true,
+  "_idx": 59
+ },
+ {
+  "url": "https://huggingface.co/docs/transformers/chat_templating",
+  "title": "Chat templates (Hugging Face Transformers docs)",
+  "summary": "Explains add_generation_prompt and the assistant-header boundary; adjacent to but not an exact citation for the 'leading space' tokenization pitfall.",
+  "authors": null,
+  "year": null,
+  "supporting_passages": [
+   {
+    "quote": "This argument adds tokens to the end of the chat that indicate the start of an",
+    "locator": "add_generation_prompt section"
+   }
+  ],
+  "verified": true,
+  "_idx": 60
+ },
+ {
+  "url": "https://huggingface.co/docs/transformers/llm_tutorial",
+  "title": "Text generation (Hugging Face Transformers docs)",
+  "summary": "Confirms padding_side='left' requirement for decoder-only batched generation.",
+  "authors": null,
+  "year": null,
+  "supporting_passages": [
+   {
+    "quote": "because a LLM is not trained to continue generation from padding tokens.",
+    "locator": "Default generate section"
+   }
+  ],
+  "verified": true,
+  "_idx": 61
+ },
+ {
+  "url": "https://aclanthology.org/W04-3250.pdf",
+  "title": "Statistical Significance Tests for Machine Translation Evaluation",
+  "summary": "Introduces paired bootstrap resampling for comparing two systems on the same test set.",
+  "authors": [
+   "Philipp Koehn"
+  ],
+  "year": 2004,
+  "supporting_passages": [
+   {
+    "quote": "we describe bootstrap resampling methods to compute statistical significance of test results, and validate them on the concrete example of the BLEU score. Even for small test sizes of only 300 sentences, our methods may give us assurances that test result differences are real.",
+    "locator": "Abstract"
+   }
+  ],
+  "verified": true,
+  "_idx": 62
+ },
+ {
+  "url": "https://arxiv.org/pdf/1809.01448",
+  "title": "The Hitchhiker's Guide to Testing Statistical Significance in Natural Language Processing",
+  "summary": "Recommends paired significance tests when comparing systems on the same dataset.",
+  "authors": [
+   "Rotem Dror",
+   "Gili Baumer",
+   "Segev Shlomov",
+   "Roi Reichart"
+  ],
+  "year": 2018,
+  "supporting_passages": [
+   {
+    "quote": "on the same dataset, one should use the paired version of the statistical significance test (such as the matched-pair t-test).",
+    "locator": "Introduction"
+   }
+  ],
+  "verified": true,
+  "_idx": 63
+ }
+]

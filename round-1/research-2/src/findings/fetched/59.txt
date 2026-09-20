@@ -1,0 +1,1640 @@
+URL: https://arxiv.org/pdf/2402.14116
+Type: PDF
+Length: 60579 chars (truncated)
+
+--- Content ---
+
+FanOutQA: A Multi-Hop, Multi-Document
+Question Answering Benchmark for Large Language Models
+Andrew Zhu,
+Alyssa Hwang,
+Liam Dugan,
+Chris Callison-Burch
+University of Pennsylvania
+{andrz,ahwang16,ldugan,ccb}@seas.upenn.edu
+Abstract
+One type of question that is commonly found
+in day-to-day scenarios is “fan-out” questions,
+complex multi-hop, multi-document reasoning
+questions that require finding information about
+a large number of entities. However, there
+exist few resources to evaluate this type of
+question-answering capability among large lan-
+guage models. To evaluate complex reasoning
+in LLMs more fully, we present FanOutQA, a
+high-quality dataset of fan-out question-answer
+pairs and human-annotated decompositions
+with English Wikipedia as the knowledge base.
+We formulate three benchmark settings across
+our dataset and benchmark 7 LLMs, including
+GPT-4, LLaMA 2, Claude-2.1, and Mixtral-
+8x7B, finding that contemporary models still
+have room to improve reasoning over inter-
+document dependencies in a long context. We
+provide our dataset and open-source tools to
+run models to encourage evaluation.1
+1
+Introduction
+In real-world production deployments, large lan-
+guage models (LLMs) are often asked “fan-out”
+questions: questions that require models to find
+a list of entities and then consult a large num-
+ber of documents to aggregate information about
+those entities to answer a user’s question. This
+pattern of question can be found commonly in day-
+to-day scenarios, such as performing a literature
+review (fan-out over research papers), planning a
+trip (fan-out over attractions), or choosing where to
+eat (fan-out over nearby restaurants). The fan-out
+task is particularly challenging because it requires
+multi-hop reasoning across multiple documents,
+and the combined length of the documents needed
+to answer the question typically exceeds the length
+of a model’s context window. Existing question-
+answering benchmarks like HotpotQA (Yang et al.,
+1
+https://fanoutqa.com
+https://github.com/zhudotexe/fanoutqa
+What is the total 
+number of 
+employees in the 
+five largest banks
+in the world?
+How many employees 
+does HDFC Bank have?
+JPMorgan Chase, Bank of America,  ...,  HDFC Bank
+1,604,898
+177,000
+308,669
+What are the 5 largest banks in 
+the world?
+How many employees does
+JPMorgan Chase have?
+How many employees does 
+Bank of America have?
+217,000
+Evidence Provided
+Open Book
+Closed Book
+Figure 1: The FanOutQA dataset contains multi-hop,
+multi-document “fan-out” questions along with human-
+written decompositions (bottom). We formulate three
+challenge settings for LLMs to answer these fan-out
+questions to test capabilities of LLMs (top).
+2018), LongBench (Bai et al., 2023), and Zero-
+SCROLLS (Shaham et al., 2023) focus on intra-
+document dependencies or dependencies between
+a small number of documents, which does not suf-
+ficiently evaluate models’ performance on this type
+of task.
+In this paper, we present FanOutQA, a high qual-
+ity dataset of 1,034 information seeking questions,
+7,305 human-written decompositions, and their an-
+swers, along with a multi-hop, multi-document
+benchmark using English Wikipedia as its knowl-
+edge base. Compared to other question-answering
+benchmarks, FanOutQA requires reasoning over a
+greater number of documents, with its main focus
+being on the fan-out style of question (Figure 1).
+We formulate three distinct challenge settings
+over the dataset. The closed-book setting requires
+the model to answer fan-out questions without ex-
+ternal knowledge, testing its general knowledge.
+The open-book setting gives models access to re-
+trieval tools, testing their ability to retrieve relevant
+articles and reason across multiple long documents.
+Finally, the evidence-provided setting provides
+1
+arXiv:2402.14116v2  [cs.CL]  6 Jun 2024
+
+the models with relevant articles, testing their long-
+context and multi-hop reasoning capabilities.
+We find that the closed- and open-book settings
+are difficult for modern systems, with the best per-
+forming models scoring below 50%. In the open-
+book setting, retrieved documents outgrow models’
+context lengths. In the evidence-provided setting,
+models’ performance correlates strongly with their
+context length. Human volunteers completing the
+open-book task score 85% accuracy, showing room
+to improve LLM systems.
+2
+Related Work
+Multi-Hop Question Answering.
+HotpotQA
+(Yang et al., 2018) focuses on using bridge enti-
+ties to introduce a “hop”, requiring models to re-
+trieve information about two related entities. Com-
+plexWebQuestions (Talmor and Berant, 2018) com-
+poses simpler questions to create two-hop ques-
+tions with a similar bridge entity. 2WikiMulti-
+HopQA (Ho et al., 2020) uses manually curated
+templates to generate two to four-hop questions
+among entities in the same class. MuSiQue (Trivedi
+et al., 2022) presents algorithmically generated
+questions with nonlinear reasoning chains, which
+require up to four hops per question. These datasets
+focus on simple reasoning chains, with a maximum
+of four hops. In FanOutQA, we require nonlin-
+ear reasoning chains that are longer than previous
+multi-hop QA datasets (an average of seven hops
+per question).
+Long Context Evaluations.
+LongBench (Bai
+et al., 2023) is a collection of multiple long-context
+tasks. In its multi-document QA setting, it builds
+on top of the multi-hop QA benchmarks discussed
+above, adding distractor spans to create artificial
+long documents which are provided to the model.
+However, it has been shown that this approach does
+not necessarily increase the complexity of the QA
+task (Min et al., 2019). The Qasper (Dasigi et al.,
+2021) and SCROLLS (Shaham et al., 2022) bench-
+marks present QA tasks that focus primarily on
+reading comprehension within a single document,
+rather than reasoning across multiple documents.
+These benchmarks and others also evaluate differ-
+ent aspects of long context reasoning through sub-
+jective summarization tasks (Kwan et al., 2023) or
+text span reordering (Shaham et al., 2023; Li et al.,
+2023), which is beyond the focus of our benchmark.
+Unlike previous benchmarks, our open-book set-
+ting requires models to retrieve and reason over
+multiple natural long documents (multi-hop multi-
+document), and our evidence-provided setting re-
+quires models to perform inter-document reasoning
+over multiple provided documents. On average,
+questions in FanOutQA are paired with 172k to-
+kens of evidence spanning 7 documents.
+3
+FanOutQA Dataset
+FanOutQA consists of three parts: questions, an-
+swers, and evidence. Each question includes a
+decomposition into sub-questions that can be an-
+swered with a single Wikipedia article. The an-
+swers to the sub-questions can then be combined
+to answer the top-level question. We provide these
+sub-questions, answers, and associated Wikipedia
+articles as an additional resource for decomposing
+complex queries. We provide sample questions in
+Appendix A, and the dataset’s topic distribution in
+Appendix B.
+3.1
+Dataset Creation
+To create FanOutQA, we recruited 379 undergrad-
+uate and graduate students enrolled in AI or NLP
+courses at a US university to write questions and
+answers in the fan-out style. We required each ques-
+tion to reference at least five different Wikipedia
+articles to find its answer. We also tasked the stu-
+dents to decompose their top-level questions into
+sub-questions, each providing an answer from a sin-
+gle article. The questions were written in a period
+of one week, ending on November 20, 2023. We
+stored a snapshot of Wikipedia on the last day to
+preserve the knowledge source, which we provide
+with the dataset. We provided a Jupyter notebook
+to help with writing (see Appendix G) and offered
+students extra credit for their contributions.
+The students produced 1,418 sets of top-level
+questions, sub-questions, and Wikipedia references.
+After our filtering pipeline (Appendix C) to ensure
+the quality of our dataset, we arrive at 1,034 top-
+level questions and 7,305 sub-questions, across
+4,121 distinct Wikipedia articles.
+We split the
+dataset into dev and test splits at a ratio of 30% dev
+(310), 70% test (724). We release the full questions,
+decomposition, and answers of the dev questions,
+and only the top-level question and list of articles
+used in the decomposition for the test questions.
+We maintain a leaderboard of performance on the
+test set on our website2, with a standard submission
+for generations on the test set.
+2
+https://fanoutqa.com/leaderboard/
+2
+
+3.2
+Settings
+We present three different benchmark settings over
+the data to evaluate different aspects of LLM sys-
+tems, which we present in order of expected diffi-
+culty (most-to-least difficult).
+Closed Book.
+In what could be considered the
+most difficult setting, the model is given only the
+top-level question and must answer it based solely
+on the knowledge encoded in its parameters. This
+setting primarily tests the model’s general knowl-
+edge and establishes a model-specific baseline.
+Open Book.
+The open book setting gives the
+model access to the Wikipedia knowledge base
+along with the top-level question. Using retrieval
+tools, it can query our dated snapshot of Wikipedia
+for relevant information across multiple rounds
+of interaction. Since the questions in FanOutQA
+require multiple reasoning steps over specific in-
+formation across a large number of documents,
+the open book setting is suitable for evaluating
+retrieval-augmented generation, multi-hop reason-
+ing, and long-horizon question answering.
+Evidence Provided.
+In this setting, the model
+is given the top-level question and the text of
+each Wikipedia article used in the decomposition.
+The model can answer based on information fully
+within its context window, which evaluates long-
+context and long-dependency reasoning similar to
+Li et al. (2023). It can alternatively retrieve the
+necessary information from the given documents
+as a simpler retrieval task.
+4
+Benchmarking Study
+We benchmarked seven large language models on
+FanOutQA: GPT-4, GPT-4-turbo, GPT-3.5-turbo,
+LLaMA 2 70B Chat, Mistral-7B, Mixtral-8x7B,
+and Claude 2 (more details in Appendix D). All
+models generated text with greedy decoding; all
+local models were run with FP16 precision.
+4.1
+Metrics
+We report benchmark performance with four
+classes of metrics.
+The first is string accuracy, which we compute
+after lemmatizing and removing stop words and
+punctuation from each sequence:
+Loose(R, g) =
+P
+r∈R 1[substr(r, g)]
+|R|
+(1)
+Strict(R, g) = 1[Loose(R, g) = 1]
+(2)
+Where R is the list of normalized reference an-
+swer strings for a given question and g is the nor-
+malized candidate generation for that question.
+We report the mean proportion of reference an-
+swer strings found in the generation (“loose” accu-
+racy, Eqn. 1) and proportion of questions in which
+every answer string was found in the generation
+(“strict” accuracy, Eqn. 2).
+We also report ROUGE-1, ROUGE-2, and
+ROUGE-L F1-scores (Lin, 2004) and BLEURT
+(Sellam et al., 2020) scores, consistent with existing
+related work. Finally, we use GPT-4 (gpt-4-0613)
+to estimate the factual equivalence of the generated
+and reference answers for each question (prompt in
+Appendix H). We observe that this method is more
+robust to misspellings and string substitutions, such
+as “two” and “2” or “1 trillion” and “1000 billion.”
+We present loose string accuracy and the model
+judge score across all settings in Figure 2, and tab-
+ulate all other results in Appendix E.
+4.2
+Closed Book Results
+Using only knowledge encoded in their parameters,
+models’ loose string accuracy ranged from 0.341
+(Claude) to 0.470 (Mixtral), with none reaching our
+estimated human baseline of 0.685 or upper bound
+of 0.847 (see Section 4.5).
+Most errors were plausible but incorrect hallu-
+cinations. For example, when asked “which of
+the top five best selling video games does not
+feature physical combat,” GPT-4-turbo answered
+“Minecraft” even though the true answer is Tetris.
+A substantial proportion of errors were unique
+to OpenAI’s GPT models. These models often
+refused to answer, citing lack of real time data. Of
+the models, GPT-4-turbo refused to answer 5% of
+the time, GPT-3.5-turbo 10%, and GPT-4 44%.
+4.3
+Open Book Results
+We used Kani (Zhu et al., 2023) to provide access
+to Wikipedia using native function calling (Ope-
+nAI’s GPT models) or through a structured search
+query. We split each retrieved document into 1024-
+character chunks, preferring to split at paragraph
+and sentence boundaries. We ranked the chunks
+with a BM25+ (Lv and Zhai, 2011) retriever and
+provided up to half the model’s context length of
+tokens per document. Mistral-7B suffered from
+severe neural text degeneration (Holtzman et al.,
+2020) and entered infinite loops when attempting
+to search, so we omit its open-book results.
+3
+
+LLaMA 2
+GPT-4
+GPT-3.5-turbo
+Mistral-7B
+Mixtral-8x7B
+GPT-4-turbo
+Claude 2.1
+0.2
+0.4
+0.6
+0.8
+Loose Accuracy
+44.0
+35.5
+39.8
+42.7
+47.0
+46.0
+34.1
+39.0
+31.5
+15.5
+39.6
+47.0
+47.1
+51.4
+54.6
+51.7
+54.0
+57.6
+62.8
+65.3
+Human (Open Book)
+Closed Book
+Open Book
+Evidence Provided
+LLaMA 2
+GPT-4
+GPT-3.5-turbo
+Mistral-7B
+Mixtral-8x7B
+GPT-4-turbo
+Claude 2.1
+0.0
+0.2
+0.4
+Model Judge Accuracy
+12.0
+14.9
+14.5
+10.2
+18.6
+19.9
+11.0
+10.8
+16.4
+7.6
+14.8
+26.2
+21.8
+16.2
+30.4
+24.3
+20.2
+28.3
+41.3
+47.0
+Figure 2: Loose string accuracy and model judged accuracy of all benchmarked models in all settings, including
+baseline human performance in the open-book setting. See Appendix E for additional metrics.
+Perhaps surprisingly, most models performed
+worse in the open-book setting than in the closed
+book setting. We find this to be because mod-
+els in this setting “forgot” the original question as
+their context windows filled with long retrieved pas-
+sages across multiple retrieval rounds, outputting
+a summary of the last retrieved passage instead of
+answering the question. This is supported by a
+moderate positive correlation between maximum
+context window sizes and model-judged accuracy
+(r2 = 0.558). Models with larger context lengths
+are able to include a greater amount of information
+in the context and “forget” the original question
+less often as context windows fill up. We ran two
+additional experiments where we: a) repeated the
+original question after each retrieval round and b)
+limited the context window of all models to the
+smallest of all models to verify these findings, the
+results of which are tabulated in Appendix F.
+4.4
+Evidence Provided Results
+We use the same retrieval scheme as in the open-
+book setting, providing models as many chunks as
+would fit each model’s context. Performance cor-
+related strongly with maximum context length in
+this setting (r2 = 0.782), supporting the proposi-
+tion that the amount and quality of information in a
+model’s context affects its ability to answer fan-out
+questions. This shows that questions in FanOutQA
+effectively measure long-context reasoning over
+very long dependencies.
+4.5
+Human Performance
+We conducted a human evaluation to create a hu-
+man baseline and estimate the upper bound of hu-
+man performance on FanOutQA. We recruited 14
+volunteers to each answer 10 FanOutQA questions
+with access to Wikipedia, similar to the open-book
+setting. On average, humans took 5-15 minutes to
+answer each question. In the open-book setting, the
+humans score significantly higher than our tested
+models (p < 0.05), achieving a loose accuracy of
+68.5% and model-judged accuracy of 45.2%. This
+score may seem low, as the model-judged accuracy
+does not account for partial credit. As our only au-
+tomated metric that accounts for partial credit is not
+robust to typos and equivalent string substitutions,
+we also manually evaluate the human answers to
+establish an upper bound of 84.7%.
+5
+Conclusions
+Fan-out question answering presents several chal-
+lenges for LLMs, including decomposing complex
+questions into simpler sub-questions, retrieving
+documents, extracting relevant information, and
+multi-hop reasoning over a large number of docu-
+ments. We developed a dataset called FanOutQA
+for this ambitious task in response to the rapidly
+improving reasoning abilities and context manage-
+ment strategies in large language models, and we
+formulate three challenge settings over the dataset.
+We benchmarked the performance of seven state-of-
+the-art models on our challenge settings, and find
+that the requirement of fan-out question-answering
+challenges even the long context capabilities of
+modern models. Accuracy correlated with context
+length in the open book and evidence-provided but
+not in the closed book settings, suggesting that
+more information helps performance. The correla-
+tion was stronger in the evidence-provided setting,
+further suggesting that the quality of information
+matters as well.
+4
+
+In our experiments, our main goal was to eval-
+uate LLMs’ answers to the top-level questions in
+the three settings we present. As there may be
+multiple valid decompositions to achieve a final
+answer, we don’t evaluate on the similarity be-
+tween the human-written question decompositions
+and strategies used by LLMs (most relevant in the
+Open Book setting). However, we would like to
+highlight its usefulness for imitation learning (e.g.
+fine-tuning a function-calling-capable model) as a
+direction for future work. We also encourage ex-
+ploration of additional decompositional prompting
+strategies, such as decomposed prompting (Khot
+et al., 2023) and GenDec (Wu et al., 2024).
+We encourage researchers to use FanOutQA to
+evaluate new retrieval-augmented models, long-
+context models, and other novel LLM systems with
+our open-source resources.3
+6
+Ethics Statement
+Our question writers and human evaluators were
+compensated with extra credit in a class they were
+taking or digital items of their choice, with intrinsic
+value equivalent to or greater than the time effort
+spent on our task. Participants gave informed con-
+sent and were aware of the compensation before
+accepting the tasks. Data we collected from human
+annotators is IRB exempt under 45 CFR 46.104,
+category 2. No personal identifying information
+was collected from human participants, and any
+references to individuals found in the dataset refer-
+ence publicly-available information (i.e. Wikipedia
+pages).
+Wikipedia text is available under the Creative
+Commons Attribution-ShareAlike 4.0 International
+License (CC BY-SA) license.
+We release our
+dataset under the Creative Commons Attribution-
+ShareAlike 4.0 International (CC BY-SA) license,
+and our Python package under the MIT license.
+7
+Limitations
+Due to the limitations of text-based metrics, most of
+our metrics are biased towards recall over precision.
+The ROUGE metrics measure precision, but LLMs
+can output extraneous text that penalizes precision
+without affecting the factual content of the question.
+This led to many models scoring high in recall but
+low in precision, leading to an on-average lower
+reported F1 score. Although using GPT-4 as a
+3
+https://fanoutqa.com
+https://github.com/zhudotexe/fanoutqa
+judge model helps measure the factual equivalence
+of two answers, this may be prohibitively expensive
+to scale to many more thousands of samples.
+FanOutQA uses content solely from English
+Wikipedia, making it a monolingual dataset. It
+may be plausible to create parallel datasets using
+the same provided Wikipedia pages found in other
+languages, but we leave creation and verification
+of this dataset to future work.
+We focus only on information gathering in this
+dataset since it possesses useful properties:
+1. The information is factual with a single an-
+swer. Domains such as trip planning require
+qualitative judgment which complicates eval-
+uation.
+2. We are able to leverage Wikipedia’s backlinks
+API to enforce the fan-out requirement by ex-
+amining all articles which commonly link to
+all evidence used by our human annotators.
+3. Researchers using the dataset are easily able to
+access the source content as it is available on
+the web, publicly licensed, and widely avail-
+able globally without specialized setup.
+4. Information gathering from a closed domain
+(i.e. Wikipedia) allows us to snapshot the
+entire domain easily regardless of the path
+taken by human annotators, allowing us to
+replicate the entire environment faithfully in
+evaluation trials.
+However, “fan-out” tasks extend beyond infor-
+mation gathering, and we are interested in using
+the methods presented here to extend the scope of
+the dataset to other domains in future work.
+Acknowledgements
+We would like to thank the members of the lab
+of Chris Callison-Burch for detailed feedback on
+the contents of this paper and the members of the
+Northern Lights Province Discord for their partici-
+pation in our human evaluation. In particular, we
+would like to thank Bryan Li for his thoughtful
+suggestions with regards to our human evaluation
+and other parts of the paper.
+This research is supported in part by the Office
+of the Director of National Intelligence (ODNI),
+Intelligence Advanced Research Projects Activ-
+ity (IARPA), via the HIATUS Program contract
+#2022-22072200005. The views and conclusions
+5
+
+contained herein are those of the authors and should
+not be interpreted as necessarily representing the
+official policies, either expressed or implied, of
+ODNI, IARPA, or the U.S. Government. The U.S.
+Government is authorized to reproduce and dis-
+tribute reprints for governmental purposes notwith-
+standing any copyright annotation therein.
+References
+Yushi Bai, Xin Lv, Jiajie Zhang, Hongchang Lyu,
+Jiankai Tang, Zhidian Huang, Zhengxiao Du, Xiao
+Liu, Aohan Zeng, Lei Hou, Yuxiao Dong, Jie Tang,
+and Juanzi Li. 2023. Longbench: A bilingual, mul-
+titask benchmark for long context understanding.
+arXiv preprint arXiv:2308.14508.
+Pradeep Dasigi, Kyle Lo, Iz Beltagy, Arman Cohan,
+Noah A. Smith, and Matt Gardner. 2021. A dataset
+of information-seeking questions and answers an-
+chored in research papers. In Proceedings of the
+2021 Conference of the North American Chapter of
+the Association for Computational Linguistics: Hu-
+man Language Technologies, pages 4599–4610, On-
+line. Association for Computational Linguistics.
+Xanh Ho, Anh-Khoa Duong Nguyen, Saku Sugawara,
+and Akiko Aizawa. 2020.
+Constructing a multi-
+hop QA dataset for comprehensive evaluation of
+reasoning steps. In Proceedings of the 28th Inter-
+national Conference on Computational Linguistics,
+pages 6609–6625, Barcelona, Spain (Online). Inter-
+national Committee on Computational Linguistics.
+Ari Holtzman, Jan Buys, Li Du, Maxwell Forbes, and
+Yejin Choi. 2020. The curious case of neural text de-
+generation. In International Conference on Learning
+Representations.
+Albert Q. Jiang, Alexandre Sablayrolles, Arthur Men-
+sch, Chris Bamford, Devendra Singh Chaplot, Diego
+de las Casas, Florian Bressand, Gianna Lengyel, Guil-
+laume Lample, Lucile Saulnier, Lélio Renard Lavaud,
+Marie-Anne Lachaux, Pierre Stock, Teven Le Scao,
+Thibaut Lavril, Thomas Wang, Timothée Lacroix,
+and William El Sayed. 2023. Mistral 7b.
+Albert Q. Jiang, Alexandre Sablayrolles, Antoine
+Roux, Arthur Mensch, Blanche Savary, Chris
+Bamford, Devendra Singh Chaplot, Diego de las
+Casas, Emma Bou Hanna, Florian Bressand, Gi-
+anna Lengyel, Guillaume Bour, Guillaume Lam-
+ple, Lélio Renard Lavaud, Lucile Saulnier, Marie-
+Anne Lachaux, Pierre Stock, Sandeep Subramanian,
+Sophia Yang, Szymon Antoniak, Teven Le Scao,
+Théophile Gervet, Thibaut Lavril, Thomas Wang,
+Timothée Lacroix, and William El Sayed. 2024. Mix-
+tral of experts.
+Tushar Khot, Harsh Trivedi, Matthew Finlayson, Yao
+Fu, Kyle Richardson, Peter Clark, and Ashish Sab-
+harwal. 2023. Decomposed prompting: A modular
+approach for solving complex tasks. In The Eleventh
+International Conference on Learning Representa-
+tions.
+Wai-Chung Kwan, Xingshan Zeng, Yufei Wang, Yusen
+Sun, Liangyou Li, Lifeng Shang, Qun Liu, and
+Kam-Fai Wong. 2023. M4le: A multi-ability multi-
+range multi-task multi-domain long-context evalua-
+tion benchmark for large language models.
+Jiaqi Li, Mengmeng Wang, Zilong Zheng, and Muhan
+Zhang. 2023. Loogle: Can long-context language
+models understand long contexts?
+Chin-Yew Lin. 2004. ROUGE: A package for auto-
+matic evaluation of summaries. In Text Summariza-
+tion Branches Out, pages 74–81, Barcelona, Spain.
+Association for Computational Linguistics.
+Yuanhua Lv and ChengXiang Zhai. 2011.
+Lower-
+bounding term frequency normalization. In Proceed-
+ings of the 20th ACM International Conference on
+Information and Knowledge Management, CIKM
+’11, page 7–16, New York, NY, USA. Association for
+Computing Machinery.
+Sewon Min, Eric Wallace, Sameer Singh, Matt Gardner,
+Hannaneh Hajishirzi, and Luke Zettlemoyer. 2019.
+Compositional questions do not necessitate multi-hop
+reasoning. In Proceedings of the 57th Annual Meet-
+ing of the Association for Computational Linguistics,
+pages 4249–4257, Florence, Italy. Association for
+Computational Linguistics.
+Arvind Neelakantan, Tao Xu, Raul Puri, Alec Rad-
+ford, Jesse Michael Han, Jerry Tworek, Qiming
+Yuan, Nikolas Tezak, Jong Wook Kim, Chris Hallacy,
+Johannes Heidecke, Pranav Shyam, Boris Power,
+Tyna Eloundou Nekoul, Girish Sastry, Gretchen
+Krueger, David Schnurr, Felipe Petroski Such, Kenny
+Hsu, Madeleine Thompson, Tabarak Khan, Toki
+Sherbakov, Joanne Jang, Peter Welinder, and Lilian
+Weng. 2022.
+Text and code embeddings by con-
+trastive pre-training.
+OpenAI. 2023. Gpt-4 technical report.
+Thibault Sellam, Dipanjan Das, and Ankur Parikh. 2020.
+BLEURT: Learning robust metrics for text genera-
+tion. In Proceedings of the 58th Annual Meeting of
+the Association for Computational Linguistics, pages
+7881–7892, Online. Association for Computational
+Linguistics.
+Uri Shaham, Maor Ivgi, Avia Efrat, Jonathan Berant,
+and Omer Levy. 2023. ZeroSCROLLS: A zero-shot
+benchmark for long text understanding.
+In Find-
+ings of the Association for Computational Linguis-
+tics: EMNLP 2023, pages 7977–7989, Singapore.
+Association for Computational Linguistics.
+Uri Shaham, Elad Segal, Maor Ivgi, Avia Efrat, Ori
+Yoran, Adi Haviv, Ankit Gupta, Wenhan Xiong,
+Mor Geva, Jonathan Berant, and Omer Levy. 2022.
+SCROLLS: Standardized CompaRison over long lan-
+guage sequences. In Proceedings of the 2022 Con-
+ference on Empirical Methods in Natural Language
+6
+
+Processing, pages 12007–12021, Abu Dhabi, United
+Arab Emirates. Association for Computational Lin-
+guistics.
+Alon Talmor and Jonathan Berant. 2018. The web as
+a knowledge-base for answering complex questions.
+In Proceedings of the 2018 Conference of the North
+American Chapter of the Association for Computa-
+tional Linguistics: Human Language Technologies,
+Volume 1 (Long Papers), pages 641–651, New Or-
+leans, Louisiana. Association for Computational Lin-
+guistics.
+Hugo Touvron, Louis Martin, Kevin Stone, Peter Al-
+bert, Amjad Almahairi, Yasmine Babaei, Nikolay
+Bashlykov, Soumya Batra, Prajjwal Bhargava, Shruti
+Bhosale, Dan Bikel, Lukas Blecher, Cristian Canton
+Ferrer, Moya Chen, Guillem Cucurull, David Esiobu,
+Jude Fernandes, Jeremy Fu, Wenyin Fu, Brian Fuller,
+Cynthia Gao, Vedanuj Goswami, Naman Goyal, An-
+thony Hartshorn, Saghar Hosseini, Rui Hou, Hakan
+Inan, Marcin Kardas, Viktor Kerkez, Madian Khabsa,
+Isabel Kloumann, Artem Korenev, Punit Singh Koura,
+Marie-Anne Lachaux, Thibaut Lavril, Jenya Lee, Di-
+ana Liskovich, Yinghai Lu, Yuning Mao, Xavier Mar-
+tinet, Todor Mihaylov, Pushkar Mishra, Igor Moly-
+bog, Yixin Nie, Andrew Poulton, Jeremy Reizen-
+stein, Rashi Rungta, Kalyan Saladi, Alan Schelten,
+Ruan Silva, Eric Michael Smith, Ranjan Subrama-
+nian, Xiaoqing Ellen Tan, Binh Tang, Ross Tay-
+lor, Adina Williams, Jian Xiang Kuan, Puxin Xu,
+Zheng Yan, Iliyan Zarov, Yuchen Zhang, Angela Fan,
+Melanie Kambadur, Sharan Narang, Aurelien Ro-
+driguez, Robert Stojnic, Sergey Edunov, and Thomas
+Scialom. 2023. Llama 2: Open foundation and fine-
+tuned chat models.
+Harsh Trivedi, Niranjan Balasubramanian, Tushar Khot,
+and Ashish Sabharwal. 2022.
+MuSiQue: Multi-
+hop questions via single-hop question composition.
+Transactions of the Association for Computational
+Linguistics, 10:539–554.
+Jian Wu, Linyi Yang, Yuliang Ji, Wenhao Huang,
+Börje F. Karlsson, and Manabu Okumura. 2024. Gen-
+dec: A robust generative question-decomposition
+method for multi-hop reasoning.
+Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Bengio,
+William Cohen, Ruslan Salakhutdinov, and Christo-
+pher D. Manning. 2018. HotpotQA: A dataset for
+diverse, explainable multi-hop question answering.
+In Proceedings of the 2018 Conference on Empiri-
+cal Methods in Natural Language Processing, pages
+2369–2380, Brussels, Belgium. Association for Com-
+putational Linguistics.
+Andrew Zhu, Liam Dugan, Alyssa Hwang, and Chris
+Callison-Burch. 2023.
+Kani: A lightweight and
+highly hackable framework for building language
+model applications. In Proceedings of the 3rd Work-
+shop for Natural Language Processing Open Source
+Software (NLP-OSS 2023), pages 65–77, Singapore.
+Association for Computational Linguistics.
+7
+
+A
+Example Questions
+In this section, we provide a sample of various questions found in the FanOutQA dataset, along with their
+human-written decompositions and answers.
+1. Q: What is the duration in minutes and seconds of the top 5 songs on the Billboard Year-End Hot
+100 singles list of 2022?
+Decomposition:
+(a) Q: What are the top 5 songs on the list of Billboard Year-End Hot 100 singles of 2022?
+Evidence:
+https://en.wikipedia.org/wiki/Billboard_Year-End_Hot_100_singles_of_2022
+A: Heat Waves, As It Was, Stay, Easy on Me, Shivers
+(b) Q: What is the length of Heat Waves?
+Evidence: https://en.wikipedia.org/wiki/Heat_Waves
+A: 3:58
+(c) Q: What is the length of As It Was?
+Evidence: https://en.wikipedia.org/wiki/As_It_Was
+A: 2:43
+(d) Q: What is the length of Stay?
+Evidence:
+https://en.wikipedia.org/wiki/Stay_(The_Kid_Laroi_and_Justin_Bieber_song)
+A: 2:21
+(e) Q: What is the length of Easy on Me?
+Evidence: https://en.wikipedia.org/wiki/Easy_on_Me
+A: 3:44
+(f) Q: What is the length of Shivers?
+Evidence: https://en.wikipedia.org/wiki/Shivers_(Ed_Sheeran_song)
+A: 3:27
+A: {"Heat Waves": "3:58", "As It Was": "2:43", "Stay": "2:21", "Easy on Me":
+"3:44", "Shivers": "3:27"}
+2. Q: What are the ages of the top 5 most followed people on Instagram?4
+Decomposition:
+(a) Q: Who are the top 5 most followed on Instagram?
+Evidence:
+https://en.wikipedia.org/wiki/List_of_most-followed_Instagram_accounts
+A: Cristiano Ronaldo, Lionel Messi, Selena Gomez, Kylie Jenner, Dwayne Johnson
+(b) Q: What is the age of Cristiano Ronaldo?
+Evidence: https://en.wikipedia.org/wiki/Cristiano_Ronaldo
+A: 38
+(c) Q: What is the age of Lionel Messi?
+Evidence: https://en.wikipedia.org/wiki/Lionel_Messi
+A: 36
+(d) Q: What is the age of Selena Gomez?
+Evidence: https://en.wikipedia.org/wiki/Selena_Gomez
+A: 31
+(e) Q: What is the age of Kylie Jenner?
+Evidence: https://en.wikipedia.org/wiki/Kylie_Jenner
+A: 26
+4
+As of the dataset epoch of Nov 20, 2023. Retrieved documents return the revision as of this date, so answers are consistent
+over time.
+8
+
+(f) Q: What is the age of Dwayne Johnson?
+Evidence: https://en.wikipedia.org/wiki/Dwayne_Johnson
+A: 51
+A: { "Cristiano Ronaldo": 38, "Lionel Messi": 36, "Selena Gomez": 31, "Kylie
+Jenner": 26, "Dwayne Johnson": 51 }
+3. Q: What are the top 4 best-selling mangas of all time and who is the protagonist for each?
+Decomposition:
+(a) Q: What are the top 4 best-selling mangas of all time?
+Evidence: https://en.wikipedia.org/wiki/List_of_best-selling_manga
+A: One Piece, Golgo 13, Case Closed / Detective Conan, Dragon Ball
+(b) Q: Who is the protagonist of ‘One Piece’?
+Evidence: https://en.wikipedia.org/wiki/One_Piece
+A: Monkey D. Luffy
+(c) Q: Who is the protagonist of ‘Golgo 13’?
+Evidence: https://en.wikipedia.org/wiki/Golgo_13
+A: Duke Togo
+(d) Q: Who is the protagonist of ‘Case Closed / Detective Conan’?
+Evidence: https://en.wikipedia.org/wiki/Case_Closed
+A: Shinichi Kudo
+(e) Q: Who is the protagonist of ‘Dragon Ball’?
+Evidence: https://en.wikipedia.org/wiki/Dragon_Ball_(manga)
+A: Goku
+A: { "One Piece": "Monkey D. Luffy", "Golgo 13": "Duke Togo", "Case Closed /
+Detective Conan": "Shinichi Kudo", "Dragon Ball": "Goku" }
+4. Q: Among the Ivy League universities, which four have the lowest endowments and how many
+Nobel laureates do each of them have?
+Decomposition:
+(a) Q: Which 4 Ivy League universities have the lowest endowment?
+Evidence: https://en.wikipedia.org/wiki/Ivy_League
+A: Brown University, Dartmouth College, Cornell University, Columbia University
+(b) Q: How many Nobel laureates does Brown University have?
+Evidence: https://en.wikipedia.org/wiki/Brown_University
+A: 11
+(c) Q: How many Nobel laureates does Dartmouth College have?
+Evidence: https://en.wikipedia.org/wiki/Dartmouth_College
+A: 3
+(d) Q: How many Nobel laureates does Cornell University have?
+Evidence: https://en.wikipedia.org/wiki/Cornell_University
+A: 62
+(e) Q: How many Nobel laureates does Columbia University have?
+Evidence: https://en.wikipedia.org/wiki/Columbia_University
+A: 103
+A: { "Brown University": 11, "Dartmouth College": 3, "Cornell University": 62,
+"Columbia University": 103 }
+5. Q: What is the area in square kilometers of the city that hosts the alma mater of all partners of the
+main actors from ‘How I Met Your Mother’ who eventually hosted the Academy Awards?
+Decomposition:
+9
+
+(a) Q: Who are the main actors in ‘How I Met Your Mother’?
+Evidence: https://en.wikipedia.org/wiki/How_I_Met_Your_Mother
+A: Josh Radnor, Jason Segel, Cobie Smulders, Neil Patrick Harris, Alyson Hannigan, Cristin
+Milioti
+(b) Q: Which of these actors hosted the Academy Awards?
+Evidence: https://en.wikipedia.org/wiki/List_of_Academy_Awards_ceremonies
+A: Neil Patrick Harris
+(c) Q: Who is the partner of Neil Patrick Harris?
+Evidence: https://en.wikipedia.org/wiki/Neil_Patrick_Harris
+A: David Burtka
+(d) Q: What is the alma mater of David Burtka?
+Evidence: https://en.wikipedia.org/wiki/David_Burtka
+A: University of Michigan
+(e) Q: What city is the University of Michigan in?
+Evidence: https://en.wikipedia.org/wiki/University_of_Michigan
+A: Ann Arbor, Michigan
+(f) Q: What is the area of the city of Ann Arbor?
+Evidence: https://en.wikipedia.org/wiki/Ann_Arbor,_Michigan
+A: 73.35 sq km
+A: 73.35 sq km
+6. Q: What are the five most popular grape varieties from the Bordeaux appellation, and which area of
+Bordeaux are they most planted in?
+Decomposition:
+(a) Q: What are the five most popular grape varieties from the Bordeaux appellation?
+Evidence: https://en.wikipedia.org/wiki/Bordeaux_wine
+A: Cabernet Sauvignon, Cabernet Franc, Merlot, Semillon, Sauvignon Blanc
+(b) Q: Which area of Bordeaux is Cabernet Sauvignon most planted in?
+Evidence: https://en.wikipedia.org/wiki/Cabernet_Sauvignon
+A: Haut-Medoc
+(c) Q: Which area of Bordeaux is Cabernet Franc most planted in?
+Evidence: https://en.wikipedia.org/wiki/Cabernet_Franc
+A: Saint-Emilion
+(d) Q: Which area of Bordeaux is Merlot most planted in?
+Evidence: https://en.wikipedia.org/wiki/Merlot
+A: Saint-Emilion and Pomerol
+(e) Q: Which area of Bordeaux is Semillon most planted in?
+Evidence: https://en.wikipedia.org/wiki/S%C3%A9millon
+A: Saint-Emilion
+(f) Q: Which area of Bordeaux is Sauvignon Blanc most planted in?
+Evidence: https://en.wikipedia.org/wiki/Sauvignon_blanc
+A: Pessac-Leognan and Graves
+A: { "Cabernet Sauvignon": "Haut-Medoc", "Cabernet Franc": "Saint-Emilion",
+"Merlot": "Saint-Emilion and Pomerol", "Semillon": "Saint-Emilion", "Sauvignon
+Blanc": "Pessac-Leognan and Graves" }
+B
+Dataset Topic Distribution
+We queried topics by using GPT-4 to suggest a list of associated topics for each question, then manually
+reviewed the topics and merged similar ones (e.g. “Film” and “Film Studies”). A question may have
+multiple associated topics. The top 25 topics covered by the questions are tabulated in Table 1.
+10
+
+Topic
+#
+%
+Geography
+345
+18.22%
+History
+230
+12.14%
+Sports
+166
+8.76%
+Film Studies
+101
+5.33%
+Education
+94
+4.96%
+Economics
+92
+4.86%
+Politics
+90
+4.75%
+Demographics
+79
+4.17%
+Business
+77
+4.07%
+Music
+67
+3.54%
+Culture
+46
+2.43%
+Statistics
+41
+2.16%
+Literature
+27
+1.43%
+Video Games
+25
+1.32%
+Technology
+23
+1.21%
+Television
+22
+1.16%
+Linguistics
+21
+1.11%
+Architecture
+20
+1.06%
+Finance
+20
+1.06%
+Astronomy
+19
+1.00%
+International Relations
+15
+0.79%
+Physics
+15
+0.79%
+Law
+14
+0.74%
+Japanese Culture
+14
+0.74%
+Other
+231
+12.20%
+Table 1: Breakdown of question topics included in
+FanOutQA. Each question may be associated with
+multiple topics.
+There is a slight bias towards questions including
+a Geography or History component likely due to the
+example questions given to the question writers. We
+used vector similarity to deduplicate questions, and in
+our manual review of similar questions ensured that
+questions explore distinct topics by removing ques-
+tions that were simple word-edits of each other (in
+addition to simple duplicates). Although there is a
+slight bias towards these domains, no one topic domi-
+nates the entire dataset, and we do not believe that the
+bias has a significant impact on the final conclusions.
+C
+Filtering Pipeline
+To assess the quality of our dataset and remove un-
+suitable questions, we used computational methods
+to identify candidates for removal and manually re-
+viewed them after each round. We started with a
+heuristic-based algorithm to flag two common indi-
+cators of low-quality questions: top-level answers not
+being composed of sub-question answers and multi-
+ple sub-questions using the same Wikipedia article
+as evidence. Next, we ensured that the knowledge
+base was being used appropriately by verifying that
+each sub-question answer is contained in the refer-
+enced article. Since Wikipedia is a large resource
+and the writers may not have seen every article re-
+lated to their questions, we used the OpenAI embed-
+dings (text-embedding-3-small, henceforth “em-
+beddings”; Neelakantan et al., 2022) of top-level ques-
+tions and article titles to retrieve the 30 most similar
+Wikipedia articles for each question. If any of these
+articles contained all answers to the sub-questions, we
+removed the entire example from the dataset. This
+ensures that the questions both can and need to be answered by the fan-out method.
+In the final round of reviewing the quality of our dataset, we used GPT-4 (gpt-4-0613) with greedy
+sampling to help remove or fix poorly phrased questions (prompts in Appendix H). We prompted GPT-4 to
+identify if a question is not objective, such as “What are five inventions in the Industrial Revolution?” or
+“Who are the five most famous celebrities?” It was also instructed to identify questions that were missing
+numeric units and suggest grammar corrections. We manually reviewed all LLM-assisted modifications
+before deduplication. Finally, we considered duplicate questions to have embeddings with cosine similarity
+within 0.9. We manually reviewed these duplicates and selected one to remain in the final dataset.
+D
+Models Used
+We benchmarked the following state-of-the-art LLMs’ performance on FanOutQA. Where needed, the
+specific model’s key/sub-version is provided.
+Commercial Models
+• GPT-4 (gpt-4-0613, OpenAI, 2023)
+• GPT-4-turbo (gpt-4-0125-preview5)
+5
+https://platform.openai.com/docs/models/gpt-4-and-gpt-4-turbo
+11
+
+• GPT-3.5-turbo (gpt-3.5-turbo-11066)
+• Claude (claude-2.17)
+Open-Source Models
+• LLaMA 2 70B Chat (Llama-2-70b-chat, Touvron et al., 2023)
+• Mistral 7B (Mistral-7B-Instruct-v0.2, Jiang et al., 2023)
+• Mixtral 8x7B (Mixtral-8x7B-Instruct-v0.1, Jiang et al., 2024)
+All models were sampled using greedy decoding, and local models were loaded using FP16 precision
+on 3 NVIDIA RTX A6000s. We provided the seed 31415 to OpenAI’s GPT models for deterministic
+generation.
+E
+Results Table
+We tabulate the results of each model and metric in Table 2.
+Closed Book
+Model
+Ctx Size
+Loose
+Strict
+ROUGE-1
+ROUGE-2
+ROUGE-L
+BLEURT
+GPT Judge
+LLaMA 2 70B
+4,096
+0.440
+0.058
+0.285
+0.149
+0.238
+0.441
+0.120
+GPT-4
+8,096
+0.355
+0.066
+0.313
+0.177
+0.267
+0.419
+0.149
+GPT-3.5-turbo
+16,384
+0.398
+0.058
+0.401
+0.227
+0.342
+0.455
+0.145
+Mistral-7B
+32,768
+0.427
+0.055
+0.260
+0.123
+0.212
+0.449
+0.102
+Mixtral-8x7B
+32,768
+0.470
+0.081
+0.302
+0.158
+0.254
+0.466
+0.186
+GPT-4-turbo
+128,000
+0.460
+0.101
+0.482
+0.290
+0.409
+0.493
+0.199
+Claude 2.1
+200,000
+0.341
+0.041
+0.412
+0.208
+0.344
+0.426
+0.110
+Open Book
+Model
+Ctx Size
+Loose
+Strict
+ROUGE-1
+ROUGE-2
+ROUGE-L
+BLEURT
+GPT Judge
+LLaMA 2 70B
+4,096
+0.390
+0.064
+0.157
+0.075
+0.131
+0.443
+0.108
+GPT-4
+8,096
+0.315
+0.057
+0.208
+0.106
+0.183
+0.427
+0.164
+GPT-3.5-turbo
+16,384
+0.155
+0.032
+0.114
+0.051
+0.099
+0.338
+0.076
+Mistral-7B
+32,768
+—
+—
+—
+—
+—
+—
+—
+Mixtral-8x7B
+32,768
+0.396
+0.055
+0.173
+0.078
+0.147
+0.449
+0.148
+GPT-4-turbo
+128,000
+0.470
+0.109
+0.356
+0.207
+0.314
+0.487
+0.262
+Claude 2.1
+200,000
+0.471
+0.086
+0.295
+0.157
+0.253
+0.485
+0.218
+Human
+—
+0.685
+0.289
+0.344
+0.210
+0.307
+0.413
+0.452
+Evidence Provided
+Model
+Ctx Size
+Loose
+Strict
+ROUGE-1
+ROUGE-2
+ROUGE-L
+BLEURT
+GPT Judge
+LLaMA 2 70B
+4,096
+0.514
+0.077
+0.376
+0.206
+0.304
+0.472
+0.162
+GPT-4
+8,096
+0.546
+0.144
+0.500
+0.301
+0.413
+0.530
+0.304
+GPT-3.5-turbo
+16,384
+0.517
+0.102
+0.455
+0.252
+0.358
+0.497
+0.243
+Mistral-7B
+32,768
+0.540
+0.088
+0.330
+0.172
+0.264
+0.475
+0.202
+Mixtral-8x7B
+32,768
+0.576
+0.135
+0.409
+0.231
+0.343
+0.509
+0.283
+GPT-4-turbo
+128,000
+0.628
+0.192
+0.614
+0.395
+0.523
+0.581
+0.413
+Claude 2.1
+200,000
+0.653
+0.215
+0.423
+0.262
+0.354
+0.508
+0.470
+Table 2: Performance of each model on all metrics and all settings. We include human performance in the open-book
+setting, and omit Mistral-7B’s performance in the open-book setting due to catastrophic neural text degeneration.
+F
+Additional Experiments
+In this section, we list the results of two additional experiments:
+1. In the open book and evidence provided settings, we limit the context window of all models to the
+smallest of all models to verify the correlation between context length and performance.
+6
+https://platform.openai.com/docs/models/gpt-3-5-turbo
+7
+https://www.anthropic.com/news/claude-2-1
+12
+
+2. In the open book setting, we repeat the original question after each retrieval round, to ensure that it is
+always in the context of the model.
+F.1
+Limited Context Length
+In this experiment, we fix the context size of each model to be equal to the shortest model’s (4096 tokens)
+to verify correlations between context length and performance, the results of which we tabulate in Table 3.
+Open Book, Context Limited
+Model
+Ctx Size
+Loose
+Strict
+ROUGE-1
+ROUGE-2
+ROUGE-L
+BLEURT
+GPT Judge
+LLaMA 2 70B
+4,096
+0.423
+0.066
+0.194
+0.095
+0.163
+0.449
+0.113
+GPT-4
+4,096
+0.236
+0.040
+0.151
+0.071
+0.134
+0.395
+0.102
+GPT-3.5-turbo
+4,096
+0.124
+0.023
+0.099
+0.041
+0.087
+0.326
+0.054
+Mistral-7B
+4,096
+—
+—
+—
+—
+—
+—
+—
+Mixtral-8x7B
+4,096
+0.458
+0.076
+0.224
+0.105
+0.192
+0.465
+0.160
+GPT-4-turbo
+4,096
+0.294
+0.051
+0.194
+0.103
+0.169
+0.427
+0.137
+Claude 2.1
+4,096
+0.348
+0.055
+0.224
+0.113
+0.187
+0.445
+0.140
+Evidence Provided, Context Limited
+Model
+Ctx Size
+Loose
+Strict
+ROUGE-1
+ROUGE-2
+ROUGE-L
+BLEURT
+GPT Judge
+LLaMA 2 70B
+4,096
+0.514
+0.077
+0.376
+0.206
+0.304
+0.472
+0.160
+GPT-4
+4,096
+0.380
+0.083
+0.157
+0.075
+0.131
+0.443
+0.184
+GPT-3.5-turbo
+4,096
+0.425
+0.054
+0.208
+0.106
+0.183
+0.427
+0.162
+Mistral-7B
+4,096
+0.466
+0.040
+0.114
+0.051
+0.099
+0.338
+0.134
+Mixtral-8x7B
+4,096
+0.525
+0.102
+0.173
+0.078
+0.147
+0.449
+0.229
+GPT-4-turbo
+4,096
+0.515
+0.113
+0.356
+0.207
+0.314
+0.487
+0.250
+Claude 2.1
+4,096
+0.490
+0.084
+0.295
+0.157
+0.253
+0.485
+0.189
+Table 3: Performance of each model with a fixed context length on all metrics in the open-book and evidence-
+provided settings. We omit Mistral-7B’s performance in the open-book setting due to catastrophic neural text
+degeneration.
+F.2
+Repeated Question After Retrieval
+In this experiment, we repeat the original question in the prompt after each retrieval round to attempt
+to mitigate the model “forgetting” the original question. The results are tabulated in Table 4. We found
+that in this experiment, if the model performed multiple searches, it would “forget” some of the retrieved
+information rather than the original question. For GPT-4, this caused it to re-run a search for previous
+information (which in turn caused it to “forget” other information and re-run another search, ad infinitum).
+We set a time limit of 5 minutes for each question, and find that GPT-4 times out in 33.1% of questions.
+Among the other two tested models, we see no significant improvement in benchmark performance
+(p > 0.2) by repeating the original question after each retrieval round. This suggests that the problem
+cannot be solved by changing the location of the question in a prompt alone: if more information is
+retrieved than can fit in a model’s context window, some information will always be truncated.
+Open Book, Question Repeated
+Model
+Ctx Size
+Loose
+Strict
+ROUGE-1
+ROUGE-2
+ROUGE-L
+BLEURT
+GPT Judge
+LLaMA 2 70B
+4,096
+0.431
+0.065
+0.196
+0.097
+0.166
+0.451
+0.110
+GPT-4
+8,096
+0.230
+0.051
+0.190
+0.095
+0.170
+0.339
+0.140
+Mixtral-8x7B
+32,768
+0.465
+0.081
+0.223
+0.105
+0.191
+0.466
+0.170
+Table 4: Performance of three models after repeating the original question after each retrieval on all metrics in the
+open-book setting.
+G
+Human Instructions
+G.1
+Question Writing Instructions
+We presented the following instructions to students in a Google Colaboratory notebook. To write the
+questions and their decompositions, students wrote them as a Python dictionary, which the notebook
+13
+
+validated the structure of before their submission. The remainder of this section contains the verbatim
+instructions included in the notebook.
+We are creating a challenge problem for natural language processing systems, where systems have to
+answer questions that require them to read multiple sources.
+Specifically, we’re looking at "fan-out" questions - where the question itself is not too long, but to
+answer it requires first looking up (or being supplied) some list of items, then finding out more details
+about each item.
+Your job is to help us write:
+• these fan-out questions
+• strategies to answer the questions you write, with relevant Wikipedia articles linked
+• reference answers to these questions.
+You’ll be using this Colab notebook to make sure the questions and answers are in the right format.
+Let’s take a look at a couple examples, first:
+For example, a very simple fan-out question might be:
+What was the population of New York and Los Angeles in 1950?
+In this example, the best strategy to answer this question is to split it once into two questions, "What
+was the population of New York in 1950?" and "What was the population of Los Angeles in 1950"?
+# EXAMPLE FORMAT - DO NOT MODIFY
+example_q1 = {
+"question": "What was the population of New York and Los Angeles in 1950?",
+"strategy": [
+# each question in here is the same structure recursively!
+# we don't need to here , but subquestions can be broken up even further
+{
+"question": "What was the population of New York in 1950?",
+"evidence": "https ://en.wikipedia.org/wiki/
+Demographic_history_of_New_York_City",
+"answer": 7891957
+},
+{
+"question": "What was the population of Los Angeles in 1950?",
+"evidence": "https ://en.wikipedia.org/wiki/Los_Angeles",
+"answer": 1970358
+},
+],
+"answer": {
+"New York": 7891957 ,
+"Los Angeles": 1970358
+}
+}
+validate_question(example_q1 , is_demonstration=True)
+# END EXAMPLE 1
+We can make this question more complex by making the system look up the list of items rather than
+providing it in the question:
+What was the population in 1950 of the 5 current most populous cities in the United States?
+Now, to answer the question, one has to first look up a list of populous cities in the US (the strategy),
+then fan-out based on that information.
+# EXAMPLE FORMAT - DO NOT MODIFY
+example_q2 = {
+"question": "What was the population in 1950 of the 5 current most populous cities
+in the United States?",
+14
+
+# use "strategy" for questions that don't depend on the answers to previous
+questions
+"strategy": [
+{
+"question": "What are the 5 most populous cities in the United States?",
+"evidence": "https ://en.wikipedia.org/wiki/
+List_of_United_States_cities_by_population",
+"answer": ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix"]
+},
+],
+# use "then" if sub -questions depend on answers to the questions in "strategy"
+"then": [
+{
+"question": "What was the population of New York in 1950?",
+"evidence": "https ://en.wikipedia.org/wiki/
+Demographic_history_of_New_York_City",
+"answer": 7891957
+},
+{
+"question": "What was the population of Los Angeles in 1950?",
+"evidence": "https ://en.wikipedia.org/wiki/Los_Angeles",
+"answer": 1970358
+},
+{
+"question": "What was the population of Chicago in 1950?",
+"evidence": "https ://en.wikipedia.org/wiki/Chicago",
+"answer": 3620962
+},
+{
+"question": "What was the population of Houston in 1950?",
+"evidence": "https ://en.wikipedia.org/wiki/Houston",
+"answer": 596163
+},
+{
+"question": "What was the population of Phoenix in 1950?",
+"evidence": "https ://en.wikipedia.org/wiki/Phoenix ,_Arizona",
+"answer": 106818
+},
+],
+"answer": {
+"New York": 7891957 ,
+"Los Angeles": 1970358 ,
+"Chicago": 3620962 ,
+"Houston": 596163 ,
+"Phoenix": 106818
+}
+}
+validate_question(example_q2)
+# END EXAMPLE 2
+Let’s look at one more example that’s a bit more complex. We’ll ask the question:
+Find the female cabinet members of the current US President. Who are those cabinet members
+and what city/town were they born in?
+Now, we need to look up quite a bit more information:
+# EXAMPLE FORMAT - DO NOT MODIFY
+example_q3 = {
+"question": "Find the female cabinet members of the current US President. Who are
+those cabinet members and what city/town were they born in?",
+"strategy": [
+{
+"question": "Who is the current US President?",
+"evidence": "https ://en.wikipedia.org/wiki/
+List_of_presidents_of_the_United_States",
+"answer": "Joe Biden",
+}
+15
+
+],
+"then": [
+{
+"question": "Who are the female members of Joe Biden's cabinet and what city/
+town were they born in?",
+"strategy": [
+{
+"question": "Who are the female members of Joe Biden's cabinet?",
+"evidence": "https ://en.wikipedia.org/wiki/Cabinet_of_Joe_Biden",
+"answer": ["Kamala Harris", "Janet Yellen", "Deb Haaland", "Gina Raimondo"
+, "Julie Su", "Marcia Fudge", "Jennifer Granholm"]
+}
+],
+"then": [
+{
+"question": "What city/town was Kamala Harris born in?",
+"evidence": "https ://en.wikipedia.org/wiki/Kamala_Harris",
+"answer
